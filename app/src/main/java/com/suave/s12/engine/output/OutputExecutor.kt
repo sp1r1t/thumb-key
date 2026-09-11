@@ -18,6 +18,19 @@ import com.suave.s12.engine.intent.ModifierId
  * sideways into app-specific special cases.
  */
 object OutputExecutor {
+    /**
+     * The last position [stepSelection] wrote via `setSelection`, trusted as ground truth for the
+     * next step of the *same* slide instead of re-querying the editor - see [SemanticAction]'s
+     * `resetAnchor` doc for why. Deliberately a single shared cache, not scoped per key/press:
+     * this object is a stateless-by-design singleton reused for every key on the keyboard, and
+     * the only two callers that ever populate it (a slide's own repeated steps, always spaced
+     * closely enough in time that nothing else could have touched the selection in between) don't
+     * practically collide - two different slide-capable keys being slid literally simultaneously
+     * with two fingers is the one scenario this cache doesn't handle correctly, accepted as a
+     * rare edge case rather than threading per-key identity through this pipeline for it.
+     */
+    private var cachedExtent: SelectionExtent? = null
+
     fun execute(
         action: SemanticAction,
         capabilities: EditorCapabilities,
@@ -29,15 +42,15 @@ object OutputExecutor {
             }
 
             is SemanticAction.TypeCommand -> {
-                typeCommand(action, inputConnection)
+                typeCommand(action, capabilities, inputConnection)
             }
 
             is SemanticAction.MoveCursor -> {
-                moveCursor(action.direction, extend = false, capabilities, inputConnection)
+                moveCursor(action.direction, action.resetAnchor, extend = false, capabilities, inputConnection)
             }
 
             is SemanticAction.ExtendSelection -> {
-                moveCursor(action.direction, extend = true, capabilities, inputConnection)
+                moveCursor(action.direction, action.resetAnchor, extend = true, capabilities, inputConnection)
             }
 
             SemanticAction.Noop -> {}
@@ -79,8 +92,20 @@ object OutputExecutor {
 
     private fun typeCommand(
         action: SemanticAction.TypeCommand,
+        capabilities: EditorCapabilities,
         ic: InputConnection,
     ) {
+        val direction = arrowDirectionFor(action.id)
+        // Ctrl/Alt+Arrow (e.g. terminal word-jump) still needs a real KeyEvent with those meta
+        // flags, which the setSelection path below has no way to carry - only Shift-or-nothing
+        // arrow presses route through it. Each is a single discrete tap, not a continuous slide,
+        // so it always re-derives from the editor (resetAnchor = true) rather than trusting
+        // whatever the last slide happened to leave cached.
+        if (direction != null && ModifierId.CTRL !in action.modifiers && ModifierId.ALT !in action.modifiers) {
+            val extend = ModifierId.SHIFT in action.modifiers
+            moveCursor(direction, resetAnchor = true, extend = extend, capabilities, ic)
+            return
+        }
         val keyCode =
             when (action.id) {
                 CommandId.ENTER -> KeyEvent.KEYCODE_ENTER
@@ -97,6 +122,15 @@ object OutputExecutor {
         sendKeyEvent(ic, keyCode, metaStateFor(action.modifiers))
     }
 
+    private fun arrowDirectionFor(id: CommandId): CursorDirection? =
+        when (id) {
+            CommandId.ARROW_LEFT -> CursorDirection.LEFT
+            CommandId.ARROW_RIGHT -> CursorDirection.RIGHT
+            CommandId.ARROW_UP -> CursorDirection.UP
+            CommandId.ARROW_DOWN -> CursorDirection.DOWN
+            else -> null
+        }
+
     /**
      * Moves the cursor (or extends the selection) left/right, preferring `setSelection` over a
      * raw arrow [KeyEvent] whenever the editor has a real selection concept to move within.
@@ -112,6 +146,7 @@ object OutputExecutor {
      */
     private fun moveCursor(
         direction: CursorDirection,
+        resetAnchor: Boolean,
         extend: Boolean,
         capabilities: EditorCapabilities,
         ic: InputConnection,
@@ -130,26 +165,43 @@ object OutputExecutor {
         val handled =
             delta != null &&
                 capabilities.level != EditorCapabilityLevel.RAW &&
-                moveSelectionBy(ic, delta, extend)
+                stepSelection(ic, resetAnchor, delta, extend)
         if (!handled) sendArrow(direction, extend, ic)
     }
 
+    private data class SelectionExtent(
+        val anchor: Int,
+        val cursor: Int,
+        val lowerBound: Int,
+        val upperBound: Int,
+    )
+
     /** Returns false (caller falls back to a KeyEvent) if the editor didn't expose extracted text. */
-    private fun moveSelectionBy(
+    private fun stepSelection(
         ic: InputConnection,
+        resetAnchor: Boolean,
         delta: Int,
         extend: Boolean,
     ): Boolean {
-        val extracted = ic.getExtractedText(ExtractedTextRequest(), 0) ?: return false
-        val text = extracted.text ?: return false
-        val length = text.length
-        val anchor = extracted.selectionStart.coerceIn(0, length)
-        val cursor = extracted.selectionEnd.coerceIn(0, length)
-        val newCursor = (cursor + delta).coerceIn(0, length)
-        val newAnchor = if (extend) anchor else newCursor
-        val base = extracted.startOffset
-        ic.setSelection(base + newAnchor, base + newCursor)
+        val base = (if (resetAnchor) null else cachedExtent) ?: queryExtent(ic) ?: return false
+        val newCursor = (base.cursor + delta).coerceIn(base.lowerBound, base.upperBound)
+        val newAnchor = if (extend) base.anchor else newCursor
+        ic.setSelection(newAnchor, newCursor)
+        cachedExtent = base.copy(anchor = newAnchor, cursor = newCursor)
         return true
+    }
+
+    private fun queryExtent(ic: InputConnection): SelectionExtent? {
+        val extracted = ic.getExtractedText(ExtractedTextRequest(), 0) ?: return null
+        val text = extracted.text ?: return null
+        val length = text.length
+        val base = extracted.startOffset
+        return SelectionExtent(
+            anchor = base + extracted.selectionStart.coerceIn(0, length),
+            cursor = base + extracted.selectionEnd.coerceIn(0, length),
+            lowerBound = base,
+            upperBound = base + length,
+        )
     }
 
     private fun sendArrow(

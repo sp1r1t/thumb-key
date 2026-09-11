@@ -217,6 +217,67 @@ class KeyDispatcherTest {
     }
 
     @Test
+    fun `only the first slide step of a press asks engine output to re-derive the anchor, later steps trust the cache`() {
+        val key =
+            KeyMapping(
+                CONFIG,
+                mapOf(Zone.Center to KeyIntent.Command(CommandId.BACKSPACE)),
+                slideBehavior = SlideBehavior.SELECT_AND_DELETE,
+            )
+        val dispatcher = KeyDispatcher(key)
+        val executed = mutableListOf<SemanticAction>()
+
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, -1), ModifierState(), executed::add, {}, {})
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, -1), ModifierState(), executed::add, {}, {})
+        dispatcher.handle(Gesture.Released, ModifierState(), executed::add, {}, {})
+
+        val steps = executed.filterIsInstance<SemanticAction.ExtendSelection>()
+        assertEquals(2, steps.size)
+        assertTrue("the first slide step of a press must ask for a fresh read of the editor", steps[0].resetAnchor)
+        assertFalse("a later step in the same press must trust the cached position, not re-query", steps[1].resetAnchor)
+    }
+
+    @Test
+    fun `a new press after Released asks for a fresh anchor again, not the previous press's cache`() {
+        val key =
+            KeyMapping(
+                CONFIG,
+                mapOf(Zone.Center to KeyIntent.Command(CommandId.BACKSPACE)),
+                slideBehavior = SlideBehavior.SELECT_AND_DELETE,
+            )
+        val dispatcher = KeyDispatcher(key)
+        val executed = mutableListOf<SemanticAction>()
+
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, -1), ModifierState(), executed::add, {}, {})
+        dispatcher.handle(Gesture.Released, ModifierState(), executed::add, {}, {})
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, -1), ModifierState(), executed::add, {}, {})
+
+        val steps = executed.filterIsInstance<SemanticAction.ExtendSelection>()
+        assertEquals(2, steps.size)
+        assertTrue(steps[1].resetAnchor)
+    }
+
+    @Test
+    fun `plain cursor-move slide gets the same first-step-resets, later-steps-cache treatment`() {
+        val key =
+            KeyMapping(
+                CONFIG,
+                mapOf(Zone.Center to KeyIntent.Text(" ")),
+                slideBehavior = SlideBehavior.MOVE_CURSOR,
+            )
+        val dispatcher = KeyDispatcher(key)
+        val executed = mutableListOf<SemanticAction>()
+
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add, {}, {})
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add, {}, {})
+
+        val steps = executed.filterIsInstance<SemanticAction.MoveCursor>()
+        assertEquals(2, steps.size)
+        assertTrue(steps[0].resetAnchor)
+        assertFalse(steps[1].resetAnchor)
+    }
+
+    @Test
     fun `backspace-style select-and-delete slide sends one Backspace command on release, not per slide step`() {
         val key =
             KeyMapping(

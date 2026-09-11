@@ -46,6 +46,7 @@ class KeyDispatcher(
     private var engagedModifier: ModifierId? = null
     private var freshlyActivatedByPressed = false
     private var slideExtended = false
+    private var slideStarted = false
 
     fun handle(
         gesture: Gesture,
@@ -185,15 +186,19 @@ class KeyDispatcher(
         onFeedback: (FeedbackEvent) -> Unit,
     ) {
         val direction = directionFor(step)
+        // Only the first slide step of this press should tell engine/output to trust a fresh
+        // read of the editor's position - see SemanticAction's resetAnchor doc.
+        val resetAnchor = !slideStarted
+        slideStarted = true
         val action =
             when (mapping.slideBehavior) {
                 SlideBehavior.SELECT_AND_DELETE -> {
                     slideExtended = true
-                    SemanticAction.ExtendSelection(direction)
+                    SemanticAction.ExtendSelection(direction, resetAnchor)
                 }
 
                 SlideBehavior.MOVE_CURSOR, null -> {
-                    SemanticAction.MoveCursor(direction)
+                    SemanticAction.MoveCursor(direction, resetAnchor)
                 }
             }
         repeat(abs(step.steps)) { onExecute(action) }
@@ -222,6 +227,7 @@ class KeyDispatcher(
         engagedModifier = null
         freshlyActivatedByPressed = false
         slideExtended = false
+        slideStarted = false
         return state
     }
 
