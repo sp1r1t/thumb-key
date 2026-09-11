@@ -73,7 +73,7 @@ class KeyDispatcher(
             }
 
             is Gesture.SlideStep -> {
-                dispatchSlide(gesture, onExecute, onFeedback)
+                dispatchSlide(gesture, modifierState, onExecute, onFeedback)
                 modifierState
             }
 
@@ -182,6 +182,7 @@ class KeyDispatcher(
 
     private fun dispatchSlide(
         step: Gesture.SlideStep,
+        modifierState: ModifierState,
         onExecute: (SemanticAction) -> Unit,
         onFeedback: (FeedbackEvent) -> Unit,
     ) {
@@ -197,8 +198,19 @@ class KeyDispatcher(
                     SemanticAction.ExtendSelection(direction, resetAnchor)
                 }
 
+                // A plain cursor-move slide becomes a selection-extend slide for as long as
+                // Shift is held elsewhere on the keyboard - the same "select instead of move"
+                // relationship backspace's own slide has to its delete, just modifier-driven
+                // instead of hardcoded to one key. This is deliberately re-checked on every step
+                // (not just the first) so starting a slide before Shift goes down, or releasing
+                // Shift mid-slide, switches modes live instead of freezing whatever was true at
+                // the first step.
                 SlideBehavior.MOVE_CURSOR, null -> {
-                    SemanticAction.MoveCursor(direction, resetAnchor)
+                    if (modifierState.isActive(ModifierId.SHIFT)) {
+                        SemanticAction.ExtendSelection(direction, resetAnchor)
+                    } else {
+                        SemanticAction.MoveCursor(direction, resetAnchor)
+                    }
                 }
             }
         repeat(abs(step.steps)) { onExecute(action) }

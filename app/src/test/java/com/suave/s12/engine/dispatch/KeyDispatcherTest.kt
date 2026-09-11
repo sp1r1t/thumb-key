@@ -1,5 +1,6 @@
 package com.suave.s12.engine.dispatch
 
+import com.suave.s12.engine.action.CursorDirection
 import com.suave.s12.engine.action.SemanticAction
 import com.suave.s12.engine.feedback.FeedbackEvent
 import com.suave.s12.engine.gesture.Direction
@@ -275,6 +276,48 @@ class KeyDispatcherTest {
         assertEquals(2, steps.size)
         assertTrue(steps[0].resetAnchor)
         assertFalse(steps[1].resetAnchor)
+    }
+
+    @Test
+    fun `sliding a cursor-move key extends selection instead of moving while Shift is active`() {
+        val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Text(" ")), slideBehavior = SlideBehavior.MOVE_CURSOR)
+        val dispatcher = KeyDispatcher(key)
+        val executed = mutableListOf<SemanticAction>()
+        val shiftHeld = ModifierState().activate(ModifierId.SHIFT, ActivationMode.HELD)
+
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), shiftHeld, executed::add, {}, {})
+
+        assertEquals(listOf(SemanticAction.ExtendSelection(CursorDirection.RIGHT, resetAnchor = true)), executed)
+    }
+
+    @Test
+    fun `sliding the same cursor-move key without Shift active just moves the cursor`() {
+        val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Text(" ")), slideBehavior = SlideBehavior.MOVE_CURSOR)
+        val dispatcher = KeyDispatcher(key)
+        val executed = mutableListOf<SemanticAction>()
+
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add, {}, {})
+
+        assertEquals(listOf(SemanticAction.MoveCursor(CursorDirection.RIGHT, resetAnchor = true)), executed)
+    }
+
+    @Test
+    fun `releasing Shift mid-slide switches a cursor-move key from extending back to just moving`() {
+        val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Text(" ")), slideBehavior = SlideBehavior.MOVE_CURSOR)
+        val dispatcher = KeyDispatcher(key)
+        val executed = mutableListOf<SemanticAction>()
+        val shiftHeld = ModifierState().activate(ModifierId.SHIFT, ActivationMode.HELD)
+
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), shiftHeld, executed::add, {}, {})
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add, {}, {})
+
+        assertEquals(
+            listOf(
+                SemanticAction.ExtendSelection(CursorDirection.RIGHT, resetAnchor = true),
+                SemanticAction.MoveCursor(CursorDirection.RIGHT, resetAnchor = false),
+            ),
+            executed,
+        )
     }
 
     @Test
