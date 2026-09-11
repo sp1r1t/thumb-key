@@ -154,8 +154,13 @@
     <string name="backdrop_off">Off - keys sit on the transparent IME window</string>
     <string name="key_padding">Key padding: %1$s</string>
     <string name="key_spacing">Key spacing</string>
-    <string name="key_spacing_summary">Currently %1$sdp padding around each key</string>
-    <string name="key_spacing_summary_none">Currently 0dp - keys sit flush against each other</string>
+    <string name="key_spacing_horizontal">Horizontal key spacing</string>
+    <string name="key_spacing_horizontal_summary">Currently %1$sdp padding on the left and right of each key</string>
+    <string name="key_spacing_horizontal_summary_none">Currently 0dp - keys in a row sit flush</string>
+    <string name="key_spacing_vertical">Vertical key spacing</string>
+    <string name="key_spacing_vertical_summary">Currently %1$sdp padding above and below each key</string>
+    <string name="key_spacing_vertical_summary_none">Currently 0dp - rows sit flush</string>
+    <string name="key_spacing_info">The visible gap between two keys is twice this value, because each key brings its own padding. Horizontal and vertical are independent.</string>
     <string name="key_border_width">Key border width: %1$s</string>
     <string name="border_thickness">Border thickness</string>
     <string name="border_thickness_summary">Currently %1$sdp outline around each key</string>

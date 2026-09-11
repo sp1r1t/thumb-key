@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Crop75
 import androidx.compose.material.icons.outlined.EmojiEmotions
+import androidx.compose.material.icons.outlined.Height
 import androidx.compose.material.icons.outlined.Highlight
 import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.Keyboard
@@ -81,6 +82,7 @@ import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
 import com.suave.s12.db.DEFAULT_KEY_PADDING
+import com.suave.s12.db.DEFAULT_KEY_PADDING_VERTICAL
 import com.suave.s12.db.DEFAULT_KEY_RADIUS
 import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_THEME
@@ -152,6 +154,7 @@ fun LookAndFeelScreen(
     var disableFullscreenEditorState = (settings?.disableFullscreenEditor ?: DEFAULT_DISABLE_FULLSCREEN_EDITOR).toBool()
     var backdropEnabledState = (settings?.backdropEnabled ?: DEFAULT_BACKDROP_ENABLED).toBool()
     var keyPaddingState = settings?.keyPadding ?: DEFAULT_KEY_PADDING
+    var keyPaddingVerticalState = settings?.keyPaddingVertical ?: DEFAULT_KEY_PADDING_VERTICAL
     var keyBorderWidthState = settings?.keyBorderWidth ?: DEFAULT_KEY_BORDER_WIDTH
     var keyRadiusState = settings?.keyRadius ?: DEFAULT_KEY_RADIUS
     var pushupSizeState = settings?.pushupSize ?: DEFAULT_PUSHUP_SIZE
@@ -182,6 +185,7 @@ fun LookAndFeelScreen(
                 disableFullscreenEditor = disableFullscreenEditorState.toInt(),
                 backdropEnabled = backdropEnabledState.toInt(),
                 keyPadding = keyPaddingState,
+                keyPaddingVertical = keyPaddingVerticalState,
                 keyBorderWidth = keyBorderWidthState,
                 keyRadius = keyRadiusState,
                 pushupSize = pushupSizeState,
@@ -543,20 +547,66 @@ fun LookAndFeelScreen(
                             },
                             valueRange = 0..10,
                             title = {
-                                Text(stringResource(R.string.key_spacing))
+                                SettingTitle(
+                                    text = stringResource(R.string.key_spacing_horizontal),
+                                    infoText = stringResource(R.string.key_spacing_info),
+                                )
                             },
                             summary = {
                                 Text(
                                     if (keyPaddingState == 0) {
-                                        stringResource(R.string.key_spacing_summary_none)
+                                        stringResource(R.string.key_spacing_horizontal_summary_none)
                                     } else {
-                                        stringResource(R.string.key_spacing_summary, keyPaddingState.toString())
+                                        stringResource(
+                                            R.string.key_spacing_horizontal_summary,
+                                            keyPaddingState.toString(),
+                                        )
                                     },
                                 )
                             },
                             icon = {
                                 Icon(
                                     imageVector = Icons.Outlined.Padding,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+
+                    SettingRow(
+                        onReset = {
+                            keyPaddingVerticalState = DEFAULT_KEY_PADDING_VERTICAL
+                            updateLookAndFeel()
+                        },
+                    ) {
+                        IntStepperPreference(
+                            value = keyPaddingVerticalState,
+                            onValueChange = {
+                                keyPaddingVerticalState = it
+                                updateLookAndFeel()
+                            },
+                            valueRange = 0..10,
+                            title = {
+                                SettingTitle(
+                                    text = stringResource(R.string.key_spacing_vertical),
+                                    infoText = stringResource(R.string.key_spacing_info),
+                                )
+                            },
+                            summary = {
+                                Text(
+                                    if (keyPaddingVerticalState == 0) {
+                                        stringResource(R.string.key_spacing_vertical_summary_none)
+                                    } else {
+                                        stringResource(
+                                            R.string.key_spacing_vertical_summary,
+                                            keyPaddingVerticalState.toString(),
+                                        )
+                                    },
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Height,
                                     contentDescription = null,
                                 )
                             },

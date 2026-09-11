@@ -63,6 +63,7 @@ const val DEFAULT_SLIDE_SPACEBAR_DEADZONE_ENABLED = 1
 const val DEFAULT_SLIDE_BACKSPACE_DEADZONE_ENABLED = 1
 const val DEFAULT_BACKDROP_ENABLED = 0
 const val DEFAULT_KEY_PADDING = 2
+const val DEFAULT_KEY_PADDING_VERTICAL = DEFAULT_KEY_PADDING
 const val DEFAULT_KEY_BORDER_WIDTH = 1
 const val DEFAULT_KEY_RADIUS = 0
 const val DEFAULT_DRAG_RETURN_ENABLED = 1
@@ -287,6 +288,11 @@ data class AppSettings(
     )
     val keyPadding: Int = DEFAULT_KEY_PADDING,
     @ColumnInfo(
+        name = "key_padding_vertical",
+        defaultValue = DEFAULT_KEY_PADDING_VERTICAL.toString(),
+    )
+    val keyPaddingVertical: Int = DEFAULT_KEY_PADDING_VERTICAL,
+    @ColumnInfo(
         name = "key_border_width",
         defaultValue = DEFAULT_KEY_BORDER_WIDTH.toString(),
     )
@@ -370,6 +376,8 @@ data class LookAndFeelUpdate(
     val backdropEnabled: Int,
     @ColumnInfo(name = "key_padding")
     val keyPadding: Int,
+    @ColumnInfo(name = "key_padding_vertical")
+    val keyPaddingVertical: Int,
     @ColumnInfo(name = "key_border_width")
     val keyBorderWidth: Int,
     @ColumnInfo(name = "key_radius")
@@ -519,7 +527,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 37,
+    version = 38,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -601,6 +609,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_34_35,
                             MIGRATION_35_36,
                             MIGRATION_36_37,
+                            MIGRATION_37_38,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

@@ -89,6 +89,7 @@ fun EngineKeyboardKey(
     modifierBehaviors: Map<ModifierId, ModifierBehavior>,
     keyHeight: Dp,
     keyPadding: Int,
+    keyPaddingVertical: Int,
     keyBorderWidthDp: Float,
     keyCornerRadius: Dp,
     animations: KeyAnimationSettings = KeyAnimationSettings(),
@@ -139,7 +140,7 @@ fun EngineKeyboardKey(
     Box(
         modifier =
             modifier
-                .padding(keyPadding.dp)
+                .padding(horizontal = keyPadding.dp, vertical = keyPaddingVertical.dp)
                 .clip(keyShape)
                 .then(
                     if (keyBorderWidthDp > 0f) {

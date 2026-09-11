@@ -52,6 +52,7 @@ import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
 import com.suave.s12.db.DEFAULT_KEY_PADDING
+import com.suave.s12.db.DEFAULT_KEY_PADDING_VERTICAL
 import com.suave.s12.db.DEFAULT_KEY_RADIUS
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_POSITION
@@ -130,6 +131,7 @@ fun EngineKeyboardScreen(
     val showDebugBar = (settings?.showDebugBar ?: DEFAULT_SHOW_DEBUG_BAR).toBool()
     val backdropEnabled = (settings?.backdropEnabled ?: DEFAULT_BACKDROP_ENABLED).toBool()
     val keyPadding = settings?.keyPadding ?: DEFAULT_KEY_PADDING
+    val keyPaddingVertical = settings?.keyPaddingVertical ?: DEFAULT_KEY_PADDING_VERTICAL
     val keyBorderWidthDp = (settings?.keyBorderWidth ?: DEFAULT_KEY_BORDER_WIDTH) / 10f
     val keyRadiusPercent = settings?.keyRadius ?: DEFAULT_KEY_RADIUS
     val pushupSize = (settings?.pushupSize ?: DEFAULT_PUSHUP_SIZE).dp
@@ -259,6 +261,7 @@ fun EngineKeyboardScreen(
                 legendVisibility = legendVisibility,
                 modifierBehaviors = behaviors,
                 keyPadding = keyPadding,
+                keyPaddingVertical = keyPaddingVertical,
                 keyBorderWidthDp = keyBorderWidthDp,
                 keyCornerRadius = keyCornerRadius,
                 vibrateOnTap = vibrateOnTap,
@@ -326,6 +329,7 @@ private fun EngineKeyboardPanel(
     legendVisibility: LegendVisibility,
     modifierBehaviors: Map<ModifierId, ModifierBehavior>,
     keyPadding: Int,
+    keyPaddingVertical: Int,
     keyBorderWidthDp: Float,
     keyCornerRadius: Dp,
     vibrateOnTap: Boolean,
@@ -359,6 +363,7 @@ private fun EngineKeyboardPanel(
             legendVisibility = legendVisibility,
             modifierBehaviors = modifierBehaviors,
             keyPadding = keyPadding,
+            keyPaddingVertical = keyPaddingVertical,
             keyBorderWidthDp = keyBorderWidthDp,
             keyCornerRadius = keyCornerRadius,
             animations = animations,
@@ -426,6 +431,7 @@ private fun LayoutGrid(
     legendVisibility: LegendVisibility,
     modifierBehaviors: Map<ModifierId, ModifierBehavior>,
     keyPadding: Int,
+    keyPaddingVertical: Int,
     keyBorderWidthDp: Float,
     keyCornerRadius: Dp,
     animations: KeyAnimationSettings,
@@ -447,6 +453,7 @@ private fun LayoutGrid(
                     modifierBehaviors = modifierBehaviors,
                     keyHeight = keyHeight,
                     keyPadding = keyPadding,
+                    keyPaddingVertical = keyPaddingVertical,
                     keyBorderWidthDp = keyBorderWidthDp,
                     keyCornerRadius = keyCornerRadius,
                     animations = animations,

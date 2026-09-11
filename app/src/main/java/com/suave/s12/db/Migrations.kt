@@ -549,3 +549,15 @@ val MIGRATION_36_37 =
             )
         }
     }
+
+val MIGRATION_37_38 =
+    object : Migration(37, 38) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN key_padding_vertical INTEGER NOT NULL DEFAULT $DEFAULT_KEY_PADDING_VERTICAL",
+            )
+            // Keep the current square gutter: whoever already changed key_padding should not
+            // suddenly get a different vertical gap.
+            db.execSQL("UPDATE AppSettings SET key_padding_vertical = key_padding")
+        }
+    }

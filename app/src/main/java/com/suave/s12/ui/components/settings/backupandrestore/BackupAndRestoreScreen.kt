@@ -59,6 +59,7 @@ import com.suave.s12.db.DEFAULT_KEYBOARD_LAYOUT
 import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
 import com.suave.s12.db.DEFAULT_KEY_PADDING
+import com.suave.s12.db.DEFAULT_KEY_PADDING_VERTICAL
 import com.suave.s12.db.DEFAULT_KEY_RADIUS
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_POSITION
@@ -260,6 +261,7 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             showDebugBar = DEFAULT_SHOW_DEBUG_BAR,
             backdropEnabled = DEFAULT_BACKDROP_ENABLED,
             keyPadding = DEFAULT_KEY_PADDING,
+            keyPaddingVertical = DEFAULT_KEY_PADDING_VERTICAL,
             keyBorderWidth = DEFAULT_KEY_BORDER_WIDTH,
             keyRadius = DEFAULT_KEY_RADIUS,
             pushupSize = DEFAULT_PUSHUP_SIZE,

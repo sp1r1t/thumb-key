@@ -131,8 +131,13 @@
     <string name="backdrop_on">An - füllt den Bereich hinter den Tasten mit der Hintergrundfarbe des Designs</string>
     <string name="backdrop_off">Aus - die Tasten sitzen auf dem transparenten IME-Fenster</string>
     <string name="key_spacing">Tastenabstand</string>
-    <string name="key_spacing_summary">Aktuell %1$sdp Abstand um jede Taste</string>
-    <string name="key_spacing_summary_none">Aktuell 0dp - die Tasten liegen direkt aneinander</string>
+    <string name="key_spacing_horizontal">Horizontaler Tastenabstand</string>
+    <string name="key_spacing_horizontal_summary">Aktuell %1$sdp Abstand links und rechts an jeder Taste</string>
+    <string name="key_spacing_horizontal_summary_none">Aktuell 0dp - Tasten in einer Reihe liegen direkt aneinander</string>
+    <string name="key_spacing_vertical">Vertikaler Tastenabstand</string>
+    <string name="key_spacing_vertical_summary">Aktuell %1$sdp Abstand oben und unten an jeder Taste</string>
+    <string name="key_spacing_vertical_summary_none">Aktuell 0dp - Reihen liegen direkt aneinander</string>
+    <string name="key_spacing_info">Der sichtbare Spalt zwischen zwei Tasten ist doppelt so groß, weil jede Taste ihren eigenen Abstand mitbringt. Horizontal und vertikal sind unabhängig.</string>
     <string name="border_thickness">Randstärke</string>
     <string name="border_thickness_summary">Aktuell %1$sdp Umriss um jede Taste</string>
     <string name="border_thickness_summary_none">Aktuell keiner - die Tasten haben keinen Umriss</string>
