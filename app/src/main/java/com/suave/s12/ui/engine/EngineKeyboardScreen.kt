@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.suave.s12.IMEService
 import com.suave.s12.db.AppSettings
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
+import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
@@ -64,6 +66,7 @@ fun EngineKeyboardScreen(
     val vibrateOnSlide = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
     val hideLetters = (settings?.hideLetters ?: DEFAULT_HIDE_LETTERS).toBool()
     val minSwipeDistancePx = (settings?.minSwipeLength ?: DEFAULT_MIN_SWIPE_LENGTH).toFloat()
+    val ignoreBottomPadding = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
 
     val feedbackSettings =
         remember(vibrateOnTap, vibrateOnSlide) {
@@ -76,7 +79,12 @@ fun EngineKeyboardScreen(
     // input focus), matching how the old engine treated editor capability too.
     val capabilities = remember { EditorCapabilityResolver.resolve(ime.currentInputEditorInfo) }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .then(if (!ignoreBottomPadding) Modifier.safeDrawingPadding() else Modifier),
+    ) {
         for (row in 0..3) {
             val columns = if (row == 3) 0..3 else 0..4
             Row(modifier = Modifier.fillMaxWidth().height(56.dp)) {
