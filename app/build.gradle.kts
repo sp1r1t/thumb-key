@@ -23,8 +23,8 @@ android {
         applicationId = "com.suave.s12"
         minSdk = 24
         targetSdk = 36
-        versionCode = 179
-        versionName = "5.1.9"
+        versionCode = 1
+        versionName = "0.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
