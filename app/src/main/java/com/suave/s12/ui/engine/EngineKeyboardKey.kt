@@ -68,15 +68,17 @@ fun EngineKeyboardKey(
     val dispatcher =
         remember(mapping, shiftMappings, modifierBehaviors) { KeyDispatcher(mapping, shiftMappings, modifierBehaviors) }
 
-    // The pointer-input loop below is long-lived (keyed on Unit, never restarts), so it must
-    // read every value that can change across recomposition through rememberUpdatedState -
-    // capturing them directly would freeze it at whatever was true the first time this key was
-    // composed. This is the exact staleness hazard the old engine's KeyboardKey.kt ran into.
+    // Values that change across recompositions of the *same* mapping are read through
+    // rememberUpdatedState. The loop itself restarts when [mapping] changes: numeric/main
+    // reuse the same composed key slots, and a loop keyed on Unit would keep dispatching the
+    // letter-key intents after the labels had already switched.
     val currentModifierState by rememberUpdatedState(modifierState)
     val currentMinSwipeDistancePx by rememberUpdatedState(minSwipeDistancePx)
     val currentOnModifierStateChange by rememberUpdatedState(onModifierStateChange)
     val currentOnExecute by rememberUpdatedState(onExecute)
     val currentOnFeedback by rememberUpdatedState(onFeedback)
+    val currentDispatcher by rememberUpdatedState(dispatcher)
+    val currentMapping by rememberUpdatedState(mapping)
 
     val isModifierKeyActive =
         mapping.intents.values.any { it is KeyIntent.ModifierPress && modifierState.isActive(it.modifier) }
@@ -87,7 +89,7 @@ fun EngineKeyboardKey(
             modifier
                 .padding(2.dp)
                 .background(backgroundColor)
-                .pointerInput(Unit) {
+                .pointerInput(mapping) {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
                         down.consume()
@@ -98,7 +100,7 @@ fun EngineKeyboardKey(
                         // reusing the swipe-length setting the user already controls gives a
                         // sensible, tunable default instead of a second hardcoded constant.
                         val config =
-                            mapping.gestureConfig.copy(
+                            currentMapping.gestureConfig.copy(
                                 minSwipeDistancePx = currentMinSwipeDistancePx,
                                 slideStepPx = currentMinSwipeDistancePx,
                             )
@@ -120,7 +122,7 @@ fun EngineKeyboardKey(
                         fun handle(gesture: Gesture) {
                             val before = localState
                             val newState =
-                                dispatcher.handle(
+                                currentDispatcher.handle(
                                     gesture,
                                     before,
                                     currentOnExecute,
