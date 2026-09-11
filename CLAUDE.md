@@ -28,3 +28,9 @@ Shared implementation: `SettingTitle` (in `SettingRow.kt`) puts the optional inf
 title; `SettingRow` wraps a preference with the reset button; `SettingsSection` groups related
 rows behind a collapsible header. Integer quantities use `IntStepperPreference` (tap for one
 step, hold to repeat), not sliders. Named discrete choices use a dropdown.
+
+## Device
+
+After every code update, assemble the debug APK and install it on the connected phone with
+`adb install -r`. Do not wait to be asked, and do not leave a keyboard change only on the
+branch.
