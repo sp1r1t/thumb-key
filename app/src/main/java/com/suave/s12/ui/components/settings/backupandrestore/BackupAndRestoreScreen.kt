@@ -44,7 +44,6 @@ import com.suave.s12.db.DEFAULT_CLIPBOARD_SIZE_LIMIT_ENABLED
 import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
-import com.suave.s12.db.DEFAULT_EXPAND_EMOJI_PICKER
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEYBOARD_LAYOUT
@@ -59,6 +58,7 @@ import com.suave.s12.db.DEFAULT_THEME_COLOR
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
+import com.suave.s12.layout.DEFAULT_LAYER_HEIGHTS
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.keyboardLayoutsSetFromDbIndexString
 import com.suave.s12.utils.updateLayouts
@@ -215,7 +215,7 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             ignoreBottomPadding = DEFAULT_IGNORE_BOTTOM_PADDING,
             disableFullscreenEditor = DEFAULT_DISABLE_FULLSCREEN_EDITOR,
             keyHeight = DEFAULT_KEY_HEIGHT,
-            expandEmojiPicker = DEFAULT_EXPAND_EMOJI_PICKER,
+            layerHeights = DEFAULT_LAYER_HEIGHTS,
             vibrateOnTap = DEFAULT_VIBRATE_ON_TAP,
             vibrateOnSlide = DEFAULT_VIBRATE_ON_SLIDE,
             minSwipeLength = DEFAULT_MIN_SWIPE_LENGTH,

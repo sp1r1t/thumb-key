@@ -395,7 +395,74 @@ val MIGRATION_30_31 =
     object : Migration(30, 31) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.execSQL(
-                "ALTER TABLE AppSettings ADD COLUMN expand_emoji_picker INTEGER NOT NULL DEFAULT $DEFAULT_EXPAND_EMOJI_PICKER",
+                "ALTER TABLE AppSettings ADD COLUMN expand_emoji_picker INTEGER NOT NULL DEFAULT 1",
             )
+        }
+    }
+
+val MIGRATION_31_32 =
+    object : Migration(31, 32) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS AppSettings_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    theme INTEGER NOT NULL DEFAULT $DEFAULT_THEME,
+                    theme_color INTEGER NOT NULL DEFAULT $DEFAULT_THEME_COLOR,
+                    hide_letters INTEGER NOT NULL DEFAULT $DEFAULT_HIDE_LETTERS,
+                    ignore_bottom_padding INTEGER NOT NULL DEFAULT $DEFAULT_IGNORE_BOTTOM_PADDING,
+                    disable_fullscreen_editor INTEGER NOT NULL DEFAULT $DEFAULT_DISABLE_FULLSCREEN_EDITOR,
+                    key_height INTEGER NOT NULL DEFAULT $DEFAULT_KEY_HEIGHT,
+                    layer_heights TEXT NOT NULL DEFAULT '',
+                    vibrate_on_tap INTEGER NOT NULL DEFAULT $DEFAULT_VIBRATE_ON_TAP,
+                    vibrate_on_slide INTEGER NOT NULL DEFAULT $DEFAULT_VIBRATE_ON_SLIDE,
+                    min_swipe_length INTEGER NOT NULL DEFAULT $DEFAULT_MIN_SWIPE_LENGTH,
+                    esc_as_modifier INTEGER NOT NULL DEFAULT $DEFAULT_ESC_AS_MODIFIER,
+                    ctrl_as_modifier INTEGER NOT NULL DEFAULT $DEFAULT_CTRL_AS_MODIFIER,
+                    alt_as_modifier INTEGER NOT NULL DEFAULT $DEFAULT_ALT_AS_MODIFIER,
+                    shift_as_modifier INTEGER NOT NULL DEFAULT $DEFAULT_SHIFT_AS_MODIFIER,
+                    keyboard_layout INTEGER NOT NULL DEFAULT $DEFAULT_KEYBOARD_LAYOUT,
+                    keyboard_layouts TEXT NOT NULL DEFAULT '$DEFAULT_KEYBOARD_LAYOUT',
+                    show_toast_on_layout_switch INTEGER NOT NULL DEFAULT $DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH,
+                    position INTEGER NOT NULL DEFAULT $DEFAULT_POSITION,
+                    last_version_code_viewed INTEGER NOT NULL DEFAULT 0,
+                    clipboard_history_enabled INTEGER NOT NULL DEFAULT $DEFAULT_CLIPBOARD_HISTORY_ENABLED,
+                    clipboard_auto_cleanup_enabled INTEGER NOT NULL DEFAULT $DEFAULT_CLIPBOARD_AUTO_CLEANUP_ENABLED,
+                    clipboard_cleanup_after_minutes INTEGER NOT NULL DEFAULT $DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES,
+                    clipboard_size_limit_enabled INTEGER NOT NULL DEFAULT $DEFAULT_CLIPBOARD_SIZE_LIMIT_ENABLED,
+                    clipboard_max_size INTEGER NOT NULL DEFAULT $DEFAULT_CLIPBOARD_MAX_SIZE,
+                    use_private_clipboard INTEGER NOT NULL DEFAULT $DEFAULT_USE_PRIVATE_CLIPBOARD,
+                    show_on_screen_keyboard INTEGER NOT NULL DEFAULT $DEFAULT_SHOW_ON_SCREEN_KEYBOARD
+                )
+                """.trimIndent(),
+            )
+            db.execSQL(
+                """
+                INSERT INTO AppSettings_new (
+                    id, theme, theme_color, hide_letters, ignore_bottom_padding,
+                    disable_fullscreen_editor, key_height, layer_heights, vibrate_on_tap,
+                    vibrate_on_slide, min_swipe_length, esc_as_modifier, ctrl_as_modifier,
+                    alt_as_modifier, shift_as_modifier, keyboard_layout, keyboard_layouts,
+                    show_toast_on_layout_switch, position, last_version_code_viewed,
+                    clipboard_history_enabled, clipboard_auto_cleanup_enabled,
+                    clipboard_cleanup_after_minutes, clipboard_size_limit_enabled,
+                    clipboard_max_size, use_private_clipboard, show_on_screen_keyboard
+                )
+                SELECT
+                    id, theme, theme_color, hide_letters, ignore_bottom_padding,
+                    disable_fullscreen_editor, key_height,
+                    CASE WHEN expand_emoji_picker = 0 THEN 'EMOJI=4' ELSE '' END,
+                    vibrate_on_tap, vibrate_on_slide, min_swipe_length, esc_as_modifier,
+                    ctrl_as_modifier, alt_as_modifier, shift_as_modifier, keyboard_layout,
+                    keyboard_layouts, show_toast_on_layout_switch, position,
+                    last_version_code_viewed, clipboard_history_enabled,
+                    clipboard_auto_cleanup_enabled, clipboard_cleanup_after_minutes,
+                    clipboard_size_limit_enabled, clipboard_max_size, use_private_clipboard,
+                    show_on_screen_keyboard
+                FROM AppSettings
+                """.trimIndent(),
+            )
+            db.execSQL("DROP TABLE AppSettings")
+            db.execSQL("ALTER TABLE AppSettings_new RENAME TO AppSettings")
         }
     }

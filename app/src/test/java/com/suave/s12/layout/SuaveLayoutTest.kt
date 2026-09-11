@@ -129,6 +129,8 @@ class SuaveLayoutTest {
         assertEquals(SUAVE_LAYOUT, suave.gridFor(LayoutLayer.MAIN))
         assertEquals(SUAVE_NUMERIC_LAYOUT, suave.gridFor(LayoutLayer.NUMERIC))
         assertEquals(SUAVE_EMOJI_BOTTOM_ROW, suave.gridFor(LayoutLayer.EMOJI))
+        assertEquals(LayerContent.EmojiPicker, suave.contentFor(LayoutLayer.EMOJI))
+        assertEquals(SUAVE_EMOJI_LAYER_HEIGHT_ROWS, suave.heightRows(LayoutLayer.EMOJI))
         assertEquals(listOf(suave), BuiltinLayouts.ALL)
     }
 

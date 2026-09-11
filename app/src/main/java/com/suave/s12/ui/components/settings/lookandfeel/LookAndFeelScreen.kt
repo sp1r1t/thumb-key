@@ -11,9 +11,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BorderBottom
 import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.Crop75
-import androidx.compose.material.icons.outlined.Height
+import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.HideImage
+import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.LinearScale
+import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material.icons.outlined.WebAssetOff
@@ -27,10 +29,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -38,7 +42,6 @@ import androidx.navigation.NavController
 import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
-import com.suave.s12.db.DEFAULT_EXPAND_EMOJI_PICKER
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
@@ -47,6 +50,13 @@ import com.suave.s12.db.DEFAULT_THEME_COLOR
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
 import com.suave.s12.db.LookAndFeelUpdate
+import com.suave.s12.layout.BuiltinLayouts
+import com.suave.s12.layout.DEFAULT_LAYER_HEIGHTS
+import com.suave.s12.layout.LayoutLayer
+import com.suave.s12.layout.MAX_LAYER_HEIGHT_ROWS
+import com.suave.s12.layout.NamedLayout
+import com.suave.s12.layout.formatLayerHeightOverrides
+import com.suave.s12.layout.parseLayerHeightOverrides
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.TestOutTextField
 import com.suave.s12.ui.components.settings.about.SettingsDivider
@@ -82,7 +92,9 @@ fun LookAndFeelScreen(
     var hideLettersState = (settings?.hideLetters ?: DEFAULT_HIDE_LETTERS).toBool()
     var ignoreBottomPaddingState = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
     var disableFullscreenEditorState = (settings?.disableFullscreenEditor ?: DEFAULT_DISABLE_FULLSCREEN_EDITOR).toBool()
-    var expandEmojiPickerState = (settings?.expandEmojiPicker ?: DEFAULT_EXPAND_EMOJI_PICKER).toBool()
+    var layerHeightsState = settings?.layerHeights ?: DEFAULT_LAYER_HEIGHTS
+    val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
+    val layerHeightOverrides = parseLayerHeightOverrides(layerHeightsState)
 
     fun updateLookAndFeel() {
         appSettingsViewModel.updateLookAndFeel(
@@ -95,7 +107,7 @@ fun LookAndFeelScreen(
                 theme = themeState.ordinal,
                 themeColor = themeColorState.ordinal,
                 keyHeight = keyHeightState.toInt(),
-                expandEmojiPicker = expandEmojiPickerState.toInt(),
+                layerHeights = layerHeightsState,
                 disableFullscreenEditor = disableFullscreenEditorState.toInt(),
             ),
         )
@@ -297,34 +309,19 @@ fun LookAndFeelScreen(
                         )
                     }
 
-                    SettingRow(infoText = stringResource(R.string.expand_emoji_picker_info)) {
-                        SwitchPreference(
-                            value = expandEmojiPickerState,
-                            onValueChange = {
-                                expandEmojiPickerState = it
-                                updateLookAndFeel()
-                            },
-                            title = {
-                                Text(stringResource(R.string.expand_emoji_picker))
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        if (expandEmojiPickerState) {
-                                            R.string.expand_emoji_picker_on
-                                        } else {
-                                            R.string.expand_emoji_picker_off
-                                        },
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Height,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
+                    namedLayout.availableLayers().forEachIndexed { index, layer ->
+                        key(layer) {
+                            LayerHeightRow(
+                                layer = layer,
+                                namedLayout = namedLayout,
+                                overrides = layerHeightOverrides,
+                                showInfo = index == 0,
+                                onOverridesChange = { next ->
+                                    layerHeightsState = formatLayerHeightOverrides(next)
+                                    updateLookAndFeel()
+                                },
+                            )
+                        }
                     }
 
                     SettingsDivider()
@@ -382,3 +379,78 @@ fun LookAndFeelScreen(
         },
     )
 }
+
+@Composable
+private fun LayerHeightRow(
+    layer: LayoutLayer,
+    namedLayout: NamedLayout,
+    overrides: Map<LayoutLayer, Int>,
+    showInfo: Boolean,
+    onOverridesChange: (Map<LayoutLayer, Int>) -> Unit,
+) {
+    val gridRows = namedLayout.gridRowCount(layer)
+    val defaultRows = namedLayout.heightRows(layer, 0)
+    val currentRows = namedLayout.heightRows(layer, overrides[layer] ?: 0)
+    var sliderValue by remember(layer, currentRows) { mutableFloatStateOf(currentRows.toFloat()) }
+    val extraRows = currentRows - gridRows
+    val minRows = gridRows.toFloat()
+    val maxRows = MAX_LAYER_HEIGHT_ROWS.toFloat().coerceAtLeast(minRows)
+
+    SettingRow(
+        infoText = if (showInfo) stringResource(R.string.layer_height_info) else null,
+        onReset = {
+            sliderValue = defaultRows.toFloat()
+            onOverridesChange(overrides - layer)
+        },
+    ) {
+        SliderPreference(
+            value = currentRows.toFloat(),
+            sliderValue = sliderValue,
+            onValueChange = {
+                val rows = it.toInt().coerceIn(gridRows, MAX_LAYER_HEIGHT_ROWS)
+                sliderValue = rows.toFloat()
+                onOverridesChange(overrides + (layer to rows))
+            },
+            onSliderValueChange = {
+                sliderValue = it
+            },
+            valueRange = minRows..maxRows,
+            title = {
+                Text(stringResource(layer.heightTitleRes()))
+            },
+            summary = {
+                Text(
+                    if (extraRows == 0) {
+                        stringResource(R.string.layer_height_summary_flush, currentRows.toString())
+                    } else {
+                        stringResource(
+                            R.string.layer_height_summary_extra,
+                            currentRows.toString(),
+                            extraRows.toString(),
+                        )
+                    },
+                )
+            },
+            icon = {
+                Icon(
+                    imageVector = layer.heightIcon(),
+                    contentDescription = null,
+                )
+            },
+        )
+    }
+}
+
+private fun LayoutLayer.heightTitleRes(): Int =
+    when (this) {
+        LayoutLayer.MAIN -> R.string.layer_height_main
+        LayoutLayer.NUMERIC -> R.string.layer_height_numeric
+        LayoutLayer.EMOJI -> R.string.layer_height_emoji
+    }
+
+private fun LayoutLayer.heightIcon(): ImageVector =
+    when (this) {
+        LayoutLayer.MAIN -> Icons.Outlined.Keyboard
+        LayoutLayer.NUMERIC -> Icons.Outlined.Numbers
+        LayoutLayer.EMOJI -> Icons.Outlined.EmojiEmotions
+    }

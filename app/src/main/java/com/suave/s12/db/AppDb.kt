@@ -20,6 +20,7 @@ import androidx.room.RoomDatabase
 import androidx.room.Update
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.suave.s12.BuildConfig
+import com.suave.s12.layout.DEFAULT_LAYER_HEIGHTS
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,12 +32,6 @@ const val DEFAULT_AUTO_SIZE_KEYS = 1
 const val DEFAULT_NON_SQUARE_KEYS = 0
 const val DEFAULT_KEY_WIDTH = 64
 const val DEFAULT_KEY_HEIGHT = DEFAULT_KEY_WIDTH
-// Compact picker fills the three letter rows so total height matches the 4-row
-// letter keyboard (picker + the emoji bottom row). Expanded adds two extra
-// row-heights so more emoji categories fit without covering the whole screen.
-const val EMOJI_PICKER_HEIGHT_ROWS = 3
-const val EMOJI_PICKER_EXPANDED_HEIGHT_ROWS = 5
-const val DEFAULT_EXPAND_EMOJI_PICKER = 1
 const val DEFAULT_ANIMATION_SPEED = 250
 const val DEFAULT_ANIMATION_HELPER_SPEED = 250
 const val DEFAULT_POSITION = 0
@@ -126,10 +121,10 @@ data class AppSettings(
     )
     val keyHeight: Int,
     @ColumnInfo(
-        name = "expand_emoji_picker",
-        defaultValue = DEFAULT_EXPAND_EMOJI_PICKER.toString(),
+        name = "layer_heights",
+        defaultValue = DEFAULT_LAYER_HEIGHTS,
     )
-    val expandEmojiPicker: Int = DEFAULT_EXPAND_EMOJI_PICKER,
+    val layerHeights: String = DEFAULT_LAYER_HEIGHTS,
     @ColumnInfo(
         name = "vibrate_on_tap",
         defaultValue = DEFAULT_VIBRATE_ON_TAP.toString(),
@@ -253,8 +248,8 @@ data class LookAndFeelUpdate(
     val disableFullscreenEditor: Int,
     @ColumnInfo(name = "key_height")
     val keyHeight: Int,
-    @ColumnInfo(name = "expand_emoji_picker")
-    val expandEmojiPicker: Int,
+    @ColumnInfo(name = "layer_heights")
+    val layerHeights: String,
     @ColumnInfo(name = "vibrate_on_tap")
     val vibrateOnTap: Int,
     @ColumnInfo(name = "vibrate_on_slide")
@@ -394,7 +389,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 31,
+    version = 32,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -447,6 +442,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_28_29,
                             MIGRATION_29_30,
                             MIGRATION_30_31,
+                            MIGRATION_31_32,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

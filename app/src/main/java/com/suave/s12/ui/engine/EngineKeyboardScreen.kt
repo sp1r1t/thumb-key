@@ -4,6 +4,7 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,7 +35,6 @@ import com.suave.s12.db.AppSettings
 import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
-import com.suave.s12.db.DEFAULT_EXPAND_EMOJI_PICKER
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
@@ -43,8 +43,6 @@ import com.suave.s12.db.DEFAULT_POSITION
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
-import com.suave.s12.db.EMOJI_PICKER_EXPANDED_HEIGHT_ROWS
-import com.suave.s12.db.EMOJI_PICKER_HEIGHT_ROWS
 import com.suave.s12.engine.action.SemanticAction
 import com.suave.s12.engine.capability.EditorCapabilities
 import com.suave.s12.engine.capability.EditorCapabilityResolver
@@ -59,8 +57,11 @@ import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.engine.modifier.modifierBehaviors
 import com.suave.s12.engine.output.OutputExecutor
 import com.suave.s12.layout.BuiltinLayouts
+import com.suave.s12.layout.DEFAULT_LAYER_HEIGHTS
+import com.suave.s12.layout.LayerContent
 import com.suave.s12.layout.LayoutLayer
 import com.suave.s12.layout.NamedLayout
+import com.suave.s12.layout.parseLayerHeightOverrides
 import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.toBool
 import java.text.SimpleDateFormat
@@ -120,7 +121,7 @@ fun EngineKeyboardScreen(
     // Row height is always keyHeight. Horizontal size is each key's columnSpan as a Row
     // weight, so a span-2 Enter fills two letter-columns without a separate width setting.
     val keyHeight = (settings?.keyHeight ?: DEFAULT_KEY_HEIGHT).dp
-    val expandEmojiPicker = (settings?.expandEmojiPicker ?: DEFAULT_EXPAND_EMOJI_PICKER).toBool()
+    val layerHeightOverrides = parseLayerHeightOverrides(settings?.layerHeights ?: DEFAULT_LAYER_HEIGHTS)
 
     val feedbackSettings =
         remember(vibrateOnTap, vibrateOnSlide) {
@@ -205,7 +206,7 @@ fun EngineKeyboardScreen(
                 namedLayout = namedLayout,
                 layer = layer,
                 keyHeight = keyHeight,
-                expandEmojiPicker = expandEmojiPicker,
+                layerHeightOverrides = layerHeightOverrides,
                 modifierState = modifierState,
                 onModifierStateChange = { modifierState = it },
                 onExecute = { action ->
@@ -242,7 +243,7 @@ private fun EngineKeyboardPanel(
     namedLayout: NamedLayout,
     layer: LayoutLayer,
     keyHeight: Dp,
-    expandEmojiPicker: Boolean,
+    layerHeightOverrides: Map<LayoutLayer, Int>,
     modifierState: ModifierState,
     onModifierStateChange: (ModifierState) -> Unit,
     onExecute: (SemanticAction) -> Unit,
@@ -254,12 +255,46 @@ private fun EngineKeyboardPanel(
     capabilities: EditorCapabilities,
     ime: IMEService,
 ) {
-    val view = LocalView.current
+    val grid = namedLayout.gridFor(layer)
+    val overrideRows = layerHeightOverrides[layer] ?: 0
+    val contentRows = namedLayout.contentRows(layer, overrideRows)
     Column(modifier = modifier) {
-        if (layer == LayoutLayer.EMOJI && namedLayout.emojiBottomRow != null) {
-            val pickerRows =
-                if (expandEmojiPicker) EMOJI_PICKER_EXPANDED_HEIGHT_ROWS else EMOJI_PICKER_HEIGHT_ROWS
-            val pickerHeight = keyHeight * pickerRows
+        if (contentRows > 0) {
+            LayerContentSlot(
+                content = namedLayout.contentFor(layer),
+                height = keyHeight * contentRows,
+                vibrateOnTap = vibrateOnTap,
+                capabilities = capabilities,
+                ime = ime,
+            )
+        }
+        LayoutGrid(
+            layout = grid,
+            namedLayout = namedLayout,
+            keyHeight = keyHeight,
+            modifierState = modifierState,
+            onModifierStateChange = onModifierStateChange,
+            onExecute = onExecute,
+            onFeedback = onFeedback,
+            minSwipeDistancePx = minSwipeDistancePx,
+            hideLetters = hideLetters,
+            modifierBehaviors = modifierBehaviors,
+        )
+    }
+}
+
+@Composable
+private fun LayerContentSlot(
+    content: LayerContent,
+    height: Dp,
+    vibrateOnTap: Boolean,
+    capabilities: EditorCapabilities,
+    ime: IMEService,
+) {
+    val view = LocalView.current
+    when (content) {
+        LayerContent.None -> Spacer(modifier = Modifier.fillMaxWidth().height(height))
+        LayerContent.EmojiPicker -> {
             val colorScheme = MaterialTheme.colorScheme
             val pickerText = colorScheme.onSurface.toArgb()
             val pickerIcon = colorScheme.onSurfaceVariant.toArgb()
@@ -287,34 +322,9 @@ private fun EngineKeyboardPanel(
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(pickerHeight),
+                    modifier = Modifier.fillMaxWidth().height(height),
                 )
             }
-            LayoutGrid(
-                layout = namedLayout.emojiBottomRow,
-                namedLayout = namedLayout,
-                keyHeight = keyHeight,
-                modifierState = modifierState,
-                onModifierStateChange = onModifierStateChange,
-                onExecute = onExecute,
-                onFeedback = onFeedback,
-                minSwipeDistancePx = minSwipeDistancePx,
-                hideLetters = hideLetters,
-                modifierBehaviors = modifierBehaviors,
-            )
-        } else {
-            LayoutGrid(
-                layout = namedLayout.gridFor(layer),
-                namedLayout = namedLayout,
-                keyHeight = keyHeight,
-                modifierState = modifierState,
-                onModifierStateChange = onModifierStateChange,
-                onExecute = onExecute,
-                onFeedback = onFeedback,
-                minSwipeDistancePx = minSwipeDistancePx,
-                hideLetters = hideLetters,
-                modifierBehaviors = modifierBehaviors,
-            )
         }
     }
 }
