@@ -35,8 +35,8 @@ import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.SettingTitle
+import com.suave.s12.ui.components.common.SettingsSection
 import com.suave.s12.ui.components.common.TestOutTextField
-import com.suave.s12.ui.components.settings.about.SettingsDivider
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.toBool
@@ -96,6 +96,7 @@ fun BehaviorScreen(
                         .imePadding(),
             ) {
                 ProvidePreferenceTheme {
+                    SettingsSection(title = stringResource(R.string.settings_section_gestures)) {
                     SettingRow(
                         onReset = {
                             minSwipeLengthState = DEFAULT_MIN_SWIPE_LENGTH
@@ -128,7 +129,8 @@ fun BehaviorScreen(
                             },
                         )
                     }
-                    SettingsDivider()
+                    }
+                    SettingsSection(title = stringResource(R.string.settings_section_modifiers)) {
                     ModifierAsModifierSwitch(
                         title = R.string.ctrl_as_modifier,
                         onSummary = R.string.ctrl_as_modifier_on,
@@ -140,7 +142,6 @@ fun BehaviorScreen(
                             updateBehavior()
                         },
                     )
-                    SettingsDivider()
                     ModifierAsModifierSwitch(
                         title = R.string.alt_as_modifier,
                         onSummary = R.string.alt_as_modifier_on,
@@ -152,7 +153,6 @@ fun BehaviorScreen(
                             updateBehavior()
                         },
                     )
-                    SettingsDivider()
                     ModifierAsModifierSwitch(
                         title = R.string.shift_as_modifier,
                         onSummary = R.string.shift_as_modifier_on,
@@ -164,7 +164,6 @@ fun BehaviorScreen(
                             updateBehavior()
                         },
                     )
-                    SettingsDivider()
                     ModifierAsModifierSwitch(
                         title = R.string.esc_as_modifier,
                         onSummary = R.string.esc_as_modifier_on,
@@ -176,7 +175,7 @@ fun BehaviorScreen(
                             updateBehavior()
                         },
                     )
-                    SettingsDivider()
+                    }
                     TestOutTextField()
                 }
             }

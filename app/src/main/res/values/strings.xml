@@ -30,6 +30,17 @@
     <string name="built_on_thumbkey">Built on Thumb-Key</string>
     <string name="source_code_subtitle">S12 is libre open-source software (a fork of Thumb-Key), licensed under the GNU Affero General Public License v3.0</string>
     <string name="look_and_feel">Appearance</string>
+    <string name="settings_section_labels">Labels</string>
+    <string name="settings_section_keyboard">Keyboard</string>
+    <string name="settings_section_keys">Keys</string>
+    <string name="settings_section_layers">Layers</string>
+    <string name="settings_section_feedback">Feedback</string>
+    <string name="settings_section_gestures">Gestures</string>
+    <string name="settings_section_modifiers">Modifiers</string>
+    <string name="settings_section_history">History</string>
+    <string name="settings_section_cleanup">Cleanup</string>
+    <string name="expand_section">Expand section</string>
+    <string name="collapse_section">Collapse section</string>
     <string name="behavior">Behavior</string>
     <string name="layouts">Layouts</string>
     <string name="theme">Theme</string>

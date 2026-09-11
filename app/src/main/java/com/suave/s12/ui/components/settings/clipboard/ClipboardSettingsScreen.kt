@@ -46,6 +46,7 @@ import com.suave.s12.db.MIN_CLIPBOARD_MAX_SIZE
 import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.SettingTitle
+import com.suave.s12.ui.components.common.SettingsSection
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.toBool
@@ -142,6 +143,7 @@ fun ClipboardSettingsScreen(
                         .imePadding(),
             ) {
                 ProvidePreferenceTheme {
+                    SettingsSection(title = stringResource(R.string.settings_section_history)) {
                     SettingRow {
                         SwitchPreference(
                             value = clipboardHistoryEnabledState,
@@ -171,6 +173,39 @@ fun ClipboardSettingsScreen(
                             },
                         )
                     }
+                    SwitchPreference(
+                        value = usePrivateClipboardState,
+                        onValueChange = {
+                            usePrivateClipboardState = it
+                            updateClipboardSettings()
+                        },
+                        enabled = clipboardHistoryEnabledState,
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.use_private_clipboard),
+                                infoText = stringResource(R.string.use_private_clipboard_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                stringResource(
+                                    if (usePrivateClipboardState) {
+                                        R.string.use_private_clipboard_on
+                                    } else {
+                                        R.string.use_private_clipboard_off
+                                    },
+                                ),
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.VisibilityOff,
+                                contentDescription = null,
+                            )
+                        },
+                    )
+                    }
+                    SettingsSection(title = stringResource(R.string.settings_section_cleanup)) {
                     SettingRow {
                         SwitchPreference(
                             value = clipboardAutoCleanupEnabledState,
@@ -296,37 +331,7 @@ fun ClipboardSettingsScreen(
                             },
                         )
                     }
-                    SwitchPreference(
-                        value = usePrivateClipboardState,
-                        onValueChange = {
-                            usePrivateClipboardState = it
-                            updateClipboardSettings()
-                        },
-                        enabled = clipboardHistoryEnabledState,
-                        title = {
-                            SettingTitle(
-                                text = stringResource(R.string.use_private_clipboard),
-                                infoText = stringResource(R.string.use_private_clipboard_info),
-                            )
-                        },
-                        summary = {
-                            Text(
-                                stringResource(
-                                    if (usePrivateClipboardState) {
-                                        R.string.use_private_clipboard_on
-                                    } else {
-                                        R.string.use_private_clipboard_off
-                                    },
-                                ),
-                            )
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.VisibilityOff,
-                                contentDescription = null,
-                            )
-                        },
-                    )
+                    }
                 }
             }
         },

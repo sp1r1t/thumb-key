@@ -81,8 +81,8 @@ import com.suave.s12.layout.parseLayerHeightOverrides
 import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.SettingTitle
+import com.suave.s12.ui.components.common.SettingsSection
 import com.suave.s12.ui.components.common.TestOutTextField
-import com.suave.s12.ui.components.settings.about.SettingsDivider
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.ThemeColor
@@ -177,6 +177,7 @@ fun LookAndFeelScreen(
                         .imePadding(),
             ) {
                 ProvidePreferenceTheme {
+                    SettingsSection(title = stringResource(R.string.theme)) {
                     SettingRow(onReset = {
                         themeState = ThemeMode.entries[DEFAULT_THEME]
                         updateLookAndFeel()
@@ -236,9 +237,12 @@ fun LookAndFeelScreen(
                             },
                         )
                     }
+                    }
 
-                    SettingsDivider()
-
+                    SettingsSection(
+                        title = stringResource(R.string.settings_section_labels),
+                        initiallyExpanded = false,
+                    ) {
                     HideLabelSwitch(
                         value = hideLettersState,
                         onValueChange = {
@@ -328,9 +332,12 @@ fun LookAndFeelScreen(
                         offSummary = R.string.hide_editing_off,
                         icon = Icons.AutoMirrored.Outlined.KeyboardBackspace,
                     )
+                    }
 
-                    SettingsDivider()
-
+                    SettingsSection(
+                        title = stringResource(R.string.settings_section_keyboard),
+                        initiallyExpanded = false,
+                    ) {
                     SettingRow {
                         SwitchPreference(
                             value = backdropEnabledState,
@@ -450,7 +457,9 @@ fun LookAndFeelScreen(
                             )
                         },
                     )
+                    }
 
+                    SettingsSection(title = stringResource(R.string.settings_section_keys)) {
                     SettingRow(
                         onReset = {
                             keyHeightState = DEFAULT_KEY_HEIGHT
@@ -477,21 +486,6 @@ fun LookAndFeelScreen(
                                 )
                             },
                         )
-                    }
-
-                    namedLayout.availableLayers().forEachIndexed { index, layer ->
-                        key(layer) {
-                            LayerHeightRow(
-                                layer = layer,
-                                namedLayout = namedLayout,
-                                overrides = layerHeightOverrides,
-                                showInfo = index == 0,
-                                onOverridesChange = { next ->
-                                    layerHeightsState = formatLayerHeightOverrides(next)
-                                    updateLookAndFeel()
-                                },
-                            )
-                        }
                     }
 
                     SettingRow(
@@ -601,9 +595,32 @@ fun LookAndFeelScreen(
                             },
                         )
                     }
+                    }
 
-                    SettingsDivider()
+                    SettingsSection(
+                        title = stringResource(R.string.settings_section_layers),
+                        initiallyExpanded = false,
+                    ) {
+                        namedLayout.availableLayers().forEachIndexed { index, layer ->
+                            key(layer) {
+                                LayerHeightRow(
+                                    layer = layer,
+                                    namedLayout = namedLayout,
+                                    overrides = layerHeightOverrides,
+                                    showInfo = index == 0,
+                                    onOverridesChange = { next ->
+                                        layerHeightsState = formatLayerHeightOverrides(next)
+                                        updateLookAndFeel()
+                                    },
+                                )
+                            }
+                        }
+                    }
 
+                    SettingsSection(
+                        title = stringResource(R.string.settings_section_feedback),
+                        initiallyExpanded = false,
+                    ) {
                     SwitchPreference(
                         value = vibrateOnTapState,
                         onValueChange = {
@@ -652,7 +669,8 @@ fun LookAndFeelScreen(
                             )
                         },
                     )
-                    SettingsDivider()
+                    }
+
                     TestOutTextField()
                 }
             }

@@ -25,6 +25,6 @@
    to it, since there's otherwise no way to recover the original value once it's been changed.
 
 Shared implementation: `SettingTitle` (in `SettingRow.kt`) puts the optional info "i" in the
-title; `SettingRow` wraps a preference with the reset button. Integer quantities use
-`IntStepperPreference` (tap for one step, hold to repeat), not sliders. Named discrete
-choices use a dropdown.
+title; `SettingRow` wraps a preference with the reset button; `SettingsSection` groups related
+rows behind a collapsible header. Integer quantities use `IntStepperPreference` (tap for one
+step, hold to repeat), not sliders. Named discrete choices use a dropdown.
