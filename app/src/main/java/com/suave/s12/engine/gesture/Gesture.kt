@@ -23,6 +23,19 @@ enum class SlideAxis { HORIZONTAL, VERTICAL }
  * modifier engine's Held activation) never need to infer it from Tap/Hold.
  */
 sealed class Gesture {
+    /**
+     * Fired once, the instant a swipe locks onto a compass direction - mid-drag, while the
+     * finger still has good tactile contact with the screen. Purely an early feedback signal:
+     * the actual committed intent for this zone still resolves later via [Tap]/[Hold] at
+     * release, same as ever. Firing feedback only at that later commit (as this used to)
+     * meant swipe feedback landed right as the finger was lifting off - the worst possible
+     * moment to feel a buzz, which is why it read as "swipe never vibrates" even though the
+     * call was succeeding every time.
+     */
+    data class SwipeLocked(
+        val direction: Direction,
+    ) : Gesture()
+
     data class Tap(
         val zone: Zone,
     ) : Gesture()

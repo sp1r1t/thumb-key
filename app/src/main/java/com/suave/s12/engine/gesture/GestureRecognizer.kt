@@ -92,8 +92,12 @@ class GestureRecognizer(
         }
 
         if (config.directions != SwipeDirections.NONE) {
-            zone = Zone.Directional(resolveDirection(totalDx, totalDy, config.directions))
+            val direction = resolveDirection(totalDx, totalDy, config.directions)
+            zone = Zone.Directional(direction)
             zoneLocked = true
+            lastX = event.x
+            lastY = event.y
+            return listOf(Gesture.SwipeLocked(direction))
         }
         lastX = event.x
         lastY = event.y

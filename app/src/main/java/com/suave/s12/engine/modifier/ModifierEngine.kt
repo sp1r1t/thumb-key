@@ -108,7 +108,7 @@ object ModifierEngine {
                 }
             }
 
-            Gesture.Cancelled, is Gesture.SlideStep -> {
+            Gesture.Cancelled, is Gesture.SlideStep, is Gesture.SwipeLocked -> {
                 state
             }
         }

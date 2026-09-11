@@ -67,6 +67,13 @@ class KeyDispatcher(
                 modifierState
             }
 
+            is Gesture.SwipeLocked -> {
+                // Purely a feedback signal, mid-drag - the actual commit still resolves later
+                // via Tap/Hold for the same zone, unchanged.
+                onFeedback(FeedbackEvent.SwipeLocked(gesture.direction))
+                modifierState
+            }
+
             Gesture.Released, Gesture.Cancelled -> {
                 finishPress(gesture, modifierState, onExecute, onFeedback)
             }
@@ -97,7 +104,11 @@ class KeyDispatcher(
                 // settings" or "toggle emoji mode" on every repeat tick isn't meaningful.
                 if (gesture is Gesture.Tap || gesture is Gesture.Hold) {
                     onLegacyAction(intent.action)
-                    onFeedback(feedbackForZone(zone))
+                    // Directional zones already got their feedback at lock time (Gesture.
+                    // SwipeLocked, fired mid-drag - see its doc); firing again here on commit
+                    // would double-buzz right as the finger lifts, the worst moment to feel it.
+                    // Center has no separate lock moment, so it still fires here.
+                    if (zone == Zone.Center) onFeedback(FeedbackEvent.TapRecognized)
                 }
                 modifierState
             }
@@ -105,7 +116,18 @@ class KeyDispatcher(
             is KeyIntent.Text, is KeyIntent.Command, KeyIntent.Noop -> {
                 val resolved = ModifierEngine.resolve(modifierState, intent, shiftMappings)
                 onExecute(IntentCompiler.compile(resolved))
-                onFeedback(if (gesture is Gesture.HoldRepeat) FeedbackEvent.RepeatTick else feedbackForZone(zone))
+                when {
+                    gesture is Gesture.HoldRepeat -> {
+                        onFeedback(FeedbackEvent.RepeatTick)
+                    }
+
+                    zone == Zone.Center -> {
+                        onFeedback(FeedbackEvent.TapRecognized)
+                    }
+
+                    // Directional zones already got their feedback at lock time - see above.
+                    else -> {}
+                }
                 if (consumeOneShot) ModifierEngine.consumeOneShots(modifierState) else modifierState
             }
         }
@@ -177,12 +199,6 @@ class KeyDispatcher(
             else -> {}
         }
     }
-
-    private fun feedbackForZone(zone: Zone): FeedbackEvent =
-        when (zone) {
-            Zone.Center -> FeedbackEvent.TapRecognized
-            is Zone.Directional -> FeedbackEvent.SwipeLocked(zone.direction)
-        }
 
     private fun directionFor(step: Gesture.SlideStep): CursorDirection =
         when (step.axis) {

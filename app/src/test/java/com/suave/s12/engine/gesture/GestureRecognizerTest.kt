@@ -42,13 +42,16 @@ class GestureRecognizerTest {
     }
 
     @Test
-    fun `swipe past threshold locks a direction and taps it on release`() {
+    fun `swipe past threshold emits SwipeLocked immediately, then taps that zone on release`() {
         val recognizer = GestureRecognizer(plainKeyConfig)
         recognizer.process(down())
         val duringMove = recognizer.process(move(x = 0f, y = -50f, t = START_MS + 50))
         val result = recognizer.process(up(START_MS + 100))
 
-        assertEquals("locking a swipe zone doesn't itself emit a gesture", emptyList<Gesture>(), duringMove)
+        // Fires the instant the zone locks, mid-drag, not just at the eventual Tap on release -
+        // this is the feedback signal a UI layer buzzes on while the finger still has good
+        // tactile contact with the screen (see Gesture.SwipeLocked's doc for why that matters).
+        assertEquals(listOf(Gesture.SwipeLocked(Direction.UP)), duringMove)
         assertEquals(listOf(Gesture.Tap(Zone.Directional(Direction.UP)), Gesture.Released), result)
     }
 

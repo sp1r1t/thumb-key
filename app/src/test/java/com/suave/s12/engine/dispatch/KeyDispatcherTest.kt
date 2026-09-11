@@ -99,6 +99,27 @@ class KeyDispatcherTest {
     }
 
     @Test
+    fun `a swipe fires feedback at lock time, and does not double-buzz when the swipe commits on release`() {
+        val key =
+            KeyMapping(
+                CONFIG,
+                mapOf(Zone.Center to KeyIntent.Text("o"), Zone.Directional(Direction.UP) to KeyIntent.Text("1")),
+            )
+        val dispatcher = KeyDispatcher(key)
+        val executed = mutableListOf<SemanticAction>()
+        val feedback = mutableListOf<FeedbackEvent>()
+
+        // The lock, mid-drag - feedback fires here, nothing executes yet.
+        dispatcher.handle(Gesture.SwipeLocked(Direction.UP), ModifierState(), executed::add, {}, feedback::add)
+        // The eventual commit on release - executes the character, but the buzz already
+        // happened at lock time, so no second feedback event here.
+        dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.UP)), ModifierState(), executed::add, {}, feedback::add)
+
+        assertEquals(listOf(FeedbackEvent.SwipeLocked(Direction.UP)), feedback)
+        assertEquals(listOf(SemanticAction.TypeText("1")), executed)
+    }
+
+    @Test
     fun `a legacy action key fires once on tap and not again on hold-repeat`() {
         val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.LegacyAction(KeyAction.Copy)))
         val dispatcher = KeyDispatcher(key)
