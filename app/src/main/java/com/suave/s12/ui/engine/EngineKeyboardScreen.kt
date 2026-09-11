@@ -14,10 +14,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
@@ -25,7 +28,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.emoji2.emojipicker.EmojiPickerView
 import com.suave.s12.BuildConfig
 import com.suave.s12.IMEService
 import com.suave.s12.db.AppSettings
@@ -258,23 +260,36 @@ private fun EngineKeyboardPanel(
             val pickerRows =
                 if (expandEmojiPicker) EMOJI_PICKER_EXPANDED_HEIGHT_ROWS else EMOJI_PICKER_HEIGHT_ROWS
             val pickerHeight = keyHeight * pickerRows
-            AndroidView(
-                factory = { context ->
-                    EmojiPickerView(context).apply {
-                        setOnEmojiPickedListener { picked ->
-                            if (vibrateOnTap) {
-                                view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+            val colorScheme = MaterialTheme.colorScheme
+            val pickerText = colorScheme.onSurface.toArgb()
+            val pickerIcon = colorScheme.onSurfaceVariant.toArgb()
+            val pickerAccent = colorScheme.primary.toArgb()
+            val darkKeyboard = colorScheme.surface.luminance() < 0.5f
+            key(pickerText, pickerIcon, pickerAccent, darkKeyboard) {
+                AndroidView(
+                    factory = { context ->
+                        createThemedEmojiPicker(
+                            context = context,
+                            darkKeyboard = darkKeyboard,
+                            text = pickerText,
+                            icon = pickerIcon,
+                            accent = pickerAccent,
+                        ).apply {
+                            setOnEmojiPickedListener { picked ->
+                                if (vibrateOnTap) {
+                                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                                }
+                                OutputExecutor.execute(
+                                    SemanticAction.TypeText(picked.emoji),
+                                    capabilities,
+                                    ime.currentInputConnection,
+                                )
                             }
-                            OutputExecutor.execute(
-                                SemanticAction.TypeText(picked.emoji),
-                                capabilities,
-                                ime.currentInputConnection,
-                            )
                         }
-                    }
-                },
-                modifier = Modifier.fillMaxWidth().height(pickerHeight),
-            )
+                    },
+                    modifier = Modifier.fillMaxWidth().height(pickerHeight),
+                )
+            }
             LayoutGrid(
                 layout = namedLayout.emojiBottomRow,
                 namedLayout = namedLayout,

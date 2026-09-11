@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      EmojiPickerView reads android:textColorPrimary for category labels
+      (RECENTLY USED, SMILEYS AND EMOTIONS, ...) and android:colorControlNormal /
+      android:colorAccent for the category tab icons. The IME's AppCompat theme
+      is light, so without this overlay those labels render as black on a dark
+      keyboard. Exact keyboard colors are applied in code on top of this.
+    -->
+    <style name="EmojiPickerDark">
+        <item name="android:textColorPrimary">#DEFFFFFF</item>
+        <item name="android:textColorSecondary">#99FFFFFF</item>
+        <item name="android:colorControlNormal">#99FFFFFF</item>
+        <item name="android:colorAccent">#FFFFFFFF</item>
+        <item name="colorControlNormal">#99FFFFFF</item>
+        <item name="colorAccent">#FFFFFFFF</item>
+    </style>
+
+    <style name="EmojiPickerLight">
+        <item name="android:textColorPrimary">#DE000000</item>
+        <item name="android:textColorSecondary">#99000000</item>
+        <item name="android:colorControlNormal">#99000000</item>
+        <item name="android:colorAccent">#FF000000</item>
+        <item name="colorControlNormal">#99000000</item>
+        <item name="colorAccent">#FF000000</item>
+    </style>
+</resources>
