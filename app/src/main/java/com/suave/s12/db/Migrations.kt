@@ -390,3 +390,12 @@ val MIGRATION_29_30 =
             db.execSQL("ALTER TABLE AppSettings_new RENAME TO AppSettings")
         }
     }
+
+val MIGRATION_30_31 =
+    object : Migration(30, 31) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN expand_emoji_picker INTEGER NOT NULL DEFAULT $DEFAULT_EXPAND_EMOJI_PICKER",
+            )
+        }
+    }

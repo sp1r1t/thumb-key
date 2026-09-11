@@ -49,6 +49,10 @@
     <string name="key_non_square">Use non-square keys</string>
     <string name="key_height">Key height</string>
     <string name="key_height_summary">Currently %1$sdp</string>
+    <string name="expand_emoji_picker">Taller emoji picker</string>
+    <string name="expand_emoji_picker_on">On - the keyboard grows when the emoji picker is open so more rows are visible</string>
+    <string name="expand_emoji_picker_off">Off - the emoji picker stays the same height as the letter keyboard</string>
+    <string name="expand_emoji_picker_info">When on, opening the emoji picker makes the whole keyboard taller so more emoji rows fit. The bottom row of keys (backspace, space, enter) stays the same height as everywhere else.</string>
     <string name="key_width">Key width: %1$s</string>
     <string name="bottom_offset">Bottom offset: %1$s</string>
     <string name="min_swipe_length">Minimum swipe length</string>

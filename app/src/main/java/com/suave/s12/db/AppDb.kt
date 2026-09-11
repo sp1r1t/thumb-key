@@ -31,6 +31,12 @@ const val DEFAULT_AUTO_SIZE_KEYS = 1
 const val DEFAULT_NON_SQUARE_KEYS = 0
 const val DEFAULT_KEY_WIDTH = 64
 const val DEFAULT_KEY_HEIGHT = DEFAULT_KEY_WIDTH
+// Compact picker fills the three letter rows so total height matches the 4-row
+// letter keyboard (picker + the emoji bottom row). Expanded adds two extra
+// row-heights so more emoji categories fit without covering the whole screen.
+const val EMOJI_PICKER_HEIGHT_ROWS = 3
+const val EMOJI_PICKER_EXPANDED_HEIGHT_ROWS = 5
+const val DEFAULT_EXPAND_EMOJI_PICKER = 1
 const val DEFAULT_ANIMATION_SPEED = 250
 const val DEFAULT_ANIMATION_HELPER_SPEED = 250
 const val DEFAULT_POSITION = 0
@@ -119,6 +125,11 @@ data class AppSettings(
         defaultValue = DEFAULT_KEY_HEIGHT.toString(),
     )
     val keyHeight: Int,
+    @ColumnInfo(
+        name = "expand_emoji_picker",
+        defaultValue = DEFAULT_EXPAND_EMOJI_PICKER.toString(),
+    )
+    val expandEmojiPicker: Int = DEFAULT_EXPAND_EMOJI_PICKER,
     @ColumnInfo(
         name = "vibrate_on_tap",
         defaultValue = DEFAULT_VIBRATE_ON_TAP.toString(),
@@ -242,6 +253,8 @@ data class LookAndFeelUpdate(
     val disableFullscreenEditor: Int,
     @ColumnInfo(name = "key_height")
     val keyHeight: Int,
+    @ColumnInfo(name = "expand_emoji_picker")
+    val expandEmojiPicker: Int,
     @ColumnInfo(name = "vibrate_on_tap")
     val vibrateOnTap: Int,
     @ColumnInfo(name = "vibrate_on_slide")
@@ -381,7 +394,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 30,
+    version = 31,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -433,6 +446,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_27_28,
                             MIGRATION_28_29,
                             MIGRATION_29_30,
+                            MIGRATION_30_31,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

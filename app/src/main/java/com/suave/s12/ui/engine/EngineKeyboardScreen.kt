@@ -32,6 +32,7 @@ import com.suave.s12.db.AppSettings
 import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_EXPAND_EMOJI_PICKER
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
@@ -40,6 +41,8 @@ import com.suave.s12.db.DEFAULT_POSITION
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
+import com.suave.s12.db.EMOJI_PICKER_EXPANDED_HEIGHT_ROWS
+import com.suave.s12.db.EMOJI_PICKER_HEIGHT_ROWS
 import com.suave.s12.engine.action.SemanticAction
 import com.suave.s12.engine.capability.EditorCapabilities
 import com.suave.s12.engine.capability.EditorCapabilityResolver
@@ -115,6 +118,7 @@ fun EngineKeyboardScreen(
     // Row height is always keyHeight. Horizontal size is each key's columnSpan as a Row
     // weight, so a span-2 Enter fills two letter-columns without a separate width setting.
     val keyHeight = (settings?.keyHeight ?: DEFAULT_KEY_HEIGHT).dp
+    val expandEmojiPicker = (settings?.expandEmojiPicker ?: DEFAULT_EXPAND_EMOJI_PICKER).toBool()
 
     val feedbackSettings =
         remember(vibrateOnTap, vibrateOnSlide) {
@@ -199,6 +203,7 @@ fun EngineKeyboardScreen(
                 namedLayout = namedLayout,
                 layer = layer,
                 keyHeight = keyHeight,
+                expandEmojiPicker = expandEmojiPicker,
                 modifierState = modifierState,
                 onModifierStateChange = { modifierState = it },
                 onExecute = { action ->
@@ -235,6 +240,7 @@ private fun EngineKeyboardPanel(
     namedLayout: NamedLayout,
     layer: LayoutLayer,
     keyHeight: Dp,
+    expandEmojiPicker: Boolean,
     modifierState: ModifierState,
     onModifierStateChange: (ModifierState) -> Unit,
     onExecute: (SemanticAction) -> Unit,
@@ -249,7 +255,9 @@ private fun EngineKeyboardPanel(
     val view = LocalView.current
     Column(modifier = modifier) {
         if (layer == LayoutLayer.EMOJI && namedLayout.emojiBottomRow != null) {
-            val pickerHeight = keyHeight * 3
+            val pickerRows =
+                if (expandEmojiPicker) EMOJI_PICKER_EXPANDED_HEIGHT_ROWS else EMOJI_PICKER_HEIGHT_ROWS
+            val pickerHeight = keyHeight * pickerRows
             AndroidView(
                 factory = { context ->
                     EmojiPickerView(context).apply {

@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BorderBottom
 import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.Crop75
+import androidx.compose.material.icons.outlined.Height
 import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.LinearScale
 import androidx.compose.material.icons.outlined.Palette
@@ -37,6 +38,7 @@ import androidx.navigation.NavController
 import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
+import com.suave.s12.db.DEFAULT_EXPAND_EMOJI_PICKER
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
@@ -80,6 +82,7 @@ fun LookAndFeelScreen(
     var hideLettersState = (settings?.hideLetters ?: DEFAULT_HIDE_LETTERS).toBool()
     var ignoreBottomPaddingState = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
     var disableFullscreenEditorState = (settings?.disableFullscreenEditor ?: DEFAULT_DISABLE_FULLSCREEN_EDITOR).toBool()
+    var expandEmojiPickerState = (settings?.expandEmojiPicker ?: DEFAULT_EXPAND_EMOJI_PICKER).toBool()
 
     fun updateLookAndFeel() {
         appSettingsViewModel.updateLookAndFeel(
@@ -92,6 +95,7 @@ fun LookAndFeelScreen(
                 theme = themeState.ordinal,
                 themeColor = themeColorState.ordinal,
                 keyHeight = keyHeightState.toInt(),
+                expandEmojiPicker = expandEmojiPickerState.toInt(),
                 disableFullscreenEditor = disableFullscreenEditorState.toInt(),
             ),
         )
@@ -287,6 +291,36 @@ fun LookAndFeelScreen(
                             icon = {
                                 Icon(
                                     imageVector = Icons.Outlined.Crop75,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+
+                    SettingRow(infoText = stringResource(R.string.expand_emoji_picker_info)) {
+                        SwitchPreference(
+                            value = expandEmojiPickerState,
+                            onValueChange = {
+                                expandEmojiPickerState = it
+                                updateLookAndFeel()
+                            },
+                            title = {
+                                Text(stringResource(R.string.expand_emoji_picker))
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (expandEmojiPickerState) {
+                                            R.string.expand_emoji_picker_on
+                                        } else {
+                                            R.string.expand_emoji_picker_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Height,
                                     contentDescription = null,
                                 )
                             },
