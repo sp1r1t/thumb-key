@@ -80,6 +80,7 @@ import com.suave.s12.layout.formatLayerHeightOverrides
 import com.suave.s12.layout.parseLayerHeightOverrides
 import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
+import com.suave.s12.ui.components.common.SettingTitle
 import com.suave.s12.ui.components.common.TestOutTextField
 import com.suave.s12.ui.components.settings.about.SettingsDivider
 import com.suave.s12.utils.SimpleTopAppBar
@@ -383,7 +384,6 @@ fun LookAndFeelScreen(
                     }
 
                     SettingRow(
-                        infoText = stringResource(R.string.raise_from_bottom_info),
                         onReset = {
                             pushupSizeState = DEFAULT_PUSHUP_SIZE
                             updateLookAndFeel()
@@ -397,7 +397,10 @@ fun LookAndFeelScreen(
                             },
                             valueRange = 0..250,
                             title = {
-                                Text(stringResource(R.string.raise_from_bottom))
+                                SettingTitle(
+                                    text = stringResource(R.string.raise_from_bottom),
+                                    infoText = stringResource(R.string.raise_from_bottom_info),
+                                )
                             },
                             summary = {
                                 Text(
@@ -417,35 +420,36 @@ fun LookAndFeelScreen(
                         )
                     }
 
-                    SettingRow(infoText = stringResource(R.string.disable_fullscreen_editor_info)) {
-                        SwitchPreference(
-                            value = disableFullscreenEditorState,
-                            onValueChange = {
-                                disableFullscreenEditorState = it
-                                updateLookAndFeel()
-                            },
-                            title = {
-                                Text(stringResource(R.string.disable_fullscreen_editor))
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        if (disableFullscreenEditorState) {
-                                            R.string.disable_fullscreen_editor_on
-                                        } else {
-                                            R.string.disable_fullscreen_editor_off
-                                        },
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.WebAssetOff,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
+                    SwitchPreference(
+                        value = disableFullscreenEditorState,
+                        onValueChange = {
+                            disableFullscreenEditorState = it
+                            updateLookAndFeel()
+                        },
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.disable_fullscreen_editor),
+                                infoText = stringResource(R.string.disable_fullscreen_editor_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                stringResource(
+                                    if (disableFullscreenEditorState) {
+                                        R.string.disable_fullscreen_editor_on
+                                    } else {
+                                        R.string.disable_fullscreen_editor_off
+                                    },
+                                ),
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.WebAssetOff,
+                                contentDescription = null,
+                            )
+                        },
+                    )
 
                     SettingRow(
                         onReset = {
@@ -525,7 +529,6 @@ fun LookAndFeelScreen(
                     }
 
                     SettingRow(
-                        infoText = stringResource(R.string.border_thickness_info),
                         onReset = {
                             keyBorderWidthState = DEFAULT_KEY_BORDER_WIDTH
                             updateLookAndFeel()
@@ -539,7 +542,10 @@ fun LookAndFeelScreen(
                             },
                             valueRange = 0..50,
                             title = {
-                                Text(stringResource(R.string.border_thickness))
+                                SettingTitle(
+                                    text = stringResource(R.string.border_thickness),
+                                    infoText = stringResource(R.string.border_thickness_info),
+                                )
                             },
                             summary = {
                                 Text(
@@ -598,52 +604,54 @@ fun LookAndFeelScreen(
 
                     SettingsDivider()
 
-                    SettingRow(infoText = stringResource(R.string.vibrate_on_tap_info)) {
-                        SwitchPreference(
-                            value = vibrateOnTapState,
-                            onValueChange = {
-                                vibrateOnTapState = it
-                                updateLookAndFeel()
-                            },
-                            title = {
-                                Text(stringResource(R.string.vibrate_on_tap))
-                            },
-                            summary = {
-                                Text(stringResource(if (vibrateOnTapState) R.string.vibrate_on_tap_on else R.string.vibrate_on_tap_off))
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Vibration,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
-                    SettingRow(infoText = stringResource(R.string.vibrate_on_slide_info)) {
-                        SwitchPreference(
-                            value = vibrateOnSlideState,
-                            onValueChange = {
-                                vibrateOnSlideState = it
-                                updateLookAndFeel()
-                            },
-                            title = {
-                                Text(stringResource(R.string.vibrate_on_slide))
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        if (vibrateOnSlideState) R.string.vibrate_on_slide_on else R.string.vibrate_on_slide_off,
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.LinearScale,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
+                    SwitchPreference(
+                        value = vibrateOnTapState,
+                        onValueChange = {
+                            vibrateOnTapState = it
+                            updateLookAndFeel()
+                        },
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.vibrate_on_tap),
+                                infoText = stringResource(R.string.vibrate_on_tap_info),
+                            )
+                        },
+                        summary = {
+                            Text(stringResource(if (vibrateOnTapState) R.string.vibrate_on_tap_on else R.string.vibrate_on_tap_off))
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Vibration,
+                                contentDescription = null,
+                            )
+                        },
+                    )
+                    SwitchPreference(
+                        value = vibrateOnSlideState,
+                        onValueChange = {
+                            vibrateOnSlideState = it
+                            updateLookAndFeel()
+                        },
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.vibrate_on_slide),
+                                infoText = stringResource(R.string.vibrate_on_slide_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                stringResource(
+                                    if (vibrateOnSlideState) R.string.vibrate_on_slide_on else R.string.vibrate_on_slide_off,
+                                ),
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.LinearScale,
+                                contentDescription = null,
+                            )
+                        },
+                    )
                     SettingsDivider()
                     TestOutTextField()
                 }
@@ -662,24 +670,22 @@ private fun HideLabelSwitch(
     icon: ImageVector,
     infoText: String? = null,
 ) {
-    SettingRow(infoText = infoText) {
-        SwitchPreference(
-            value = value,
-            onValueChange = onValueChange,
-            title = {
-                Text(stringResource(title))
-            },
-            summary = {
-                Text(stringResource(if (value) onSummary else offSummary))
-            },
-            icon = {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                )
-            },
-        )
-    }
+    SwitchPreference(
+        value = value,
+        onValueChange = onValueChange,
+        title = {
+            SettingTitle(text = stringResource(title), infoText = infoText)
+        },
+        summary = {
+            Text(stringResource(if (value) onSummary else offSummary))
+        },
+        icon = {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+            )
+        },
+    )
 }
 
 @Composable
@@ -695,7 +701,6 @@ private fun LayerHeightRow(
     val extraRows = currentRows - gridRows
 
     SettingRow(
-        infoText = if (showInfo) stringResource(R.string.layer_height_info) else null,
         onReset = {
             onOverridesChange(overrides - layer)
         },
@@ -707,7 +712,10 @@ private fun LayerHeightRow(
             },
             valueRange = gridRows..MAX_LAYER_HEIGHT_ROWS,
             title = {
-                Text(stringResource(layer.heightTitleRes()))
+                SettingTitle(
+                    text = stringResource(layer.heightTitleRes()),
+                    infoText = if (showInfo) stringResource(R.string.layer_height_info) else null,
+                )
             },
             summary = {
                 Text(

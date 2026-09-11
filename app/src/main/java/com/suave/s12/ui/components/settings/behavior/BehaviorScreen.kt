@@ -34,6 +34,7 @@ import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
+import com.suave.s12.ui.components.common.SettingTitle
 import com.suave.s12.ui.components.common.TestOutTextField
 import com.suave.s12.ui.components.settings.about.SettingsDivider
 import com.suave.s12.utils.SimpleTopAppBar
@@ -192,18 +193,21 @@ private fun ModifierAsModifierSwitch(
     value: Boolean,
     onValueChange: (Boolean) -> Unit,
 ) {
-    SettingRow(infoText = stringResource(info)) {
-        SwitchPreference(
-            value = value,
-            onValueChange = onValueChange,
-            title = { Text(stringResource(title)) },
-            summary = { Text(stringResource(if (value) onSummary else offSummary)) },
-            icon = {
-                Icon(
-                    imageVector = Icons.Outlined.SwapHoriz,
-                    contentDescription = stringResource(title),
-                )
-            },
-        )
-    }
+    SwitchPreference(
+        value = value,
+        onValueChange = onValueChange,
+        title = {
+            SettingTitle(
+                text = stringResource(title),
+                infoText = stringResource(info),
+            )
+        },
+        summary = { Text(stringResource(if (value) onSummary else offSummary)) },
+        icon = {
+            Icon(
+                imageVector = Icons.Outlined.SwapHoriz,
+                contentDescription = stringResource(title),
+            )
+        },
+    )
 }

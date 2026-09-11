@@ -29,7 +29,7 @@ import com.suave.s12.db.AppSettingsViewModel
 import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
 import com.suave.s12.db.DEFAULT_SHOW_ON_SCREEN_KEYBOARD
 import com.suave.s12.db.OtherSettingsUpdate
-import com.suave.s12.ui.components.common.SettingRow
+import com.suave.s12.ui.components.common.SettingTitle
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.toBool
@@ -83,66 +83,63 @@ fun OtherSettingsScreen(
                         .imePadding(),
             ) {
                 ProvidePreferenceTheme {
-                    SettingRow {
-                        SwitchPreference(
-                            value = showOnScreenKeyboardState,
-                            onValueChange = {
-                                showOnScreenKeyboardState = it
-                                updateOtherSettings()
-                            },
-                            title = {
-                                Text(stringResource(R.string.show_on_screen_keyboard))
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        if (showOnScreenKeyboardState) {
-                                            R.string.show_on_screen_keyboard_on
-                                        } else {
-                                            R.string.show_on_screen_keyboard_off
-                                        },
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Keyboard,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
-                    SettingRow(
-                        infoText = stringResource(R.string.show_debug_bar_info),
-                    ) {
-                        SwitchPreference(
-                            value = showDebugBarState,
-                            onValueChange = {
-                                showDebugBarState = it
-                                updateOtherSettings()
-                            },
-                            title = {
-                                Text(stringResource(R.string.show_debug_bar))
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        if (showDebugBarState) {
-                                            R.string.show_debug_bar_on
-                                        } else {
-                                            R.string.show_debug_bar_off
-                                        },
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.BugReport,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
+                    SwitchPreference(
+                        value = showOnScreenKeyboardState,
+                        onValueChange = {
+                            showOnScreenKeyboardState = it
+                            updateOtherSettings()
+                        },
+                        title = {
+                            Text(stringResource(R.string.show_on_screen_keyboard))
+                        },
+                        summary = {
+                            Text(
+                                stringResource(
+                                    if (showOnScreenKeyboardState) {
+                                        R.string.show_on_screen_keyboard_on
+                                    } else {
+                                        R.string.show_on_screen_keyboard_off
+                                    },
+                                ),
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Keyboard,
+                                contentDescription = null,
+                            )
+                        },
+                    )
+                    SwitchPreference(
+                        value = showDebugBarState,
+                        onValueChange = {
+                            showDebugBarState = it
+                            updateOtherSettings()
+                        },
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.show_debug_bar),
+                                infoText = stringResource(R.string.show_debug_bar_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                stringResource(
+                                    if (showDebugBarState) {
+                                        R.string.show_debug_bar_on
+                                    } else {
+                                        R.string.show_debug_bar_off
+                                    },
+                                ),
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.BugReport,
+                                contentDescription = null,
+                            )
+                        },
+                    )
                 }
             }
         },

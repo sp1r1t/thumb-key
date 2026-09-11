@@ -15,15 +15,16 @@
    actually removes clutter: no separate value display, no mentally cross-referencing a toggle's
    position against generic help text.
 
-3. **Deeper rationale that doesn't fit in one line goes in an optional "i" info icon** opening a
-   bottom sheet, judged per-setting rather than added reflexively to every row - simple settings
-   (a plain on/off with an obvious effect) don't need one; settings with real nuance
-   (an unusual interaction, a caveat, a "why this exists") do.
+3. **Deeper rationale that doesn't fit in one line goes in a compact "i" in the setting
+   title** (not a trailing row control), opening a bottom sheet. Judged per-setting rather
+   than added reflexively to every row - simple settings (a plain on/off with an obvious
+   effect) don't need one; settings with real nuance (an unusual interaction, a caveat, a
+   "why this exists") do.
 
 4. **Every non-boolean setting (stepper, dropdown) gets an explicit reset-to-default action** next
    to it, since there's otherwise no way to recover the original value once it's been changed.
 
-Shared implementation: `app/src/main/java/com/suave/s12/ui/components/common/SettingRow.kt` wraps
-a preference row with the optional reset button and info icon described above - use it instead of
-hand-rolling either per screen. Integer quantities use `IntStepperPreference` (tap for one step,
-hold to repeat), not sliders. Named discrete choices use a dropdown.
+Shared implementation: `SettingTitle` (in `SettingRow.kt`) puts the optional info "i" in the
+title; `SettingRow` wraps a preference with the reset button. Integer quantities use
+`IntStepperPreference` (tap for one step, hold to repeat), not sliders. Named discrete
+choices use a dropdown.
