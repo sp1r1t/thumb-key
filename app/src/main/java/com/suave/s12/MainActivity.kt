@@ -30,7 +30,6 @@ import com.suave.s12.ui.components.settings.backupandrestore.BackupAndRestoreScr
 import com.suave.s12.ui.components.settings.behavior.BehaviorScreen
 import com.suave.s12.ui.components.settings.clipboard.ClipboardSettingsScreen
 import com.suave.s12.ui.components.settings.lookandfeel.LookAndFeelScreen
-import com.suave.s12.ui.components.settings.modifykeys.ModifyKeysScreen
 import com.suave.s12.ui.components.settings.other.OtherSettingsScreen
 import com.suave.s12.ui.components.setup.SetupScreen
 import com.suave.s12.ui.theme.ThumbkeyTheme
@@ -160,12 +159,6 @@ class MainActivity : AppCompatActivity() {
                             navController = navController,
                             appSettingsViewModel = appSettingsViewModel,
                             clipboardRepository = (application as ThumbkeyApplication).clipboardRepository,
-                        )
-                    }
-                    composable(route = "modifyKeys") {
-                        ModifyKeysScreen(
-                            navController = navController,
-                            appSettingsViewModel = appSettingsViewModel,
                         )
                     }
                     composable(

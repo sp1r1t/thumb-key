@@ -47,6 +47,7 @@ import com.suave.s12.db.DEFAULT_CLIPBOARD_SIZE_LIMIT_ENABLED
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
 import com.suave.s12.db.MAX_CLIPBOARD_MAX_SIZE
 import com.suave.s12.db.MIN_CLIPBOARD_MAX_SIZE
+import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.toBool
@@ -149,137 +150,194 @@ fun ClipboardSettingsScreen(
                         .imePadding(),
             ) {
                 ProvidePreferenceTheme {
-                    SwitchPreference(
-                        value = clipboardHistoryEnabledState,
-                        onValueChange = {
-                            clipboardHistoryEnabledState = it
+                    SettingRow {
+                        SwitchPreference(
+                            value = clipboardHistoryEnabledState,
+                            onValueChange = {
+                                clipboardHistoryEnabledState = it
+                                updateClipboardSettings()
+                            },
+                            title = {
+                                Text(stringResource(R.string.clipboard_history_enabled))
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (clipboardHistoryEnabledState) {
+                                            R.string.clipboard_history_enabled_on
+                                        } else {
+                                            R.string.clipboard_history_enabled_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.ContentPaste,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+                    SettingRow {
+                        SwitchPreference(
+                            value = clipboardAutoCleanupEnabledState,
+                            onValueChange = {
+                                clipboardAutoCleanupEnabledState = it
+                                updateClipboardSettings()
+                            },
+                            enabled = clipboardHistoryEnabledState,
+                            title = {
+                                Text(stringResource(R.string.clipboard_auto_cleanup))
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (clipboardAutoCleanupEnabledState) {
+                                            R.string.clipboard_auto_cleanup_on
+                                        } else {
+                                            R.string.clipboard_auto_cleanup_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.CleaningServices,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+                    SettingRow(
+                        onReset = {
+                            clipboardCleanupDuration = CleanupDuration.fromMinutes(DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES)
+                            clipboardCleanupSliderState = clipboardCleanupDuration.ordinal.toFloat()
                             updateClipboardSettings()
                         },
-                        title = {
-                            Text(stringResource(R.string.clipboard_history_enabled))
-                        },
-                        summary = {
-                            Text(stringResource(R.string.clipboard_history_enabled_description))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.ContentPaste,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SwitchPreference(
-                        value = clipboardAutoCleanupEnabledState,
-                        onValueChange = {
-                            clipboardAutoCleanupEnabledState = it
+                    ) {
+                        SliderPreference(
+                            value = clipboardCleanupDuration.ordinal.toFloat(),
+                            sliderValue = clipboardCleanupSliderState,
+                            onValueChange = {
+                                clipboardCleanupDuration = CleanupDuration.fromIndex(it.toInt())
+                                updateClipboardSettings()
+                            },
+                            onSliderValueChange = { clipboardCleanupSliderState = it },
+                            valueRange = 0f..(CleanupDuration.entries.size - 1).toFloat(),
+                            valueSteps = CleanupDuration.entries.size - 2,
+                            enabled = clipboardHistoryEnabledState && clipboardAutoCleanupEnabledState,
+                            title = {
+                                Text(stringResource(R.string.clipboard_cleanup_after))
+                            },
+                            summary = {
+                                val duration = CleanupDuration.fromIndex(clipboardCleanupSliderState.toInt())
+                                Text(
+                                    stringResource(
+                                        R.string.clipboard_cleanup_after_summary,
+                                        stringResource(duration.displayNameResId),
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.HourglassTop,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+                    SettingRow {
+                        SwitchPreference(
+                            value = clipboardSizeLimitEnabledState,
+                            onValueChange = {
+                                clipboardSizeLimitEnabledState = it
+                                updateClipboardSettings()
+                            },
+                            enabled = clipboardHistoryEnabledState,
+                            title = {
+                                Text(stringResource(R.string.clipboard_size_limit))
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (clipboardSizeLimitEnabledState) {
+                                            R.string.clipboard_size_limit_on
+                                        } else {
+                                            R.string.clipboard_size_limit_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.DiscFull,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+                    SettingRow(
+                        onReset = {
+                            clipboardMaxSizeState = DEFAULT_CLIPBOARD_MAX_SIZE.toFloat()
+                            clipboardMaxSizeSliderState = DEFAULT_CLIPBOARD_MAX_SIZE.toFloat()
                             updateClipboardSettings()
                         },
-                        enabled = clipboardHistoryEnabledState,
-                        title = {
-                            Text(stringResource(R.string.clipboard_auto_cleanup))
-                        },
-                        summary = {
-                            Text(stringResource(R.string.clipboard_auto_cleanup_description))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.CleaningServices,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SliderPreference(
-                        value = clipboardCleanupDuration.ordinal.toFloat(),
-                        sliderValue = clipboardCleanupSliderState,
-                        onValueChange = {
-                            clipboardCleanupDuration = CleanupDuration.fromIndex(it.toInt())
-                            updateClipboardSettings()
-                        },
-                        onSliderValueChange = { clipboardCleanupSliderState = it },
-                        valueRange = 0f..(CleanupDuration.entries.size - 1).toFloat(),
-                        valueSteps = CleanupDuration.entries.size - 2,
-                        enabled = clipboardHistoryEnabledState && clipboardAutoCleanupEnabledState,
-                        title = {
-                            val duration = CleanupDuration.fromIndex(clipboardCleanupSliderState.toInt())
-                            Text(
-                                stringResource(
-                                    R.string.clipboard_cleanup_after,
-                                    stringResource(duration.displayNameResId),
-                                ),
-                            )
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.HourglassTop,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SwitchPreference(
-                        value = clipboardSizeLimitEnabledState,
-                        onValueChange = {
-                            clipboardSizeLimitEnabledState = it
-                            updateClipboardSettings()
-                        },
-                        enabled = clipboardHistoryEnabledState,
-                        title = {
-                            Text(stringResource(R.string.clipboard_size_limit))
-                        },
-                        summary = {
-                            Text(stringResource(R.string.clipboard_size_limit_description))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.DiscFull,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SliderPreference(
-                        value = clipboardMaxSizeState,
-                        sliderValue = clipboardMaxSizeSliderState,
-                        onValueChange = {
-                            clipboardMaxSizeState = it
-                            updateClipboardSettings()
-                        },
-                        onSliderValueChange = { clipboardMaxSizeSliderState = it },
-                        valueRange = MIN_CLIPBOARD_MAX_SIZE.toFloat()..MAX_CLIPBOARD_MAX_SIZE.toFloat(),
-                        enabled = clipboardHistoryEnabledState && clipboardSizeLimitEnabledState,
-                        title = {
-                            Text(
-                                stringResource(
-                                    R.string.clipboard_max_size,
-                                    clipboardMaxSizeSliderState.toInt(),
-                                ),
-                            )
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.DataArray,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SwitchPreference(
-                        value = usePrivateClipboardState,
-                        onValueChange = {
-                            usePrivateClipboardState = it
-                            updateClipboardSettings()
-                        },
-                        enabled = clipboardHistoryEnabledState,
-                        title = {
-                            Text(stringResource(R.string.use_private_clipboard))
-                        },
-                        summary = {
-                            Text(stringResource(R.string.use_private_clipboard_description))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.VisibilityOff,
-                                contentDescription = null,
-                            )
-                        },
-                    )
+                    ) {
+                        SliderPreference(
+                            value = clipboardMaxSizeState,
+                            sliderValue = clipboardMaxSizeSliderState,
+                            onValueChange = {
+                                clipboardMaxSizeState = it
+                                updateClipboardSettings()
+                            },
+                            onSliderValueChange = { clipboardMaxSizeSliderState = it },
+                            valueRange = MIN_CLIPBOARD_MAX_SIZE.toFloat()..MAX_CLIPBOARD_MAX_SIZE.toFloat(),
+                            enabled = clipboardHistoryEnabledState && clipboardSizeLimitEnabledState,
+                            title = {
+                                Text(stringResource(R.string.clipboard_max_size))
+                            },
+                            summary = {
+                                Text(stringResource(R.string.clipboard_max_size_summary, clipboardMaxSizeSliderState.toInt()))
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.DataArray,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+                    SettingRow(infoText = stringResource(R.string.use_private_clipboard_info)) {
+                        SwitchPreference(
+                            value = usePrivateClipboardState,
+                            onValueChange = {
+                                usePrivateClipboardState = it
+                                updateClipboardSettings()
+                            },
+                            enabled = clipboardHistoryEnabledState,
+                            title = {
+                                Text(stringResource(R.string.use_private_clipboard))
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (usePrivateClipboardState) {
+                                            R.string.use_private_clipboard_on
+                                        } else {
+                                            R.string.use_private_clipboard_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.VisibilityOff,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
                 }
             }
         },

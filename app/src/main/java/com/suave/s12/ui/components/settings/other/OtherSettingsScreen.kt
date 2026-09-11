@@ -27,6 +27,7 @@ import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
 import com.suave.s12.db.DEFAULT_SHOW_ON_SCREEN_KEYBOARD
 import com.suave.s12.db.OtherSettingsUpdate
+import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.toBool
@@ -77,25 +78,35 @@ fun OtherSettingsScreen(
                         .imePadding(),
             ) {
                 ProvidePreferenceTheme {
-                    SwitchPreference(
-                        value = showOnScreenKeyboardState,
-                        onValueChange = {
-                            showOnScreenKeyboardState = it
-                            updateOtherSettings()
-                        },
-                        title = {
-                            Text(stringResource(R.string.show_on_screen_keyboard))
-                        },
-                        summary = {
-                            Text(stringResource(R.string.show_on_screen_keyboard_description))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Keyboard,
-                                contentDescription = null,
-                            )
-                        },
-                    )
+                    SettingRow {
+                        SwitchPreference(
+                            value = showOnScreenKeyboardState,
+                            onValueChange = {
+                                showOnScreenKeyboardState = it
+                                updateOtherSettings()
+                            },
+                            title = {
+                                Text(stringResource(R.string.show_on_screen_keyboard))
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (showOnScreenKeyboardState) {
+                                            R.string.show_on_screen_keyboard_on
+                                        } else {
+                                            R.string.show_on_screen_keyboard_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Keyboard,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
                 }
             }
         },

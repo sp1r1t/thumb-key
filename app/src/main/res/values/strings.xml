@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name" translatable="false">Suave</string>
+    <string name="reset_to_default">Reset to default</string>
+    <string name="more_info">More info</string>
     <string name="settings">Settings</string>
     <string name="system">System</string>
     <string name="light">Light</string>
@@ -33,19 +35,24 @@
     <string name="position">Position</string>
     <string name="position_padding">Position padding: %1$s</string>
     <string name="vibrate_on_tap">Vibrate on tap</string>
-    <string name="vibrate_warning">Requires touch feedback to be enabled in system settings</string>
+    <string name="vibrate_on_tap_on">On - buzzes when a key is tapped</string>
+    <string name="vibrate_on_tap_off">Off - no vibration on tap</string>
+    <string name="vibrate_on_tap_info">Requires touch feedback to be enabled in your device\'s system settings, or this has no effect regardless of this toggle.</string>
     <string name="vibrate_on_slide">Vibrate for slide gestures</string>
-    <string name="vibrate_slide_note">Applies when sliding across the spacebar or backspace keys</string>
-    <string name="vibrate_slide_warning">Requires slide gestures to be enabled in Behavior settings</string>
+    <string name="vibrate_on_slide_on">On - buzzes when sliding on the spacebar or backspace keys</string>
+    <string name="vibrate_on_slide_off">Off - no vibration while sliding</string>
+    <string name="vibrate_on_slide_info">Requires touch feedback to be enabled in your device\'s system settings, or this has no effect regardless of this toggle.</string>
     <string name="play_sound_on_tap">Play sound on tap</string>
     <string name="auto_capitalize">Auto-capitalize</string>
     <string name="auto_size_keys">Maximize to fit screen width</string>
     <string name="key_size">Key size: %1$s</string>
     <string name="key_non_square">Use non-square keys</string>
-    <string name="key_height">Key height: %1$s</string>
+    <string name="key_height">Key height</string>
+    <string name="key_height_summary">Currently %1$sdp</string>
     <string name="key_width">Key width: %1$s</string>
     <string name="bottom_offset">Bottom offset: %1$s</string>
-    <string name="min_swipe_length">Minimum swipe length: %1$s</string>
+    <string name="min_swipe_length">Minimum swipe length</string>
+    <string name="min_swipe_length_summary">Currently %1$spx - how far a touch must move before it counts as a swipe instead of a tap</string>
     <string name="animation_speed">Animation speed: %1$s</string>
     <string name="animation_helper_speed">Animation helper speed: %1$s</string>
     <string name="slide_enable">Slide gestures</string>
@@ -70,7 +77,8 @@
     <string name="finish_setup">Finish setup</string>
     <string name="copy">Copied selected text</string>
     <string name="hide_letters">Hide letters</string>
-    <string name="hide_symbols">Hide symbols</string>
+    <string name="hide_letters_on">On - keys show no letter labels</string>
+    <string name="hide_letters_off">Off - keys show their letter labels</string>
     <string name="spacebar_multitaps">Spacebar multi-taps</string>
     <string name="done">Done</string>
     <string name="backdrop">Keyboard backdrop</string>
@@ -88,27 +96,33 @@
     <string name="slide_hold_enable">Slide-hold cursor movement</string>
     <string name="slide_hold_description">Slide and hold to repeat cursor movement, slide-return-hold for word movement. Backspace: slide-hold to repeat delete, slide-return-hold for word delete.</string>
     <string name="esc_as_modifier">Esc acts as a modifier</string>
-    <string name="esc_as_modifier_description">A quick Esc tap queues as a Meta-via-Escape combo for the next key (Esc+Esc sends a real Escape instead). Off: Esc always just sends a real Escape.</string>
+    <string name="esc_as_modifier_on">On - a quick tap queues Esc as a Meta-via-Escape combo for the next key; tapping Esc again while queued sends a real Escape instead</string>
+    <string name="esc_as_modifier_off">Off - Esc always just sends a real Escape, with no combo behavior</string>
+    <string name="esc_as_modifier_info">\"Meta via Escape\" is a standard terminal convention (Emacs and most terminals treat \"Esc x\" as \"M-x\"), which is what lets Esc double as a modifier here. Holding Esc while typing other keys sends that combo for as long as it\'s held; a quick tap queues it for just the next key. Tapping Esc again while it\'s still queued (Esc+Esc) sends a plain Escape instead of silently clearing the queue - the escape hatch for when you actually just wanted to press Escape.</string>
     <string name="backup_database">Backup database</string>
     <string name="restore_database">Restore database</string>
     <string name="restore_database_warning">Warning: This will clear out your current database</string>
     <string name="database_restored">Database Restored.</string>
     <string name="database_backed_up">Database Backed up.</string>
     <string name="backup_and_restore">Backup and restore</string>
-    <string name="modify_keys">Modify keys</string>
-    <string name="key_modification_placeholder">Enter YAML</string>
-    <string name="how_to_modify_keys">How to modify keys</string>
     <string name="ignore_bottom_padding">Ignore bottom padding</string>
-    <string name="show_toast_on_layout_switch">Show toast on layout switch</string>
+    <string name="ignore_bottom_padding_on">On - the keyboard extends into the bottom system inset (e.g. behind gesture navigation)</string>
+    <string name="ignore_bottom_padding_off">Off - the keyboard leaves room for the bottom system inset</string>
     <string name="disable_fullscreen_editor">Disable fullscreen text editor</string>
+    <string name="disable_fullscreen_editor_on">On - the keyboard never takes over the full screen, even in landscape</string>
+    <string name="disable_fullscreen_editor_off">Off - the keyboard may switch to a fullscreen editor in some apps/orientations</string>
+    <string name="disable_fullscreen_editor_info">Some apps ask the keyboard to take over the whole screen (usually in landscape) so there\'s room to type, hiding the app\'s own content until you\'re done. Turning this on keeps the normal keyboard layout visible instead, at the cost of less room to see what you\'re typing into.</string>
     <string name="warning_invalid_mode">Mode \"%s\" is not defined for layout \"%s\".</string>
     <!-- Clipboard History -->
     <string name="clipboard_history">Clipboard history</string>
     <string name="clipboard_history_enabled">Enable clipboard history</string>
-    <string name="clipboard_history_enabled_description">Store copied text for quick access</string>
+    <string name="clipboard_history_enabled_on">On - stores copied text for quick access</string>
+    <string name="clipboard_history_enabled_off">Off - copied text isn\'t stored for later</string>
     <string name="clipboard_auto_cleanup">Auto-cleanup old clips</string>
-    <string name="clipboard_auto_cleanup_description">Automatically remove old unpinned clips</string>
-    <string name="clipboard_cleanup_after">Cleanup after %1$s</string>
+    <string name="clipboard_auto_cleanup_on">On - old unpinned clips are removed automatically</string>
+    <string name="clipboard_auto_cleanup_off">Off - clips stay in history until you remove them</string>
+    <string name="clipboard_cleanup_after">Auto-cleanup duration</string>
+    <string name="clipboard_cleanup_after_summary">Currently cleans up unpinned clips after %1$s</string>
     <string name="duration_5_minutes">5 minutes</string>
     <string name="duration_10_minutes">10 minutes</string>
     <string name="duration_30_minutes">30 minutes</string>
@@ -121,8 +135,10 @@
     <string name="duration_4_days">4 days</string>
     <string name="duration_7_days">7 days</string>
     <string name="clipboard_size_limit">Limit history size</string>
-    <string name="clipboard_size_limit_description">Remove oldest clips when limit is reached</string>
-    <string name="clipboard_max_size">Max history size: %1$d</string>
+    <string name="clipboard_size_limit_on">On - oldest clips are removed once the limit is reached</string>
+    <string name="clipboard_size_limit_off">Off - clipboard history can grow without limit</string>
+    <string name="clipboard_max_size">Max history size</string>
+    <string name="clipboard_max_size_summary">Currently keeps up to %1$d clips</string>
     <string name="clipboard_clear_all">Clear all</string>
     <string name="clipboard_back">Back</string>
     <string name="clipboard_pin">Pin</string>
@@ -134,9 +150,12 @@
     <string name="clipboard_go_to_settings">Go to clipboard settings</string>
     <string name="clipboard_characters">%1$d characters</string>
     <string name="use_private_clipboard">Use private clipboard</string>
-    <string name="use_private_clipboard_description">Copy into internal clipboard instead of system clipboard"</string>
+    <string name="use_private_clipboard_on">On - copies go to Suave\'s internal clipboard instead of the system clipboard</string>
+    <string name="use_private_clipboard_off">Off - copies go to the normal system clipboard, shared with every app</string>
+    <string name="use_private_clipboard_info">The system clipboard is shared across every app on the device, and some apps or accessibility services can read it. Suave\'s private clipboard is only ever accessible from this keyboard, at the cost of not being able to paste what you copied here into another keyboard or clipboard manager.</string>
     <!-- Other -->
     <string name="other">Other</string>
     <string name="show_on_screen_keyboard">Show on-screen keyboard</string>
-    <string name="show_on_screen_keyboard_description">Show on-screen keyboard while using physical keyboard</string>
+    <string name="show_on_screen_keyboard_on">On - stays visible even while a physical keyboard is connected</string>
+    <string name="show_on_screen_keyboard_off">Off - hides itself while a physical keyboard is connected</string>
 </resources>

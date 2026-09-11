@@ -9,7 +9,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.HelpCenter
-import androidx.compose.material.icons.outlined.AppRegistration
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.Info
@@ -122,20 +121,6 @@ fun SettingsScreen(
                             )
                         },
                         onClick = { navController.navigate("clipboardSettings") },
-                    )
-                    Preference(
-                        title = {
-                            Text(
-                                text = stringResource(R.string.modify_keys),
-                            )
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.AppRegistration,
-                                contentDescription = null,
-                            )
-                        },
-                        onClick = { navController.navigate("modifyKeys") },
                     )
                     Preference(
                         title = { Text(stringResource(R.string.backup_and_restore)) },

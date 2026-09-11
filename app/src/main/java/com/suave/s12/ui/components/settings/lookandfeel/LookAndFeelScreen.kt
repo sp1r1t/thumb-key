@@ -8,24 +8,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Animation
 import androidx.compose.material.icons.outlined.BorderBottom
-import androidx.compose.material.icons.outlined.BorderOuter
 import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.Crop75
-import androidx.compose.material.icons.outlined.FormatSize
-import androidx.compose.material.icons.outlined.Fullscreen
 import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.LinearScale
-import androidx.compose.material.icons.outlined.Mail
-import androidx.compose.material.icons.outlined.MusicNote
-import androidx.compose.material.icons.outlined.Padding
 import androidx.compose.material.icons.outlined.Palette
-import androidx.compose.material.icons.outlined.RoundedCorner
-import androidx.compose.material.icons.outlined.VerticalAlignTop
 import androidx.compose.material.icons.outlined.Vibration
-import androidx.compose.material.icons.outlined.ViewDay
-import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.WebAssetOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -71,9 +60,9 @@ import com.suave.s12.db.DEFAULT_THEME_COLOR
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
 import com.suave.s12.db.LookAndFeelUpdate
+import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.TestOutTextField
 import com.suave.s12.ui.components.settings.about.SettingsDivider
-import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.ThemeColor
@@ -98,75 +87,47 @@ fun LookAndFeelScreen(
     val settings by appSettingsViewModel.appSettings.observeAsState()
     var themeState = ThemeMode.entries[settings?.theme ?: DEFAULT_THEME]
     var themeColorState = ThemeColor.entries[settings?.themeColor ?: DEFAULT_THEME_COLOR]
-    var autoSizeKeysState = (settings?.autoSizeKeys ?: DEFAULT_AUTO_SIZE_KEYS).toBool()
-    var nonSquareKeysState = (settings?.nonSquareKeys ?: DEFAULT_NON_SQUARE_KEYS).toBool()
     var keyHeightState = (settings?.keyHeight ?: DEFAULT_KEY_HEIGHT).toFloat()
     var keyHeightSliderState by remember { mutableFloatStateOf(keyHeightState) }
-    var keyWidthState = (settings?.keyWidth ?: DEFAULT_KEY_WIDTH).toFloat()
-    var keyWidthSliderState by remember { mutableFloatStateOf(keyWidthState) }
-
-    var pushupSizeState = (settings?.pushupSize ?: DEFAULT_PUSHUP_SIZE).toFloat()
-    var pushupSizeSliderState by remember { mutableFloatStateOf(pushupSizeState) }
-
-    var animationSpeedState = (settings?.animationSpeed ?: DEFAULT_ANIMATION_SPEED).toFloat()
-    var animationSpeedSliderState by remember { mutableFloatStateOf(animationSpeedState) }
-
-    var animationHelperSpeedState = (settings?.animationHelperSpeed ?: DEFAULT_ANIMATION_HELPER_SPEED).toFloat()
-    var animationHelperSpeedSliderState by remember { mutableFloatStateOf(animationHelperSpeedState) }
-
-    var keyPaddingState = (settings?.keyPadding ?: DEFAULT_KEY_PADDING).toFloat()
-    var keyPaddingSliderState by remember { mutableFloatStateOf(keyPaddingState) }
-
-    var keyBorderWidthState = (settings?.keyBorderWidth ?: DEFAULT_KEY_BORDER_WIDTH).toFloat()
-    var keyBorderWidthSliderState by remember { mutableFloatStateOf(keyBorderWidthState) }
-
-    var keyRadiusState = (settings?.keyRadius ?: DEFAULT_KEY_RADIUS).toFloat()
-    var keyRadiusSliderState by remember { mutableFloatStateOf(keyRadiusState) }
-
-    var positionState = KeyboardPosition.entries[settings?.position ?: DEFAULT_POSITION]
-
-    var positionPaddingState = (settings?.positionPadding ?: DEFAULT_POSITION_PADDING).toFloat()
-    var positionPaddingSliderState by remember { mutableFloatStateOf(positionPaddingState) }
 
     var vibrateOnTapState = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
     var vibrateOnSlideState = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
-    var soundOnTapState = (settings?.soundOnTap ?: DEFAULT_SOUND_ON_TAP).toBool()
     var hideLettersState = (settings?.hideLetters ?: DEFAULT_HIDE_LETTERS).toBool()
-    var hideSymbolsState = (settings?.hideSymbols ?: DEFAULT_HIDE_SYMBOLS).toBool()
     var ignoreBottomPaddingState = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
-    var showToastOnLayoutSwitchState = (settings?.showToastOnLayoutSwitch ?: DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH).toBool()
-
-    var backdropEnabledState = (settings?.backdropEnabled ?: DEFAULT_BACKDROP_ENABLED).toBool()
-
     var disableFullscreenEditorState = (settings?.disableFullscreenEditor ?: DEFAULT_DISABLE_FULLSCREEN_EDITOR).toBool()
 
     fun updateLookAndFeel() {
         appSettingsViewModel.updateLookAndFeel(
             LookAndFeelUpdate(
                 id = 1,
-                pushupSize = pushupSizeState.toInt(),
-                animationSpeed = animationSpeedState.toInt(),
-                animationHelperSpeed = animationHelperSpeedState.toInt(),
-                position = positionState.ordinal,
-                positionPadding = positionPaddingState.toInt(),
                 vibrateOnTap = vibrateOnTapState.toInt(),
                 vibrateOnSlide = vibrateOnSlideState.toInt(),
-                soundOnTap = soundOnTapState.toInt(),
                 hideLetters = hideLettersState.toInt(),
-                hideSymbols = hideSymbolsState.toInt(),
                 ignoreBottomPadding = ignoreBottomPaddingState.toInt(),
                 theme = themeState.ordinal,
                 themeColor = themeColorState.ordinal,
-                backdropEnabled = backdropEnabledState.toInt(),
-                keyPadding = keyPaddingState.toInt(),
-                keyBorderWidth = keyBorderWidthState.toInt(),
-                keyRadius = keyRadiusState.toInt(),
-                autoSizeKeys = autoSizeKeysState.toInt(),
-                nonSquareKeys = nonSquareKeysState.toInt(),
-                keyWidth = keyWidthState.toInt(),
                 keyHeight = keyHeightState.toInt(),
-                showToastOnLayoutSwitch = showToastOnLayoutSwitchState.toInt(),
                 disableFullscreenEditor = disableFullscreenEditorState.toInt(),
+                // Everything below is a read-through of whatever's already in the DB, not an
+                // editable setting any more - see CLAUDE.md's UI principles and this screen's
+                // audit history for why (dead fields from the pre-rewrite engine, with no live
+                // reader left anywhere). Passing the stored value instead of the bare default
+                // avoids silently resetting it just because an unrelated live control changed.
+                pushupSize = settings?.pushupSize ?: DEFAULT_PUSHUP_SIZE,
+                animationSpeed = settings?.animationSpeed ?: DEFAULT_ANIMATION_SPEED,
+                animationHelperSpeed = settings?.animationHelperSpeed ?: DEFAULT_ANIMATION_HELPER_SPEED,
+                position = settings?.position ?: DEFAULT_POSITION,
+                positionPadding = settings?.positionPadding ?: DEFAULT_POSITION_PADDING,
+                soundOnTap = settings?.soundOnTap ?: DEFAULT_SOUND_ON_TAP,
+                hideSymbols = settings?.hideSymbols ?: DEFAULT_HIDE_SYMBOLS,
+                backdropEnabled = settings?.backdropEnabled ?: DEFAULT_BACKDROP_ENABLED,
+                keyPadding = settings?.keyPadding ?: DEFAULT_KEY_PADDING,
+                keyBorderWidth = settings?.keyBorderWidth ?: DEFAULT_KEY_BORDER_WIDTH,
+                keyRadius = settings?.keyRadius ?: DEFAULT_KEY_RADIUS,
+                autoSizeKeys = settings?.autoSizeKeys ?: DEFAULT_AUTO_SIZE_KEYS,
+                nonSquareKeys = settings?.nonSquareKeys ?: DEFAULT_NON_SQUARE_KEYS,
+                keyWidth = settings?.keyWidth ?: DEFAULT_KEY_WIDTH,
+                showToastOnLayoutSwitch = settings?.showToastOnLayoutSwitch ?: DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH,
             ),
         )
     }
@@ -190,487 +151,231 @@ fun LookAndFeelScreen(
                         .imePadding(),
             ) {
                 ProvidePreferenceTheme {
-                    ListPreference(
-                        type = ListPreferenceType.DROPDOWN_MENU,
-                        value = themeState,
-                        onValueChange = {
-                            themeState = it
-                            updateLookAndFeel()
-                        },
-                        values = ThemeMode.entries,
-                        valueToText = {
-                            AnnotatedString(resources.getString(it.resId))
-                        },
-                        title = {
-                            Text(stringResource(R.string.theme))
-                        },
-                        summary = {
-                            Text(stringResource(themeState.resId))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Palette,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-
-                    ListPreference(
-                        type = ListPreferenceType.DROPDOWN_MENU,
-                        value = themeColorState,
-                        onValueChange = {
-                            themeColorState = it
-                            updateLookAndFeel()
-                        },
-                        values = ThemeColor.entries,
-                        valueToText = {
-                            AnnotatedString(resources.getString(it.resId))
-                        },
-                        title = {
-                            Text(stringResource(R.string.theme_color))
-                        },
-                        summary = {
-                            Text(stringResource(themeColorState.resId))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Colorize,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-
-                    ListPreference(
-                        type = ListPreferenceType.DROPDOWN_MENU,
-                        value = positionState,
-                        onValueChange = {
-                            positionState = it
-                            updateLookAndFeel()
-                        },
-                        values = KeyboardPosition.entries,
-                        valueToText = {
-                            AnnotatedString(resources.getString(it.resId))
-                        },
-                        summary = {
-                            Text(stringResource(positionState.resId))
-                        },
-                        title = {
-                            Text(stringResource(R.string.position))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.LinearScale,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-
-                    SliderPreference(
-                        value = positionPaddingState,
-                        sliderValue = positionPaddingSliderState,
-                        onValueChange = {
-                            positionPaddingState = it
-                            updateLookAndFeel()
-                        },
-                        onSliderValueChange = {
-                            positionPaddingSliderState = it
-                        },
-                        valueRange = -200f..200f,
-                        title = {
-                            val positionPaddingStr =
-                                stringResource(
-                                    R.string.position_padding,
-                                    positionPaddingSliderState.toInt().toString(),
-                                )
-                            Text(positionPaddingStr)
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.LinearScale,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-
-                    SwitchPreference(
-                        value = hideLettersState,
-                        onValueChange = {
-                            hideLettersState = it
-                            updateLookAndFeel()
-                        },
-                        title = {
-                            Text(stringResource(R.string.hide_letters))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.HideImage,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-
-                    SwitchPreference(
-                        value = hideSymbolsState,
-                        onValueChange = {
-                            hideSymbolsState = it
-                            updateLookAndFeel()
-                        },
-                        title = {
-                            Text(stringResource(R.string.hide_symbols))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.HideImage,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SwitchPreference(
-                        value = backdropEnabledState,
-                        onValueChange = {
-                            backdropEnabledState = it
-                            updateLookAndFeel()
-                        },
-                        title = {
-                            Text(stringResource(R.string.backdrop))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.ViewDay,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-
-                    SwitchPreference(
-                        value = ignoreBottomPaddingState,
-                        onValueChange = {
-                            ignoreBottomPaddingState = it
-                            updateLookAndFeel()
-                        },
-                        title = {
-                            Text(stringResource(R.string.ignore_bottom_padding))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.BorderBottom,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-
-                    SwitchPreference(
-                        value = showToastOnLayoutSwitchState,
-                        onValueChange = {
-                            showToastOnLayoutSwitchState = it
-                            updateLookAndFeel()
-                        },
-                        title = {
-                            Text(stringResource(R.string.show_toast_on_layout_switch))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Mail,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SwitchPreference(
-                        value = disableFullscreenEditorState,
-                        onValueChange = {
-                            disableFullscreenEditorState = it
-                            updateLookAndFeel()
-                        },
-                        title = {
-                            Text(stringResource(R.string.disable_fullscreen_editor))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.WebAssetOff,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-
-                    SwitchPreference(
-                        value = autoSizeKeysState,
-                        onValueChange = {
-                            autoSizeKeysState = it
-                            updateLookAndFeel()
-                        },
-                        title = {
-                            Text(stringResource(R.string.auto_size_keys))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Fullscreen,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-
-                    if (!autoSizeKeysState) {
-                        SliderPreference(
-                            value = keyWidthState,
-                            sliderValue = keyWidthSliderState,
+                    SettingRow(onReset = {
+                        themeState = ThemeMode.entries[DEFAULT_THEME]
+                        updateLookAndFeel()
+                    }) {
+                        ListPreference(
+                            type = ListPreferenceType.DROPDOWN_MENU,
+                            value = themeState,
                             onValueChange = {
-                                keyWidthState = it
+                                themeState = it
                                 updateLookAndFeel()
                             },
-                            onSliderValueChange = {
-                                keyWidthSliderState = it
+                            values = ThemeMode.entries,
+                            valueToText = {
+                                AnnotatedString(resources.getString(it.resId))
                             },
-                            valueRange = 10f..200f,
                             title = {
-                                val keyHeightStr =
-                                    stringResource(
-                                        if (nonSquareKeysState) R.string.key_width else R.string.key_size,
-                                        keyWidthSliderState.toInt().toString(),
-                                    )
-                                Text(keyHeightStr)
+                                Text(stringResource(R.string.theme))
+                            },
+                            summary = {
+                                Text(stringResource(themeState.resId))
                             },
                             icon = {
                                 Icon(
-                                    imageVector = Icons.Outlined.FormatSize,
+                                    imageVector = Icons.Outlined.Palette,
                                     contentDescription = null,
                                 )
                             },
                         )
                     }
 
-                    SwitchPreference(
-                        value = nonSquareKeysState,
-                        onValueChange = {
-                            nonSquareKeysState = it
-                            updateLookAndFeel()
-                        },
-                        title = {
-                            Text(stringResource(R.string.key_non_square))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Crop75,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-
-                    // Unlike the old engine, key width here is always auto-fit, so there's no
-                    // square-vs-non-square distinction to gate this behind - height always
-                    // applies directly.
-                    SliderPreference(
-                        value = keyHeightState,
-                        sliderValue = keyHeightSliderState,
-                        onValueChange = {
-                            keyHeightState = it
-                            updateLookAndFeel()
-                        },
-                        onSliderValueChange = {
-                            keyHeightSliderState = it
-                        },
-                        valueRange = 10f..200f,
-                        title = {
-                            val keyHeightStr =
-                                stringResource(
-                                    R.string.key_height,
-                                    keyHeightSliderState.toInt().toString(),
+                    SettingRow(onReset = {
+                        themeColorState = ThemeColor.entries[DEFAULT_THEME_COLOR]
+                        updateLookAndFeel()
+                    }) {
+                        ListPreference(
+                            type = ListPreferenceType.DROPDOWN_MENU,
+                            value = themeColorState,
+                            onValueChange = {
+                                themeColorState = it
+                                updateLookAndFeel()
+                            },
+                            values = ThemeColor.entries,
+                            valueToText = {
+                                AnnotatedString(resources.getString(it.resId))
+                            },
+                            title = {
+                                Text(stringResource(R.string.theme_color))
+                            },
+                            summary = {
+                                Text(stringResource(themeColorState.resId))
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Colorize,
+                                    contentDescription = null,
                                 )
-                            Text(keyHeightStr)
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Crop75,
-                                contentDescription = null,
-                            )
-                        },
-                    )
+                            },
+                        )
+                    }
 
-                    SliderPreference(
-                        value = keyPaddingState,
-                        sliderValue = keyPaddingSliderState,
-                        onValueChange = {
-                            keyPaddingState = it
-                            updateLookAndFeel()
-                        },
-                        onSliderValueChange = { keyPaddingSliderState = it },
-                        valueRange = 0f..10f,
-                        title = {
-                            val keyPaddingStr = stringResource(R.string.key_padding, keyPaddingSliderState.toInt().toString())
-                            Text(keyPaddingStr)
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Padding,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SliderPreference(
-                        value = keyBorderWidthState,
-                        sliderValue = keyBorderWidthSliderState,
-                        onValueChange = {
-                            keyBorderWidthState = it
-                            updateLookAndFeel()
-                        },
-                        onSliderValueChange = { keyBorderWidthSliderState = it },
-                        valueRange = 0f..50f,
-                        title = {
-                            val keyBorderWidthStr = stringResource(R.string.key_border_width, keyBorderWidthSliderState.toInt().toString())
-                            Text(keyBorderWidthStr)
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.BorderOuter,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SliderPreference(
-                        value = keyRadiusState,
-                        sliderValue = keyRadiusSliderState,
-                        onValueChange = {
-                            keyRadiusState = it
-                            updateLookAndFeel()
-                        },
-                        onSliderValueChange = { keyRadiusSliderState = it },
-                        valueRange = 0f..100f,
-                        title = {
-                            val keyRadiusStr = stringResource(R.string.key_radius, keyRadiusSliderState.toInt().toString())
-                            Text(keyRadiusStr)
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.RoundedCorner,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SliderPreference(
-                        value = pushupSizeState,
-                        sliderValue = pushupSizeSliderState,
-                        onValueChange = {
-                            pushupSizeState = it
-                            updateLookAndFeel()
-                        },
-                        onSliderValueChange = { pushupSizeSliderState = it },
-                        valueRange = 0f..250f,
-                        title = {
-                            val bottomOffsetStr = stringResource(R.string.bottom_offset, pushupSizeSliderState.toInt().toString())
-                            Text(bottomOffsetStr)
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.VerticalAlignTop,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SliderPreference(
-                        value = animationSpeedState,
-                        sliderValue = animationSpeedSliderState,
-                        onValueChange = {
-                            animationSpeedState = it
-                            updateLookAndFeel()
-                        },
-                        onSliderValueChange = { animationSpeedSliderState = it },
-                        valueRange = 0f..500f,
-                        title = {
-                            val animationSpeedStr = stringResource(R.string.animation_speed, animationSpeedSliderState.toInt().toString())
-                            Text(animationSpeedStr)
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Animation,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SliderPreference(
-                        value = animationHelperSpeedState,
-                        sliderValue = animationHelperSpeedSliderState,
-                        onValueChange = {
-                            animationHelperSpeedState = it
-                            updateLookAndFeel()
-                        },
-                        onSliderValueChange = { animationHelperSpeedSliderState = it },
-                        valueRange = 0f..500f,
-                        title = {
-                            val animationHelperSpeedStr =
-                                stringResource(
-                                    R.string.animation_helper_speed,
-                                    animationHelperSpeedSliderState
-                                        .toInt()
-                                        .toString(),
-                                )
-                            Text(animationHelperSpeedStr)
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Visibility,
-                                contentDescription = null,
-                            )
-                        },
-                    )
                     SettingsDivider()
-                    SwitchPreference(
-                        value = vibrateOnTapState,
-                        onValueChange = {
-                            vibrateOnTapState = it
+
+                    SettingRow {
+                        SwitchPreference(
+                            value = hideLettersState,
+                            onValueChange = {
+                                hideLettersState = it
+                                updateLookAndFeel()
+                            },
+                            title = {
+                                Text(stringResource(R.string.hide_letters))
+                            },
+                            summary = {
+                                Text(stringResource(if (hideLettersState) R.string.hide_letters_on else R.string.hide_letters_off))
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.HideImage,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+
+                    SettingRow {
+                        SwitchPreference(
+                            value = ignoreBottomPaddingState,
+                            onValueChange = {
+                                ignoreBottomPaddingState = it
+                                updateLookAndFeel()
+                            },
+                            title = {
+                                Text(stringResource(R.string.ignore_bottom_padding))
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (ignoreBottomPaddingState) {
+                                            R.string.ignore_bottom_padding_on
+                                        } else {
+                                            R.string.ignore_bottom_padding_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.BorderBottom,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+
+                    SettingRow(infoText = stringResource(R.string.disable_fullscreen_editor_info)) {
+                        SwitchPreference(
+                            value = disableFullscreenEditorState,
+                            onValueChange = {
+                                disableFullscreenEditorState = it
+                                updateLookAndFeel()
+                            },
+                            title = {
+                                Text(stringResource(R.string.disable_fullscreen_editor))
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (disableFullscreenEditorState) {
+                                            R.string.disable_fullscreen_editor_on
+                                        } else {
+                                            R.string.disable_fullscreen_editor_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.WebAssetOff,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+
+                    SettingRow(
+                        onReset = {
+                            keyHeightState = DEFAULT_KEY_HEIGHT.toFloat()
+                            keyHeightSliderState = DEFAULT_KEY_HEIGHT.toFloat()
                             updateLookAndFeel()
                         },
-                        title = {
-                            Text(stringResource(R.string.vibrate_on_tap))
-                        },
-                        summary = {
-                            Text(stringResource(R.string.vibrate_warning))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Vibration,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SwitchPreference(
-                        enabled = settings?.slideEnabled?.toBool() == true,
-                        value = vibrateOnSlideState,
-                        onValueChange = {
-                            vibrateOnSlideState = it
-                            updateLookAndFeel()
-                        },
-                        title = {
-                            Text(stringResource(R.string.vibrate_on_slide))
-                        },
-                        summary = {
-                            if (settings?.slideEnabled?.toBool() == true) {
-                                Text(stringResource(R.string.vibrate_slide_note))
-                            } else {
-                                Text(stringResource(R.string.vibrate_slide_warning))
-                            }
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.LinearScale,
-                                contentDescription = null,
-                            )
-                        },
-                    )
-                    SwitchPreference(
-                        value = soundOnTapState,
-                        onValueChange = {
-                            soundOnTapState = it
-                            updateLookAndFeel()
-                        },
-                        title = {
-                            Text(stringResource(R.string.play_sound_on_tap))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.MusicNote,
-                                contentDescription = null,
-                            )
-                        },
-                    )
+                    ) {
+                        SliderPreference(
+                            value = keyHeightState,
+                            sliderValue = keyHeightSliderState,
+                            onValueChange = {
+                                keyHeightState = it
+                                updateLookAndFeel()
+                            },
+                            onSliderValueChange = {
+                                keyHeightSliderState = it
+                            },
+                            valueRange = 10f..200f,
+                            title = {
+                                Text(stringResource(R.string.key_height))
+                            },
+                            summary = {
+                                Text(stringResource(R.string.key_height_summary, keyHeightSliderState.toInt().toString()))
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Crop75,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+
+                    SettingsDivider()
+
+                    SettingRow(infoText = stringResource(R.string.vibrate_on_tap_info)) {
+                        SwitchPreference(
+                            value = vibrateOnTapState,
+                            onValueChange = {
+                                vibrateOnTapState = it
+                                updateLookAndFeel()
+                            },
+                            title = {
+                                Text(stringResource(R.string.vibrate_on_tap))
+                            },
+                            summary = {
+                                Text(stringResource(if (vibrateOnTapState) R.string.vibrate_on_tap_on else R.string.vibrate_on_tap_off))
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Vibration,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+                    SettingRow(infoText = stringResource(R.string.vibrate_on_slide_info)) {
+                        SwitchPreference(
+                            value = vibrateOnSlideState,
+                            onValueChange = {
+                                vibrateOnSlideState = it
+                                updateLookAndFeel()
+                            },
+                            title = {
+                                Text(stringResource(R.string.vibrate_on_slide))
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (vibrateOnSlideState) R.string.vibrate_on_slide_on else R.string.vibrate_on_slide_off,
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.LinearScale,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
                     SettingsDivider()
                     TestOutTextField()
                 }
