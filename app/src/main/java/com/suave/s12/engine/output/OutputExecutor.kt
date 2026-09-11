@@ -106,25 +106,28 @@ object OutputExecutor {
             moveCursor(direction, resetAnchor = true, extend = extend, capabilities, ic)
             return
         }
-        val keyCode =
-            when (action.id) {
-                CommandId.ENTER -> KeyEvent.KEYCODE_ENTER
-                CommandId.TAB -> KeyEvent.KEYCODE_TAB
-                CommandId.BACKSPACE -> KeyEvent.KEYCODE_DEL
-                CommandId.DELETE_FORWARD -> KeyEvent.KEYCODE_FORWARD_DEL
-                CommandId.SPACE -> KeyEvent.KEYCODE_SPACE
-                CommandId.ARROW_LEFT -> KeyEvent.KEYCODE_DPAD_LEFT
-                CommandId.ARROW_RIGHT -> KeyEvent.KEYCODE_DPAD_RIGHT
-                CommandId.ARROW_UP -> KeyEvent.KEYCODE_DPAD_UP
-                CommandId.ARROW_DOWN -> KeyEvent.KEYCODE_DPAD_DOWN
-                CommandId.ESCAPE -> KeyEvent.KEYCODE_ESCAPE
-                CommandId.CTRL -> KeyEvent.KEYCODE_CTRL_LEFT
-                CommandId.ALT -> KeyEvent.KEYCODE_ALT_LEFT
-                CommandId.SHIFT -> KeyEvent.KEYCODE_SHIFT_LEFT
-            }
+        val keyCode = keyCodeFor(action.id) ?: return
         sendEscIfNeeded(action.modifiers, ic)
         sendKeyEvent(ic, keyCode, metaStateFor(action.modifiers))
     }
+
+    private fun keyCodeFor(id: CommandId): Int? =
+        when (id) {
+            CommandId.ENTER -> KeyEvent.KEYCODE_ENTER
+            CommandId.TAB -> KeyEvent.KEYCODE_TAB
+            CommandId.BACKSPACE -> KeyEvent.KEYCODE_DEL
+            CommandId.DELETE_FORWARD -> KeyEvent.KEYCODE_FORWARD_DEL
+            CommandId.SPACE -> KeyEvent.KEYCODE_SPACE
+            CommandId.ARROW_LEFT -> KeyEvent.KEYCODE_DPAD_LEFT
+            CommandId.ARROW_RIGHT -> KeyEvent.KEYCODE_DPAD_RIGHT
+            CommandId.ARROW_UP -> KeyEvent.KEYCODE_DPAD_UP
+            CommandId.ARROW_DOWN -> KeyEvent.KEYCODE_DPAD_DOWN
+            CommandId.ESCAPE -> KeyEvent.KEYCODE_ESCAPE
+            CommandId.CTRL -> KeyEvent.KEYCODE_CTRL_LEFT
+            CommandId.ALT -> KeyEvent.KEYCODE_ALT_LEFT
+            CommandId.SHIFT -> KeyEvent.KEYCODE_SHIFT_LEFT
+            else -> null
+        }
 
     private fun arrowDirectionFor(id: CommandId): CursorDirection? =
         when (id) {

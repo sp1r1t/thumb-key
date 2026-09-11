@@ -58,10 +58,9 @@ object ModifierEngine {
                 ResolvedIntent.TypedCommand(intent.id, state.active.keys)
             }
 
-            // Neither routes through resolve() in practice - ModifierPress goes through
-            // applyModifierGesture, LegacyAction is unwrapped directly by the UI wiring (Step 5)
-            // before it would ever reach here. Both are inert if resolve() is called anyway.
-            is KeyIntent.ModifierPress, is KeyIntent.LegacyAction -> {
+            // ModifierPress routes through applyModifierGesture, not resolve(). Inert if
+            // resolve() is called anyway.
+            is KeyIntent.ModifierPress -> {
                 ResolvedIntent.Noop
             }
 

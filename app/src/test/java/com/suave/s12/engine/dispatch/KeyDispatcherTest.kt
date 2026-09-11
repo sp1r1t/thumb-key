@@ -17,7 +17,6 @@ import com.suave.s12.engine.intent.SlideBehavior
 import com.suave.s12.engine.modifier.ActivationMode
 import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.engine.modifier.modifierBehaviors
-import com.suave.s12.utils.KeyAction
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -46,11 +45,11 @@ class KeyDispatcherTest {
         val letterDispatcher = KeyDispatcher(LETTER_KEY)
         val executed = mutableListOf<SemanticAction>()
 
-        var state = ctrlDispatcher.handle(Gesture.Hold(Zone.Center), ModifierState(), executed::add, {}, {})
-        state = letterDispatcher.handle(Gesture.Pressed, state, executed::add, {}, {})
-        state = letterDispatcher.handle(Gesture.Tap(Zone.Center), state, executed::add, {}, {})
-        state = letterDispatcher.handle(Gesture.Released, state, executed::add, {}, {})
-        state = ctrlDispatcher.handle(Gesture.Released, state, executed::add, {}, {})
+        var state = ctrlDispatcher.handle(Gesture.Hold(Zone.Center), ModifierState(), executed::add)
+        state = letterDispatcher.handle(Gesture.Pressed, state, executed::add)
+        state = letterDispatcher.handle(Gesture.Tap(Zone.Center), state, executed::add)
+        state = letterDispatcher.handle(Gesture.Released, state, executed::add)
+        state = ctrlDispatcher.handle(Gesture.Released, state, executed::add)
 
         assertEquals(listOf(SemanticAction.TypeText("s", setOf(ModifierId.CTRL))), executed)
         assertFalse("holding Ctrl through a command then releasing must deactivate it outright", state.isActive(ModifierId.CTRL))
@@ -66,7 +65,6 @@ class KeyDispatcherTest {
                 Gesture.Tap(Zone.Directional(Direction.RIGHT)),
                 ModifierState(),
                 onExecute = {},
-                onLegacyAction = {},
                 onFeedback = feedback::add,
             )
 
@@ -83,14 +81,14 @@ class KeyDispatcherTest {
         val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY)
 
         // Hold-swipe to Alt: locks Alt as HELD.
-        var state = dispatcher.handle(Gesture.Hold(Zone.Directional(Direction.RIGHT)), ModifierState(), {}, {}, {})
+        var state = dispatcher.handle(Gesture.Hold(Zone.Directional(Direction.RIGHT)), ModifierState())
         assertEquals(ActivationMode.HELD, state.active.getValue(ModifierId.ALT).mode)
 
         // Release: must deactivate ALT (the zone this press actually engaged), immediately, and
         // must never have touched CTRL at all - this is the exact bug class from the old engine,
         // where the center action fired unconditionally on press-down regardless of which zone
         // the swipe eventually locked.
-        state = dispatcher.handle(Gesture.Released, state, {}, {}, {})
+        state = dispatcher.handle(Gesture.Released, state, {})
 
         assertFalse(state.isActive(ModifierId.ALT))
         assertFalse("Ctrl must never have been touched by a press that locked onto the Alt zone", state.isActive(ModifierId.CTRL))
@@ -100,8 +98,8 @@ class KeyDispatcherTest {
     fun `swiping to Esc then releasing without ever holding still leaves Esc as a clean one-shot`() {
         val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY)
 
-        var state = dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.UP)), ModifierState(), {}, {}, {})
-        state = dispatcher.handle(Gesture.Released, state, {}, {}, {})
+        var state = dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.UP)), ModifierState())
+        state = dispatcher.handle(Gesture.Released, state)
 
         assertTrue("a quick swipe-tap to Esc should still be a one-shot activation", state.isActive(ModifierId.ESC))
         assertEquals(ActivationMode.ONE_SHOT, state.active.getValue(ModifierId.ESC).mode)
@@ -114,16 +112,16 @@ class KeyDispatcherTest {
         val escZone = Zone.Directional(Direction.UP)
 
         // First press: a normal quick swipe-tap to Esc, queuing it as a one-shot combo prefix.
-        var state = dispatcher.handle(Gesture.Pressed, ModifierState(), executed::add, {}, {})
-        state = dispatcher.handle(Gesture.SwipeLocked(Direction.UP), state, executed::add, {}, {})
-        state = dispatcher.handle(Gesture.Tap(escZone), state, executed::add, {}, {})
-        state = dispatcher.handle(Gesture.Released, state, executed::add, {}, {})
+        var state = dispatcher.handle(Gesture.Pressed, ModifierState(), executed::add)
+        state = dispatcher.handle(Gesture.SwipeLocked(Direction.UP), state, executed::add)
+        state = dispatcher.handle(Gesture.Tap(escZone), state, executed::add)
+        state = dispatcher.handle(Gesture.Released, state, executed::add)
         assertTrue("first tap queues a one-shot Esc combo prefix", state.isActive(ModifierId.ESC))
 
         // Second, separate press on the same zone while that's still queued: Esc+Esc.
-        state = dispatcher.handle(Gesture.Pressed, state, executed::add, {}, {})
-        state = dispatcher.handle(Gesture.SwipeLocked(Direction.UP), state, executed::add, {}, {})
-        state = dispatcher.handle(Gesture.Tap(escZone), state, executed::add, {}, {})
+        state = dispatcher.handle(Gesture.Pressed, state, executed::add)
+        state = dispatcher.handle(Gesture.SwipeLocked(Direction.UP), state, executed::add)
+        state = dispatcher.handle(Gesture.Tap(escZone), state, executed::add)
 
         assertEquals(listOf(SemanticAction.TypeCommand(CommandId.ESCAPE)), executed.filterIsInstance<SemanticAction.TypeCommand>())
         assertFalse("Esc+Esc must consume the queued one-shot instead of leaving it active", state.isActive(ModifierId.ESC))
@@ -135,7 +133,7 @@ class KeyDispatcherTest {
         val executed = mutableListOf<SemanticAction>()
 
         val state =
-            dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.UP)), ModifierState(), executed::add, {}, {})
+            dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.UP)), ModifierState(), executed::add)
 
         assertEquals(listOf(SemanticAction.TypeCommand(CommandId.ESCAPE)), executed)
         assertFalse("standalone mode never activates Esc as a modifier", state.isActive(ModifierId.ESC))
@@ -147,8 +145,8 @@ class KeyDispatcherTest {
         val executed = mutableListOf<SemanticAction>()
         val escZone = Zone.Directional(Direction.UP)
 
-        dispatcher.handle(Gesture.Hold(escZone), ModifierState(), executed::add, {}, {})
-        dispatcher.handle(Gesture.HoldRepeat(escZone), ModifierState(), executed::add, {}, {})
+        dispatcher.handle(Gesture.Hold(escZone), ModifierState(), executed::add)
+        dispatcher.handle(Gesture.HoldRepeat(escZone), ModifierState(), executed::add)
 
         assertEquals(
             listOf(SemanticAction.TypeCommand(CommandId.ESCAPE), SemanticAction.TypeCommand(CommandId.ESCAPE)),
@@ -163,7 +161,7 @@ class KeyDispatcherTest {
         val executed = mutableListOf<SemanticAction>()
         val feedback = mutableListOf<FeedbackEvent>()
 
-        dispatcher.handle(Gesture.Tap(Zone.Center), ModifierState(), executed::add, {}, feedback::add)
+        dispatcher.handle(Gesture.Tap(Zone.Center), ModifierState(), executed::add, feedback::add)
 
         assertEquals(listOf(SemanticAction.TypeText("a")), executed)
         assertEquals(emptyList<FeedbackEvent>(), feedback)
@@ -181,12 +179,12 @@ class KeyDispatcherTest {
         val feedback = mutableListOf<FeedbackEvent>()
 
         // Touch-down - buzz #1, before anything about this press is known.
-        dispatcher.handle(Gesture.Pressed, ModifierState(), executed::add, {}, feedback::add)
+        dispatcher.handle(Gesture.Pressed, ModifierState(), executed::add, feedback::add)
         // The lock, mid-drag - buzz #2, nothing executes yet.
-        dispatcher.handle(Gesture.SwipeLocked(Direction.UP), ModifierState(), executed::add, {}, feedback::add)
+        dispatcher.handle(Gesture.SwipeLocked(Direction.UP), ModifierState(), executed::add, feedback::add)
         // The eventual commit on release - executes the character, but no third buzz: that
         // would land right as the finger lifts, the worst moment to feel it.
-        dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.UP)), ModifierState(), executed::add, {}, feedback::add)
+        dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.UP)), ModifierState(), executed::add, feedback::add)
 
         assertEquals(listOf(FeedbackEvent.TapRecognized, FeedbackEvent.SwipeLocked(Direction.UP)), feedback)
         assertEquals(listOf(SemanticAction.TypeText("1")), executed)
@@ -198,23 +196,26 @@ class KeyDispatcherTest {
         val dispatcher = KeyDispatcher(key)
         val feedback = mutableListOf<FeedbackEvent>()
 
-        dispatcher.handle(Gesture.Pressed, ModifierState(), {}, {}, feedback::add)
-        dispatcher.handle(Gesture.Tap(Zone.Center), ModifierState(), {}, {}, feedback::add)
+        dispatcher.handle(Gesture.Pressed, ModifierState(), {}, feedback::add)
+        dispatcher.handle(Gesture.Tap(Zone.Center), ModifierState(), {}, feedback::add)
 
         assertEquals(listOf(FeedbackEvent.TapRecognized), feedback)
     }
 
     @Test
-    fun `a legacy action key fires once on tap and not again on hold-repeat`() {
-        val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.LegacyAction(KeyAction.Copy)))
+    fun `a copy command fires once on hold and not again on hold-repeat`() {
+        val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Command(CommandId.COPY)))
         val dispatcher = KeyDispatcher(key)
-        val fired = mutableListOf<KeyAction>()
+        val executed = mutableListOf<SemanticAction>()
 
-        dispatcher.handle(Gesture.Hold(Zone.Center), ModifierState(), {}, fired::add, {})
-        dispatcher.handle(Gesture.HoldRepeat(Zone.Center), ModifierState(), {}, fired::add, {})
-        dispatcher.handle(Gesture.HoldRepeat(Zone.Center), ModifierState(), {}, fired::add, {})
+        dispatcher.handle(Gesture.Hold(Zone.Center), ModifierState(), executed::add)
+        dispatcher.handle(Gesture.HoldRepeat(Zone.Center), ModifierState(), executed::add)
+        dispatcher.handle(Gesture.HoldRepeat(Zone.Center), ModifierState(), executed::add)
 
-        assertEquals(listOf(KeyAction.Copy), fired)
+        assertEquals(listOf(SemanticAction.TypeCommand(CommandId.COPY)), executed)
+        assertFalse(KeyIntent.Command(CommandId.COPY).repeatsOnHold())
+        assertTrue(KeyIntent.Command(CommandId.ENTER).repeatsOnHold())
+        assertTrue(KeyIntent.Command(CommandId.UNDO).repeatsOnHold())
     }
 
     @Test
@@ -225,9 +226,9 @@ class KeyDispatcherTest {
 
         // Ctrl's own Hold threshold never fires here - only Pressed does - matching the real
         // "tap+hold Ctrl, then immediately press a" scenario the user reported as a delay.
-        var state = ctrlDispatcher.handle(Gesture.Pressed, ModifierState(), executed::add, {}, {})
-        state = letterDispatcher.handle(Gesture.Pressed, state, executed::add, {}, {})
-        state = letterDispatcher.handle(Gesture.Tap(Zone.Center), state, executed::add, {}, {})
+        var state = ctrlDispatcher.handle(Gesture.Pressed, ModifierState(), executed::add)
+        state = letterDispatcher.handle(Gesture.Pressed, state, executed::add)
+        state = letterDispatcher.handle(Gesture.Tap(Zone.Center), state, executed::add)
 
         assertEquals(listOf(SemanticAction.TypeText("s", setOf(ModifierId.CTRL))), executed)
     }
@@ -237,9 +238,9 @@ class KeyDispatcherTest {
         val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY)
         val feedback = mutableListOf<FeedbackEvent>()
 
-        var state = dispatcher.handle(Gesture.Pressed, ModifierState(), {}, {}, feedback::add)
-        state = dispatcher.handle(Gesture.Tap(Zone.Center), state, {}, {}, feedback::add)
-        state = dispatcher.handle(Gesture.Released, state, {}, {}, feedback::add)
+        var state = dispatcher.handle(Gesture.Pressed, ModifierState(), {}, feedback::add)
+        state = dispatcher.handle(Gesture.Tap(Zone.Center), state, {}, feedback::add)
+        state = dispatcher.handle(Gesture.Released, state, {}, feedback::add)
 
         // Exactly one buzz for the whole press - the "on tap in vibrates twice" bug was Pressed's
         // TapRecognized plus a second ModifierActivated fired from the Tap branch itself.
@@ -252,16 +253,16 @@ class KeyDispatcherTest {
     fun `pressing then swiping from Ctrl to Alt leaves only Alt active, never both`() {
         val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY)
 
-        var state = dispatcher.handle(Gesture.Pressed, ModifierState(), {}, {}, {})
+        var state = dispatcher.handle(Gesture.Pressed, ModifierState(), {})
         assertTrue("Pressed provisionally guesses the center zone's modifier", state.isActive(ModifierId.CTRL))
 
-        state = dispatcher.handle(Gesture.SwipeLocked(Direction.RIGHT), state, {}, {}, {})
+        state = dispatcher.handle(Gesture.SwipeLocked(Direction.RIGHT), state, {})
 
         assertFalse("hand-off to the zone the swipe actually locked must undo the provisional guess", state.isActive(ModifierId.CTRL))
         assertTrue(state.isActive(ModifierId.ALT))
 
-        state = dispatcher.handle(Gesture.Hold(Zone.Directional(Direction.RIGHT)), state, {}, {}, {})
-        state = dispatcher.handle(Gesture.Released, state, {}, {}, {})
+        state = dispatcher.handle(Gesture.Hold(Zone.Directional(Direction.RIGHT)), state, {})
+        state = dispatcher.handle(Gesture.Released, state, {})
 
         assertFalse(state.isActive(ModifierId.ALT))
         assertFalse("Ctrl must never have leaked back active after the hand-off", state.isActive(ModifierId.CTRL))
@@ -278,9 +279,9 @@ class KeyDispatcherTest {
         val dispatcher = KeyDispatcher(key)
         val executed = mutableListOf<SemanticAction>()
 
-        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, -1), ModifierState(), executed::add, {}, {})
-        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, -1), ModifierState(), executed::add, {}, {})
-        dispatcher.handle(Gesture.Released, ModifierState(), executed::add, {}, {})
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, -1), ModifierState(), executed::add)
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, -1), ModifierState(), executed::add)
+        dispatcher.handle(Gesture.Released, ModifierState(), executed::add)
 
         val steps = executed.filterIsInstance<SemanticAction.ExtendSelection>()
         assertEquals(2, steps.size)
@@ -299,9 +300,9 @@ class KeyDispatcherTest {
         val dispatcher = KeyDispatcher(key)
         val executed = mutableListOf<SemanticAction>()
 
-        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, -1), ModifierState(), executed::add, {}, {})
-        dispatcher.handle(Gesture.Released, ModifierState(), executed::add, {}, {})
-        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, -1), ModifierState(), executed::add, {}, {})
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, -1), ModifierState(), executed::add)
+        dispatcher.handle(Gesture.Released, ModifierState(), executed::add)
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, -1), ModifierState(), executed::add)
 
         val steps = executed.filterIsInstance<SemanticAction.ExtendSelection>()
         assertEquals(2, steps.size)
@@ -319,8 +320,8 @@ class KeyDispatcherTest {
         val dispatcher = KeyDispatcher(key)
         val executed = mutableListOf<SemanticAction>()
 
-        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add, {}, {})
-        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add, {}, {})
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add)
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add)
 
         val steps = executed.filterIsInstance<SemanticAction.MoveCursor>()
         assertEquals(2, steps.size)
@@ -335,7 +336,7 @@ class KeyDispatcherTest {
         val executed = mutableListOf<SemanticAction>()
         val shiftHeld = ModifierState().activate(ModifierId.SHIFT, ActivationMode.HELD)
 
-        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), shiftHeld, executed::add, {}, {})
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), shiftHeld, executed::add)
 
         assertEquals(listOf(SemanticAction.ExtendSelection(CursorDirection.RIGHT, resetAnchor = true)), executed)
     }
@@ -346,7 +347,7 @@ class KeyDispatcherTest {
         val dispatcher = KeyDispatcher(key)
         val executed = mutableListOf<SemanticAction>()
 
-        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add, {}, {})
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add)
 
         assertEquals(listOf(SemanticAction.MoveCursor(CursorDirection.RIGHT, resetAnchor = true)), executed)
     }
@@ -358,8 +359,8 @@ class KeyDispatcherTest {
         val executed = mutableListOf<SemanticAction>()
         val shiftHeld = ModifierState().activate(ModifierId.SHIFT, ActivationMode.HELD)
 
-        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), shiftHeld, executed::add, {}, {})
-        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add, {}, {})
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), shiftHeld, executed::add)
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add)
 
         assertEquals(
             listOf(
@@ -377,15 +378,15 @@ class KeyDispatcherTest {
         val executed = mutableListOf<SemanticAction>()
         val shiftOneShot = ModifierState().activate(ModifierId.SHIFT, ActivationMode.ONE_SHOT)
 
-        var state = dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), shiftOneShot, executed::add, {}, {})
-        state = dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), state, executed::add, {}, {})
+        var state = dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), shiftOneShot, executed::add)
+        state = dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), state, executed::add)
 
         // Still selecting on the second step - a one-shot Shift wasn't consumed mid-slide, which
         // would otherwise have reverted the rest of the slide to plain cursor movement.
         assertEquals(2, executed.filterIsInstance<SemanticAction.ExtendSelection>().size)
         assertTrue("Shift must still be active mid-slide", state.isActive(ModifierId.SHIFT))
 
-        state = dispatcher.handle(Gesture.Released, state, executed::add, {}, {})
+        state = dispatcher.handle(Gesture.Released, state, executed::add)
 
         assertFalse("a one-shot Shift must be consumed once the whole slide press ends", state.isActive(ModifierId.SHIFT))
     }
@@ -401,9 +402,9 @@ class KeyDispatcherTest {
         val dispatcher = KeyDispatcher(key)
         val executed = mutableListOf<SemanticAction>()
 
-        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add, {}, {})
-        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add, {}, {})
-        dispatcher.handle(Gesture.Released, ModifierState(), executed::add, {}, {})
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add)
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), ModifierState(), executed::add)
+        dispatcher.handle(Gesture.Released, ModifierState(), executed::add)
 
         assertEquals(2, executed.count { it is SemanticAction.ExtendSelection })
         assertEquals(1, executed.count { it == SemanticAction.TypeCommand(CommandId.BACKSPACE) })
@@ -414,7 +415,7 @@ class KeyDispatcherTest {
         val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY, modifierBehaviors = modifierBehaviors(mapOf(ModifierId.CTRL to false)))
         val executed = mutableListOf<SemanticAction>()
 
-        val state = dispatcher.handle(Gesture.Tap(Zone.Center), ModifierState(), executed::add, {}, {})
+        val state = dispatcher.handle(Gesture.Tap(Zone.Center), ModifierState(), executed::add)
 
         assertEquals(listOf(SemanticAction.TypeCommand(CommandId.CTRL)), executed)
         assertFalse(state.isActive(ModifierId.CTRL))
@@ -427,36 +428,50 @@ class KeyDispatcherTest {
                 CONFIG,
                 mapOf(
                     Zone.Center to KeyIntent.Text("a"),
-                    Zone.Directional(Direction.LEFT) to KeyIntent.LegacyAction(KeyAction.Copy),
+                    Zone.Directional(Direction.LEFT) to KeyIntent.Command(CommandId.COPY),
                     Zone.Directional(Direction.RIGHT) to KeyIntent.Command(CommandId.ENTER),
                     Zone.Directional(Direction.UP) to KeyIntent.ModifierPress(ModifierId.SHIFT),
                 ),
             )
         val dispatcher = KeyDispatcher(key)
         val executed = mutableListOf<SemanticAction>()
-        val legacy = mutableListOf<KeyAction>()
 
-        dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.LEFT)), ModifierState(), executed::add, legacy::add, {})
-        dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.RIGHT)), ModifierState(), executed::add, legacy::add, {})
+        dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.LEFT)), ModifierState(), executed::add)
+        dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.RIGHT)), ModifierState(), executed::add)
         val shiftState =
-            dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.UP)), ModifierState(), executed::add, legacy::add, {})
+            dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.UP)), ModifierState(), executed::add)
 
-        assertEquals(listOf(KeyAction.Copy), legacy)
-        assertEquals(listOf(SemanticAction.TypeCommand(CommandId.ENTER)), executed)
+        assertEquals(
+            listOf(SemanticAction.TypeCommand(CommandId.COPY), SemanticAction.TypeCommand(CommandId.ENTER)),
+            executed,
+        )
         assertTrue(shiftState.isActive(ModifierId.SHIFT))
     }
 
     @Test
-    fun `copy on hold-repeat does not re-fire - the intent decides, not the dispatcher type switch`() {
-        val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.LegacyAction(KeyAction.Copy)))
+    fun `copy consumes a one-shot Ctrl because it is a real command press, not a side door`() {
+        val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Command(CommandId.COPY)))
         val dispatcher = KeyDispatcher(key)
-        val legacy = mutableListOf<KeyAction>()
+        val executed = mutableListOf<SemanticAction>()
+        val queued = ModifierState().activate(ModifierId.CTRL, ActivationMode.ONE_SHOT)
 
-        dispatcher.handle(Gesture.Hold(Zone.Center), ModifierState(), {}, legacy::add, {})
-        dispatcher.handle(Gesture.HoldRepeat(Zone.Center), ModifierState(), {}, legacy::add, {})
+        val state = dispatcher.handle(Gesture.Tap(Zone.Center), queued, executed::add)
 
-        assertEquals(listOf(KeyAction.Copy), legacy)
-        assertFalse(KeyIntent.LegacyAction(KeyAction.Copy).repeatsOnHold())
+        assertEquals(listOf(SemanticAction.TypeCommand(CommandId.COPY, setOf(ModifierId.CTRL))), executed)
+        assertFalse("pressing Copy must consume a queued one-shot Ctrl", state.isActive(ModifierId.CTRL))
+    }
+
+    @Test
+    fun `copy on hold-repeat does not re-fire - the intent decides, not the dispatcher type switch`() {
+        val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Command(CommandId.COPY)))
+        val dispatcher = KeyDispatcher(key)
+        val executed = mutableListOf<SemanticAction>()
+
+        dispatcher.handle(Gesture.Hold(Zone.Center), ModifierState(), executed::add)
+        dispatcher.handle(Gesture.HoldRepeat(Zone.Center), ModifierState(), executed::add)
+
+        assertEquals(listOf(SemanticAction.TypeCommand(CommandId.COPY)), executed)
+        assertFalse(KeyIntent.Command(CommandId.COPY).repeatsOnHold())
         assertTrue(KeyIntent.Command(CommandId.ENTER).repeatsOnHold())
     }
 }

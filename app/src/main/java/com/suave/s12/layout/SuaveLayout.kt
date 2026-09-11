@@ -12,7 +12,6 @@ import com.suave.s12.engine.intent.KeyPosition
 import com.suave.s12.engine.intent.Layout
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.intent.SlideBehavior
-import com.suave.s12.utils.KeyAction
 
 /**
  * Suave's shift mapping: irregular capitalizations/combos that don't just uppercase (German
@@ -76,42 +75,35 @@ private fun token(text: String): KeyIntent =
 
         "down" -> KeyIntent.Command(CommandId.ARROW_DOWN)
 
-        // Everything below is the deliberate Phase 1 bridge to old code (app-integration
-        // features not yet redesigned on the new engine - see the plan). "emoji"/"numeric"
-        // specifically won't visibly do anything yet: the old KeyboardScreen mode-swap they rely
-        // on to render a different keyset is exactly the mechanism this rewrite removes, and the
-        // new UI (Step 5) doesn't have an emoji/numeric screen of its own yet. Everything else
-        // here (clipboard ops, settings, IME/language switch) is a real InputConnection/Activity
-        // action independent of which screen is showing, and works normally through the bridge.
-        "emoji" -> KeyIntent.LegacyAction(KeyAction.ToggleEmojiMode(true))
+        "emoji" -> KeyIntent.Command(CommandId.TOGGLE_EMOJI_MODE)
 
-        "numeric" -> KeyIntent.LegacyAction(KeyAction.ToggleNumericMode(true))
+        "numeric" -> KeyIntent.Command(CommandId.TOGGLE_NUMERIC_MODE)
 
-        "abc" -> KeyIntent.LegacyAction(KeyAction.ToggleNumericMode(false))
+        "abc" -> KeyIntent.Command(CommandId.TOGGLE_ABC_MODE)
 
-        "copy" -> KeyIntent.LegacyAction(KeyAction.Copy)
+        "copy" -> KeyIntent.Command(CommandId.COPY)
 
-        "selectall" -> KeyIntent.LegacyAction(KeyAction.SelectAll)
+        "selectall" -> KeyIntent.Command(CommandId.SELECT_ALL)
 
-        "cut" -> KeyIntent.LegacyAction(KeyAction.Cut)
+        "cut" -> KeyIntent.Command(CommandId.CUT)
 
-        "undo" -> KeyIntent.LegacyAction(KeyAction.Undo)
+        "undo" -> KeyIntent.Command(CommandId.UNDO)
 
-        "redo" -> KeyIntent.LegacyAction(KeyAction.Redo)
+        "redo" -> KeyIntent.Command(CommandId.REDO)
 
-        "paste" -> KeyIntent.LegacyAction(KeyAction.Paste)
+        "paste" -> KeyIntent.Command(CommandId.PASTE)
 
-        "settings" -> KeyIntent.LegacyAction(KeyAction.GotoSettings)
+        "settings" -> KeyIntent.Command(CommandId.GOTO_SETTINGS)
 
-        "hide" -> KeyIntent.LegacyAction(KeyAction.ToggleHideLetters)
+        "hide" -> KeyIntent.Command(CommandId.TOGGLE_HIDE_LETTERS)
 
-        "ime" -> KeyIntent.LegacyAction(KeyAction.SwitchIME)
+        "ime" -> KeyIntent.Command(CommandId.SWITCH_IME)
 
-        "voice" -> KeyIntent.LegacyAction(KeyAction.SwitchIMEVoice)
+        "voice" -> KeyIntent.Command(CommandId.SWITCH_IME_VOICE)
 
-        "lang" -> KeyIntent.LegacyAction(KeyAction.SwitchLanguage)
+        "lang" -> KeyIntent.Command(CommandId.SWITCH_LANGUAGE)
 
-        "move" -> KeyIntent.LegacyAction(KeyAction.MoveKeyboard.CycleRight)
+        "move" -> KeyIntent.Command(CommandId.MOVE_KEYBOARD)
 
         else -> KeyIntent.Text(text)
     }

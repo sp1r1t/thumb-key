@@ -58,11 +58,25 @@ class SuaveLayoutTest {
     }
 
     @Test
-    fun `app-integration keys bridge to the old KeyAction pipeline`() {
+    fun `app-integration keys are first-class commands on the same intent model as Enter`() {
         val settingsMenuKey = SUAVE_LAYOUT.getValue(KeyPosition(3, 1))
+        val clipboardKey = SUAVE_LAYOUT.getValue(KeyPosition(3, 2))
 
-        assertTrue(settingsMenuKey.intents.getValue(Zone.Center) is KeyIntent.LegacyAction)
-        assertTrue(settingsMenuKey.intents.getValue(Zone.Directional(Direction.UP)) is KeyIntent.LegacyAction)
+        assertEquals(KeyIntent.Command(CommandId.TOGGLE_EMOJI_MODE), settingsMenuKey.intents[Zone.Center])
+        assertEquals(KeyIntent.Command(CommandId.GOTO_SETTINGS), settingsMenuKey.intents[Zone.Directional(Direction.UP)])
+        assertEquals(KeyIntent.Command(CommandId.TOGGLE_HIDE_LETTERS), settingsMenuKey.intents[Zone.Directional(Direction.UP_LEFT)])
+        assertEquals(KeyIntent.Command(CommandId.SWITCH_IME), settingsMenuKey.intents[Zone.Directional(Direction.DOWN)])
+        assertEquals(KeyIntent.Command(CommandId.SWITCH_IME_VOICE), settingsMenuKey.intents[Zone.Directional(Direction.DOWN_LEFT)])
+        assertEquals(KeyIntent.Command(CommandId.SWITCH_LANGUAGE), settingsMenuKey.intents[Zone.Directional(Direction.LEFT)])
+        assertEquals(KeyIntent.Command(CommandId.MOVE_KEYBOARD), settingsMenuKey.intents[Zone.Directional(Direction.RIGHT)])
+
+        assertEquals(KeyIntent.Command(CommandId.TOGGLE_NUMERIC_MODE), clipboardKey.intents[Zone.Center])
+        assertEquals(KeyIntent.Command(CommandId.COPY), clipboardKey.intents[Zone.Directional(Direction.UP)])
+        assertEquals(KeyIntent.Command(CommandId.SELECT_ALL), clipboardKey.intents[Zone.Directional(Direction.UP_LEFT)])
+        assertEquals(KeyIntent.Command(CommandId.CUT), clipboardKey.intents[Zone.Directional(Direction.UP_RIGHT)])
+        assertEquals(KeyIntent.Command(CommandId.PASTE), clipboardKey.intents[Zone.Directional(Direction.DOWN)])
+        assertEquals(KeyIntent.Command(CommandId.UNDO), clipboardKey.intents[Zone.Directional(Direction.DOWN_LEFT)])
+        assertEquals(KeyIntent.Command(CommandId.REDO), clipboardKey.intents[Zone.Directional(Direction.DOWN_RIGHT)])
     }
 
     @Test

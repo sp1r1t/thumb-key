@@ -32,7 +32,6 @@ import com.suave.s12.engine.intent.KeyMapping
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.modifier.ModifierBehavior
 import com.suave.s12.engine.modifier.ModifierState
-import com.suave.s12.utils.KeyAction
 import kotlinx.coroutines.withTimeoutOrNull
 
 private const val TICK_INTERVAL_MS = 30L
@@ -59,7 +58,6 @@ fun EngineKeyboardKey(
     modifierState: ModifierState,
     onModifierStateChange: (ModifierState) -> Unit,
     onExecute: (SemanticAction) -> Unit,
-    onLegacyAction: (KeyAction) -> Unit,
     onFeedback: (FeedbackEvent) -> Unit,
     shiftMappings: Map<String, String>,
     minSwipeDistancePx: Float,
@@ -78,7 +76,6 @@ fun EngineKeyboardKey(
     val currentMinSwipeDistancePx by rememberUpdatedState(minSwipeDistancePx)
     val currentOnModifierStateChange by rememberUpdatedState(onModifierStateChange)
     val currentOnExecute by rememberUpdatedState(onExecute)
-    val currentOnLegacyAction by rememberUpdatedState(onLegacyAction)
     val currentOnFeedback by rememberUpdatedState(onFeedback)
 
     val isModifierKeyActive =
@@ -127,7 +124,6 @@ fun EngineKeyboardKey(
                                     gesture,
                                     before,
                                     currentOnExecute,
-                                    currentOnLegacyAction,
                                     currentOnFeedback,
                                 )
                             localState = newState
@@ -213,9 +209,6 @@ private fun displayLabel(
         is KeyIntent.Command -> commandLabel(intent.id)
 
         is KeyIntent.ModifierPress -> intent.modifier.name.lowercase()
-
-        // Phase 1 doesn't have per-action icons/labels for the bridged legacy actions yet.
-        is KeyIntent.LegacyAction -> "•"
     }
 
 private fun commandLabel(id: CommandId): String =
@@ -233,4 +226,19 @@ private fun commandLabel(id: CommandId): String =
         CommandId.CTRL -> "ctrl"
         CommandId.ALT -> "alt"
         CommandId.SHIFT -> "shift"
+        CommandId.COPY -> "copy"
+        CommandId.CUT -> "cut"
+        CommandId.PASTE -> "paste"
+        CommandId.SELECT_ALL -> "all"
+        CommandId.UNDO -> "undo"
+        CommandId.REDO -> "redo"
+        CommandId.GOTO_SETTINGS -> "set"
+        CommandId.TOGGLE_HIDE_LETTERS -> "hide"
+        CommandId.SWITCH_IME -> "ime"
+        CommandId.SWITCH_IME_VOICE -> "voice"
+        CommandId.SWITCH_LANGUAGE -> "lang"
+        CommandId.MOVE_KEYBOARD -> "move"
+        CommandId.TOGGLE_EMOJI_MODE -> "emoji"
+        CommandId.TOGGLE_NUMERIC_MODE -> "123"
+        CommandId.TOGGLE_ABC_MODE -> "abc"
     }

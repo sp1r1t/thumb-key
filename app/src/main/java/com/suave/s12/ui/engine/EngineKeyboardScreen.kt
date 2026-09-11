@@ -41,7 +41,6 @@ import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.intent.layoutRows
 import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.engine.modifier.modifierBehaviors
-import com.suave.s12.engine.output.OutputExecutor
 import com.suave.s12.layout.BuiltinLayouts
 import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.toBool
@@ -63,9 +62,9 @@ import java.util.Locale
  *
  * Phase 1 scope, deliberately not attempted here: the "Dual" split-both-hands position mode
  * (this always renders a single instance regardless of the position setting), ENTER's
- * double-width sizing, emoji/numeric-mode's own screens (those keys bridge to the old KeyAction
- * pipeline and fire correctly, but have no new screen to switch to yet), and per-key icons (see
- * [EngineKeyboardKey]'s plain-glyph labels).
+ * double-width sizing, and emoji/numeric-mode's own screens (those keys are first-class
+ * commands and fire their host callbacks, but this screen has no emoji/numeric layout to
+ * switch to yet).
  */
 @Composable
 fun EngineKeyboardScreen(
@@ -125,6 +124,14 @@ fun EngineKeyboardScreen(
     // Resolved once per IME session (onStartInput recreates this whole screen on every new
     // input focus), matching how the old engine treated editor capability too.
     val capabilities = remember { EditorCapabilityResolver.resolve(ime.currentInputEditorInfo) }
+    val appHost =
+        AppCommandHost(
+            onToggleHideLetters = onToggleHideLetters,
+            onToggleEmojiMode = onToggleEmojiMode,
+            onToggleNumericMode = onToggleNumericMode,
+            onSwitchLanguage = onSwitchLanguage,
+            onChangePosition = onChangePosition,
+        )
 
     Column(
         modifier =
@@ -166,17 +173,12 @@ fun EngineKeyboardScreen(
                         mapping = mapping,
                         modifierState = modifierState,
                         onModifierStateChange = { modifierState = it },
-                        onExecute = { action -> OutputExecutor.execute(action, capabilities, ime.currentInputConnection) },
-                        onLegacyAction = { action ->
-                            dispatchLegacyAction(
+                        onExecute = { action ->
+                            ActionExecutor.execute(
                                 action = action,
-                                ime = ime,
                                 capabilities = capabilities,
-                                onToggleHideLetters = onToggleHideLetters,
-                                onToggleEmojiMode = onToggleEmojiMode,
-                                onToggleNumericMode = onToggleNumericMode,
-                                onSwitchLanguage = onSwitchLanguage,
-                                onChangePosition = onChangePosition,
+                                ime = ime,
+                                host = appHost,
                             )
                         },
                         onFeedback = { event -> FeedbackDispatcher.dispatch(event, feedbackSettings, hapticPlayer) },

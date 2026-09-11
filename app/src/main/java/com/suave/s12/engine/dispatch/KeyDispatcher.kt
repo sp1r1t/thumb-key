@@ -17,12 +17,11 @@ import com.suave.s12.engine.modifier.DEFAULT_MODIFIER_BEHAVIORS
 import com.suave.s12.engine.modifier.ModifierBehavior
 import com.suave.s12.engine.modifier.ModifierEngine
 import com.suave.s12.engine.modifier.ModifierState
-import com.suave.s12.utils.KeyAction
 import kotlin.math.abs
 
 /**
  * Orchestrates one physical key's full pipeline - Gesture -> intent lookup -> modifier
- * transformation -> action/legacy dispatch -> feedback - for a single press at a time. Plain
+ * transformation -> action dispatch -> feedback - for a single press at a time. Plain
  * Kotlin, no Android/Compose dependency, so it's unit-testable like the rest of `engine/`; the
  * UI layer (Step 5) creates one instance per rendered key and feeds it every [Gesture] that
  * key's [com.suave.s12.engine.gesture.GestureRecognizer] emits.
@@ -57,9 +56,8 @@ class KeyDispatcher(
     fun handle(
         gesture: Gesture,
         modifierState: ModifierState,
-        onExecute: (SemanticAction) -> Unit,
-        onLegacyAction: (KeyAction) -> Unit,
-        onFeedback: (FeedbackEvent) -> Unit,
+        onExecute: (SemanticAction) -> Unit = {},
+        onFeedback: (FeedbackEvent) -> Unit = {},
     ): ModifierState =
         when (gesture) {
             Gesture.Pressed -> {
@@ -67,15 +65,15 @@ class KeyDispatcher(
             }
 
             is Gesture.Tap -> {
-                dispatchZone(gesture.zone, gesture, modifierState, consumeOneShot = true, onExecute, onLegacyAction, onFeedback)
+                dispatchZone(gesture.zone, gesture, modifierState, consumeOneShot = true, onExecute, onFeedback)
             }
 
             is Gesture.Hold -> {
-                dispatchZone(gesture.zone, gesture, modifierState, consumeOneShot = true, onExecute, onLegacyAction, onFeedback)
+                dispatchZone(gesture.zone, gesture, modifierState, consumeOneShot = true, onExecute, onFeedback)
             }
 
             is Gesture.HoldRepeat -> {
-                dispatchZone(gesture.zone, gesture, modifierState, consumeOneShot = false, onExecute, onLegacyAction, onFeedback)
+                dispatchZone(gesture.zone, gesture, modifierState, consumeOneShot = false, onExecute, onFeedback)
             }
 
             is Gesture.SlideStep -> {
@@ -162,7 +160,6 @@ class KeyDispatcher(
         modifierState: ModifierState,
         consumeOneShot: Boolean,
         onExecute: (SemanticAction) -> Unit,
-        onLegacyAction: (KeyAction) -> Unit,
         onFeedback: (FeedbackEvent) -> Unit,
     ): ModifierState {
         val intent = intentFor(zone) ?: return modifierState
@@ -195,13 +192,6 @@ class KeyDispatcher(
                     behaviors = modifierBehaviors,
                     freshlyActivatedByPressed = freshlyActivatedByPressed,
                 )
-            }
-
-            is KeyIntent.LegacyAction -> {
-                if (gesture is Gesture.Tap || gesture is Gesture.Hold || (gesture is Gesture.HoldRepeat && intent.repeatsOnHold())) {
-                    onLegacyAction(intent.action)
-                }
-                modifierState
             }
 
             is KeyIntent.Text, is KeyIntent.Command, KeyIntent.Noop -> {

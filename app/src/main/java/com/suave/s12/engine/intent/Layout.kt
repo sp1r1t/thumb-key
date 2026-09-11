@@ -33,8 +33,8 @@ data class KeyMapping(
 /**
  * A layout is pure data: position -> gesture shape + zone -> intent. No mode branching, no
  * imperative logic - a layout file should be a flat table of these, nothing else. Nothing
- * about which [KeyIntent] a zone holds is privileged: text, commands, modifiers, and bridged
- * app actions are all just entries in [KeyMapping.intents].
+ * about which [KeyIntent] a zone holds is privileged: text, commands, and modifiers are all
+ * just entries in [KeyMapping.intents].
  */
 typealias Layout = Map<KeyPosition, KeyMapping>
 
