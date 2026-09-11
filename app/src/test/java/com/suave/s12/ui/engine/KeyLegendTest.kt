@@ -18,6 +18,8 @@ import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.modifier.ActivationMode
 import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.layout.SUAVE_SHIFT_MAPPINGS
+import com.suave.s12.utils.ColorVariant
+import com.suave.s12.utils.FontSizeVariant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -137,6 +139,14 @@ class KeyLegendTest {
         assertEquals(KeyLegend.Icon(Icons.Outlined.SwapHoriz), legend(KeyIntent.Command(CommandId.SWITCH_LANGUAGE)))
         assertEquals(KeyLegend.Icon(Icons.Outlined.ViewColumn), legend(KeyIntent.Command(CommandId.MOVE_KEYBOARD)))
         assertNull(legend(KeyIntent.Text(" ")))
+    }
+
+    @Test
+    fun `center legends use Thumb-Key primary large, swipes use secondary small`() {
+        assertEquals(ColorVariant.PRIMARY, legendColorVariant(isCenter = true))
+        assertEquals(ColorVariant.SECONDARY, legendColorVariant(isCenter = false))
+        assertEquals(FontSizeVariant.LARGE, legendFontSizeVariant(isCenter = true))
+        assertEquals(FontSizeVariant.SMALL, legendFontSizeVariant(isCenter = false))
     }
 
     @Test

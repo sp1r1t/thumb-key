@@ -34,6 +34,8 @@ import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.modifier.ActivationMode
 import com.suave.s12.engine.modifier.ModifierEngine
 import com.suave.s12.engine.modifier.ModifierState
+import com.suave.s12.utils.ColorVariant
+import com.suave.s12.utils.FontSizeVariant
 
 /**
  * What a key zone shows. Commands and modifiers use the same Material icons Thumb-Key put on
@@ -124,6 +126,13 @@ fun keyLegend(
             }
         }
     }
+
+/** Same size/color roles Thumb-Key used: center is LARGE/PRIMARY, swipes are SMALL/SECONDARY. */
+fun legendFontSizeVariant(isCenter: Boolean): FontSizeVariant =
+    if (isCenter) FontSizeVariant.LARGE else FontSizeVariant.SMALL
+
+fun legendColorVariant(isCenter: Boolean): ColorVariant =
+    if (isCenter) ColorVariant.PRIMARY else ColorVariant.SECONDARY
 
 internal fun classifyText(shown: String): LegendCategory =
     when {

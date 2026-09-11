@@ -322,7 +322,7 @@ private fun EngineKeyboardPanel(
     val grid = namedLayout.gridFor(layer)
     val overrideRows = layerHeightOverrides[layer] ?: 0
     val contentRows = namedLayout.contentRows(layer, overrideRows)
-    Column(modifier = modifier) {
+    Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
         if (contentRows > 0) {
             LayerContentSlot(
                 content = namedLayout.contentFor(layer),
@@ -426,6 +426,7 @@ private fun LayoutGrid(
                     minSwipeDistancePx = minSwipeDistancePx,
                     legendVisibility = legendVisibility,
                     modifierBehaviors = modifierBehaviors,
+                    keyHeight = keyHeight,
                     keyPadding = keyPadding,
                     keyBorderWidthDp = keyBorderWidthDp,
                     keyCornerRadius = keyCornerRadius,

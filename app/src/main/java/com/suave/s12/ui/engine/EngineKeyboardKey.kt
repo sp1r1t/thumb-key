@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,10 +21,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.suave.s12.engine.action.SemanticAction
 import com.suave.s12.engine.dispatch.KeyDispatcher
 import com.suave.s12.engine.feedback.FeedbackEvent
@@ -39,6 +40,9 @@ import com.suave.s12.engine.intent.KeyMapping
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.modifier.ModifierBehavior
 import com.suave.s12.engine.modifier.ModifierState
+import com.suave.s12.utils.ColorVariant
+import com.suave.s12.utils.colorVariantToColor
+import com.suave.s12.utils.fontSizeVariantToFontSize
 import kotlinx.coroutines.withTimeoutOrNull
 
 private const val TICK_INTERVAL_MS = 30L
@@ -70,6 +74,7 @@ fun EngineKeyboardKey(
     minSwipeDistancePx: Float,
     legendVisibility: LegendVisibility,
     modifierBehaviors: Map<ModifierId, ModifierBehavior>,
+    keyHeight: Dp,
     keyPadding: Int,
     keyBorderWidthDp: Float,
     keyCornerRadius: Dp,
@@ -92,9 +97,24 @@ fun EngineKeyboardKey(
 
     val isModifierKeyActive =
         mapping.intents.values.any { it is KeyIntent.ModifierPress && modifierState.isActive(it.modifier) }
-    val backgroundColor = if (isModifierKeyActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+    val backgroundColor =
+        if (isModifierKeyActive) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            colorVariantToColor(ColorVariant.SURFACE_VARIANT)
+        }
     val keyShape = RoundedCornerShape(keyCornerRadius)
     val keyBorderColour = MaterialTheme.colorScheme.outline
+    val swipeColor = colorVariantToColor(legendColorVariant(isCenter = false))
+    val centerColor =
+        if (isModifierKeyActive) {
+            MaterialTheme.colorScheme.onPrimary
+        } else {
+            colorVariantToColor(legendColorVariant(isCenter = true))
+        }
+    val density = LocalDensity.current
+    val swipeSize = fontSizeVariantToFontSize(legendFontSizeVariant(isCenter = false), keyHeight, isUpperCase = false)
+    val swipeFontSize = with(density) { swipeSize.toSp() }
 
     Box(
         modifier =
@@ -189,39 +209,50 @@ fun EngineKeyboardKey(
                     }
                 },
     ) {
-        for ((direction, alignment) in DIRECTIONAL_ALIGNMENTS) {
-            val legend =
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(2.dp),
+        ) {
+            for ((direction, alignment) in DIRECTIONAL_ALIGNMENTS) {
+                val legend =
+                    keyLegend(
+                        mapping.intents[Zone.Directional(direction)],
+                        legendVisibility,
+                        modifierState,
+                        shiftMappings,
+                    )
+                if (legend != null) {
+                    KeyLegendMark(
+                        legend = legend,
+                        fontSize = swipeFontSize,
+                        iconSize = swipeSize,
+                        color = swipeColor,
+                        modifier = Modifier.align(alignment),
+                    )
+                }
+            }
+            val centerLegend =
                 keyLegend(
-                    mapping.intents[Zone.Directional(direction)],
+                    mapping.intents[Zone.Center],
                     legendVisibility,
                     modifierState,
                     shiftMappings,
                 )
-            if (legend != null) {
+            if (centerLegend != null) {
+                val isUpperCase =
+                    (centerLegend as? KeyLegend.Text)?.text?.firstOrNull()?.isUpperCase() == true
+                val centerSize =
+                    fontSizeVariantToFontSize(legendFontSizeVariant(isCenter = true), keyHeight, isUpperCase)
                 KeyLegendMark(
-                    legend = legend,
-                    fontSize = 10.sp,
-                    iconSize = 12.dp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.align(alignment),
+                    legend = centerLegend,
+                    fontSize = with(density) { centerSize.toSp() },
+                    iconSize = centerSize,
+                    color = centerColor,
+                    modifier = Modifier.align(Alignment.Center),
                 )
             }
-        }
-        val centerLegend =
-            keyLegend(
-                mapping.intents[Zone.Center],
-                legendVisibility,
-                modifierState,
-                shiftMappings,
-            )
-        if (centerLegend != null) {
-            KeyLegendMark(
-                legend = centerLegend,
-                fontSize = 18.sp,
-                iconSize = 22.dp,
-                color = if (isModifierKeyActive) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.align(Alignment.Center),
-            )
         }
     }
 }
