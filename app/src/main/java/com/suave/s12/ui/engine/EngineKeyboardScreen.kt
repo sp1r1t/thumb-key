@@ -1,11 +1,15 @@
 package com.suave.s12.ui.engine
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -14,7 +18,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.suave.s12.BuildConfig
 import com.suave.s12.IMEService
 import com.suave.s12.db.AppSettings
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
@@ -91,6 +98,22 @@ fun EngineKeyboardScreen(
                 .fillMaxWidth()
                 .then(if (!ignoreBottomPadding) Modifier.safeDrawingPadding() else Modifier),
     ) {
+        if (BuildConfig.DEBUG) {
+            // Exists to make "which build is actually on the phone" a glance rather than an
+            // adb round-trip - see the BUILD_TIME field's own doc in build.gradle.kts. Debug
+            // builds only; never shows in a release build.
+            Text(
+                text = "build ${BuildConfig.BUILD_TIME}",
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.error)
+                        .padding(vertical = 2.dp),
+                textAlign = TextAlign.Center,
+                fontSize = 10.sp,
+                color = MaterialTheme.colorScheme.onError,
+            )
+        }
         for (row in 0..3) {
             val columns = if (row == 3) 0..3 else 0..4
             Row(modifier = Modifier.fillMaxWidth().height(56.dp)) {
