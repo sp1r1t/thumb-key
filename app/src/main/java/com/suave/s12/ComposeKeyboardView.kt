@@ -14,10 +14,10 @@ import androidx.lifecycle.lifecycleScope
 import com.suave.s12.db.AppSettingsRepository
 import com.suave.s12.layout.BuiltinLayouts
 import com.suave.s12.ui.engine.EngineKeyboardScreen
+import com.suave.s12.ui.engine.toggleHideLabels
 import com.suave.s12.ui.theme.ThumbkeyTheme
 import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.toBool
-import com.suave.s12.utils.toInt
 import kotlinx.coroutines.launch
 
 @SuppressLint("ViewConstructor")
@@ -71,9 +71,7 @@ class ComposeKeyboardView(
                         ctx.lifecycleScope.launch {
                             val state = settingsState.value
                             state?.let { s ->
-                                val newHideLetters = (!s.hideLetters.toBool()).toInt()
-                                val s2 = s.copy(hideLetters = newHideLetters)
-                                settingsRepo.update(s2)
+                                settingsRepo.update(toggleHideLabels(s))
                             }
                         }
                     },

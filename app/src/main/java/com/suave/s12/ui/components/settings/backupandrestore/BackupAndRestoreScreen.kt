@@ -46,6 +46,7 @@ import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_HIDE_EDITING
+import com.suave.s12.db.DEFAULT_HIDE_KEY_CATEGORIES
 import com.suave.s12.db.DEFAULT_HIDE_LAYER_SWITCHES
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
 import com.suave.s12.db.DEFAULT_HIDE_MODIFIERS
@@ -232,6 +233,7 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             hideSpecials = DEFAULT_HIDE_SPECIALS,
             hideNavigation = DEFAULT_HIDE_NAVIGATION,
             hideEditing = DEFAULT_HIDE_EDITING,
+            hideKeyCategories = DEFAULT_HIDE_KEY_CATEGORIES,
             ignoreBottomPadding = DEFAULT_IGNORE_BOTTOM_PADDING,
             disableFullscreenEditor = DEFAULT_DISABLE_FULLSCREEN_EDITOR,
             keyHeight = DEFAULT_KEY_HEIGHT,

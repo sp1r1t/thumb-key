@@ -53,6 +53,7 @@ const val DEFAULT_HIDE_LAYER_SWITCHES = 0
 const val DEFAULT_HIDE_SPECIALS = 0
 const val DEFAULT_HIDE_NAVIGATION = 0
 const val DEFAULT_HIDE_EDITING = 0
+const val DEFAULT_HIDE_KEY_CATEGORIES = "LETTER"
 const val DEFAULT_KEY_BORDERS = 1
 const val DEFAULT_SPACEBAR_MULTITAPS = 1
 const val DEFAULT_SLIDE_SENSITIVITY = 9
@@ -150,6 +151,11 @@ data class AppSettings(
         defaultValue = DEFAULT_HIDE_EDITING.toString(),
     )
     val hideEditing: Int = DEFAULT_HIDE_EDITING,
+    @ColumnInfo(
+        name = "hide_key_categories",
+        defaultValue = DEFAULT_HIDE_KEY_CATEGORIES,
+    )
+    val hideKeyCategories: String = DEFAULT_HIDE_KEY_CATEGORIES,
     @ColumnInfo(
         name = "ignore_bottom_padding",
         defaultValue = DEFAULT_IGNORE_BOTTOM_PADDING.toString(),
@@ -346,6 +352,8 @@ data class LookAndFeelUpdate(
     val hideNavigation: Int,
     @ColumnInfo(name = "hide_editing")
     val hideEditing: Int,
+    @ColumnInfo(name = "hide_key_categories")
+    val hideKeyCategories: String,
     @ColumnInfo(name = "ignore_bottom_padding")
     val ignoreBottomPadding: Int,
     @ColumnInfo(name = "disable_fullscreen_editor")
@@ -511,7 +519,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 36,
+    version = 37,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -592,6 +600,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_33_34,
                             MIGRATION_34_35,
                             MIGRATION_35_36,
+                            MIGRATION_36_37,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

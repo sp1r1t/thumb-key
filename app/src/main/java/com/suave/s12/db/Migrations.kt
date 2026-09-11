@@ -540,3 +540,12 @@ val MIGRATION_35_36 =
             )
         }
     }
+
+val MIGRATION_36_37 =
+    object : Migration(36, 37) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN hide_key_categories TEXT NOT NULL DEFAULT '$DEFAULT_HIDE_KEY_CATEGORIES'",
+            )
+        }
+    }

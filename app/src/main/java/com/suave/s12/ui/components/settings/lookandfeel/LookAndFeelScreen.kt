@@ -2,7 +2,10 @@ package com.suave.s12.ui.components.settings.lookandfeel
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -33,6 +36,8 @@ import androidx.compose.material.icons.outlined.VerticalAlignTop
 import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material.icons.outlined.ViewDay
 import androidx.compose.material.icons.outlined.WebAssetOff
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -40,16 +45,21 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
@@ -59,6 +69,7 @@ import com.suave.s12.db.DEFAULT_ANIMATION_RELEASE_FLASH
 import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
 import com.suave.s12.db.DEFAULT_HIDE_EDITING
+import com.suave.s12.db.DEFAULT_HIDE_KEY_CATEGORIES
 import com.suave.s12.db.DEFAULT_HIDE_LAYER_SWITCHES
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
 import com.suave.s12.db.DEFAULT_HIDE_MODIFIERS
@@ -89,6 +100,11 @@ import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.SettingTitle
 import com.suave.s12.ui.components.common.SettingsSection
 import com.suave.s12.ui.components.common.TestOutTextField
+import com.suave.s12.ui.engine.HIDE_KEY_GROUP_ORDER
+import com.suave.s12.ui.engine.LegendCategory
+import com.suave.s12.ui.engine.formatHideKeyCategories
+import com.suave.s12.ui.engine.parseHideKeyCategories
+import com.suave.s12.ui.engine.toggleHideKeyGroupSelection
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.ThemeColor
@@ -97,6 +113,7 @@ import com.suave.s12.utils.toBool
 import com.suave.s12.utils.toInt
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ListPreferenceType
+import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
 import me.zhanghai.compose.preference.SwitchPreference
 
@@ -130,6 +147,7 @@ fun LookAndFeelScreen(
     var hideSpecialsState = (settings?.hideSpecials ?: DEFAULT_HIDE_SPECIALS).toBool()
     var hideNavigationState = (settings?.hideNavigation ?: DEFAULT_HIDE_NAVIGATION).toBool()
     var hideEditingState = (settings?.hideEditing ?: DEFAULT_HIDE_EDITING).toBool()
+    var hideKeyCategoriesState = settings?.hideKeyCategories ?: DEFAULT_HIDE_KEY_CATEGORIES
     var ignoreBottomPaddingState = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
     var disableFullscreenEditorState = (settings?.disableFullscreenEditor ?: DEFAULT_DISABLE_FULLSCREEN_EDITOR).toBool()
     var backdropEnabledState = (settings?.backdropEnabled ?: DEFAULT_BACKDROP_ENABLED).toBool()
@@ -155,6 +173,7 @@ fun LookAndFeelScreen(
                 hideSpecials = hideSpecialsState.toInt(),
                 hideNavigation = hideNavigationState.toInt(),
                 hideEditing = hideEditingState.toInt(),
+                hideKeyCategories = hideKeyCategoriesState,
                 ignoreBottomPadding = ignoreBottomPaddingState.toInt(),
                 theme = themeState.ordinal,
                 themeColor = themeColorState.ordinal,
@@ -346,6 +365,13 @@ fun LookAndFeelScreen(
                         onSummary = R.string.hide_editing_on,
                         offSummary = R.string.hide_editing_off,
                         icon = Icons.AutoMirrored.Outlined.KeyboardBackspace,
+                    )
+                    HideKeyGroupsPreference(
+                        value = hideKeyCategoriesState,
+                        onValueChange = {
+                            hideKeyCategoriesState = it
+                            updateLookAndFeel()
+                        },
                     )
                     }
 
@@ -816,6 +842,121 @@ private fun HideLabelSwitch(
         },
     )
 }
+
+@Composable
+private fun HideKeyGroupsPreference(
+    value: String,
+    onValueChange: (String) -> Unit,
+) {
+    val selected = parseHideKeyCategories(value)
+    var showDialog by remember { mutableStateOf(false) }
+    var draft by remember { mutableStateOf(selected) }
+
+    SettingRow(
+        onReset = { onValueChange(DEFAULT_HIDE_KEY_CATEGORIES) },
+    ) {
+        Preference(
+            title = {
+                SettingTitle(
+                    text = stringResource(R.string.hide_key_groups),
+                    infoText = stringResource(R.string.hide_key_groups_info),
+                )
+            },
+            summary = {
+                Text(hideKeyGroupsSummary(selected))
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Outlined.HideImage,
+                    contentDescription = null,
+                )
+            },
+            onClick = {
+                draft = selected
+                showDialog = true
+            },
+        )
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text(stringResource(R.string.hide_key_groups)) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    HIDE_KEY_GROUP_ORDER.forEach { category ->
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        draft = toggleHideKeyGroupSelection(draft, category)
+                                    }.padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = category in draft,
+                                onCheckedChange = null,
+                            )
+                            Text(
+                                text = stringResource(category.hideGroupNameRes()),
+                                modifier = Modifier.padding(start = 8.dp),
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onValueChange(formatHideKeyCategories(draft))
+                        showDialog = false
+                    },
+                ) {
+                    Text(stringResource(R.string.done))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun hideKeyGroupsSummary(selected: Set<LegendCategory>): String {
+    val ordered = HIDE_KEY_GROUP_ORDER.filter { it in selected }
+    val names = ordered.map { stringResource(it.hideGroupNameRes()) }
+    val groupsText =
+        when {
+            ordered.size == HIDE_KEY_GROUP_ORDER.size ->
+                stringResource(R.string.hide_key_groups_all)
+            names.size <= 1 -> names.firstOrNull().orEmpty()
+            names.size == 2 ->
+                stringResource(R.string.hide_key_groups_two, names[0], names[1])
+            else ->
+                stringResource(
+                    R.string.hide_key_groups_many,
+                    names.dropLast(1).joinToString(", "),
+                    names.last(),
+                )
+        }
+    return stringResource(R.string.hide_key_groups_summary, groupsText)
+}
+
+private fun LegendCategory.hideGroupNameRes(): Int =
+    when (this) {
+        LegendCategory.LETTER -> R.string.hide_group_letters
+        LegendCategory.SYMBOL -> R.string.hide_group_symbols
+        LegendCategory.NUMBER -> R.string.hide_group_numbers
+        LegendCategory.MODIFIER -> R.string.hide_group_modifiers
+        LegendCategory.LAYER_SWITCH -> R.string.hide_group_layer_switches
+        LegendCategory.SPECIAL -> R.string.hide_group_specials
+        LegendCategory.NAVIGATION -> R.string.hide_group_navigation
+        LegendCategory.EDITING -> R.string.hide_group_editing
+    }
 
 @Composable
 private fun LayerHeightRow(
