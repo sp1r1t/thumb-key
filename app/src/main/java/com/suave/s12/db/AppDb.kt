@@ -502,6 +502,16 @@ abstract class AppDB : RoomDatabase() {
             val appContext = context.applicationContext
             val deviceProtected = appContext.createDeviceProtectedStorageContext()
             return synchronized(this) {
+                if (isCredentialStorageUnlocked(appContext)) {
+                    renameLegacySettingsDb(
+                        appContext.getDatabasePath(LEGACY_APP_SETTINGS_DB_NAME),
+                        appContext.getDatabasePath(APP_SETTINGS_DB_NAME),
+                    )
+                }
+                renameLegacySettingsDb(
+                    deviceProtected.getDatabasePath(LEGACY_APP_SETTINGS_DB_NAME),
+                    deviceProtected.getDatabasePath(APP_SETTINGS_DB_NAME),
+                )
                 if (isCredentialStorageUnlocked(appContext) &&
                     migrateSettingsDbToDeviceProtected(
                         appContext.getDatabasePath(APP_SETTINGS_DB_NAME),

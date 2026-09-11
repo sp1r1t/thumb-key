@@ -48,4 +48,44 @@ class SettingsDbMigrationTest {
         assertFalse(migrateSettingsDbToDeviceProtected(ce, de))
         assertFalse(de.exists())
     }
+
+    @Test
+    fun `rename moves thumbkey onto suave including sqlite sidecars`() {
+        val dir = createTempDirectory("db").toFile()
+        val legacy = File(dir, LEGACY_APP_SETTINGS_DB_NAME)
+        val current = File(dir, APP_SETTINGS_DB_NAME)
+        legacy.writeText("settings")
+        File(dir, "$LEGACY_APP_SETTINGS_DB_NAME-wal").writeText("wal")
+        File(dir, "$LEGACY_APP_SETTINGS_DB_NAME-shm").writeText("shm")
+
+        assertTrue(renameLegacySettingsDb(legacy, current))
+        assertEquals("settings", current.readText())
+        assertEquals("wal", File(dir, "$APP_SETTINGS_DB_NAME-wal").readText())
+        assertEquals("shm", File(dir, "$APP_SETTINGS_DB_NAME-shm").readText())
+        assertFalse(legacy.exists())
+        assertFalse(File(dir, "$LEGACY_APP_SETTINGS_DB_NAME-wal").exists())
+    }
+
+    @Test
+    fun `rename keeps suave and deletes a leftover thumbkey`() {
+        val dir = createTempDirectory("db").toFile()
+        val legacy = File(dir, LEGACY_APP_SETTINGS_DB_NAME)
+        val current = File(dir, APP_SETTINGS_DB_NAME)
+        legacy.writeText("old")
+        current.writeText("already-suave")
+
+        assertFalse(renameLegacySettingsDb(legacy, current))
+        assertEquals("already-suave", current.readText())
+        assertFalse(legacy.exists())
+    }
+
+    @Test
+    fun `rename is a no-op when neither file exists`() {
+        val dir = createTempDirectory("db").toFile()
+        val legacy = File(dir, LEGACY_APP_SETTINGS_DB_NAME)
+        val current = File(dir, APP_SETTINGS_DB_NAME)
+
+        assertFalse(renameLegacySettingsDb(legacy, current))
+        assertFalse(current.exists())
+    }
 }
