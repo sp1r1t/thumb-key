@@ -475,3 +475,24 @@ val MIGRATION_32_33 =
             )
         }
     }
+
+val MIGRATION_33_34 =
+    object : Migration(33, 34) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN backdrop_enabled INTEGER NOT NULL DEFAULT $DEFAULT_BACKDROP_ENABLED",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN key_padding INTEGER NOT NULL DEFAULT $DEFAULT_KEY_PADDING",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN key_border_width INTEGER NOT NULL DEFAULT $DEFAULT_KEY_BORDER_WIDTH",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN key_radius INTEGER NOT NULL DEFAULT $DEFAULT_KEY_RADIUS",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN pushup_size INTEGER NOT NULL DEFAULT $DEFAULT_PUSHUP_SIZE",
+            )
+        }
+    }

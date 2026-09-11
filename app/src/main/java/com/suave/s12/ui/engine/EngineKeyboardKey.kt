@@ -1,11 +1,13 @@
 package com.suave.s12.ui.engine
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -15,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.Dp
@@ -67,6 +70,9 @@ fun EngineKeyboardKey(
     minSwipeDistancePx: Float,
     hideLetters: Boolean,
     modifierBehaviors: Map<ModifierId, ModifierBehavior>,
+    keyPadding: Int,
+    keyBorderWidthDp: Float,
+    keyCornerRadius: Dp,
     modifier: Modifier = Modifier,
 ) {
     val dispatcher =
@@ -87,11 +93,21 @@ fun EngineKeyboardKey(
     val isModifierKeyActive =
         mapping.intents.values.any { it is KeyIntent.ModifierPress && modifierState.isActive(it.modifier) }
     val backgroundColor = if (isModifierKeyActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+    val keyShape = RoundedCornerShape(keyCornerRadius)
+    val keyBorderColour = MaterialTheme.colorScheme.outline
 
     Box(
         modifier =
             modifier
-                .padding(2.dp)
+                .padding(keyPadding.dp)
+                .clip(keyShape)
+                .then(
+                    if (keyBorderWidthDp > 0f) {
+                        Modifier.border(keyBorderWidthDp.dp, keyBorderColour, keyShape)
+                    } else {
+                        Modifier
+                    },
+                )
                 .background(backgroundColor)
                 .pointerInput(mapping) {
                     awaitEachGesture {

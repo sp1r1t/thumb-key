@@ -55,7 +55,7 @@ const val DEFAULT_SLIDE_CURSOR_MOVEMENT_MODE = 0
 const val DEFAULT_SLIDE_SPACEBAR_DEADZONE_ENABLED = 1
 const val DEFAULT_SLIDE_BACKSPACE_DEADZONE_ENABLED = 1
 const val DEFAULT_BACKDROP_ENABLED = 0
-const val DEFAULT_KEY_PADDING = 0
+const val DEFAULT_KEY_PADDING = 2
 const val DEFAULT_KEY_BORDER_WIDTH = 1
 const val DEFAULT_KEY_RADIUS = 0
 const val DEFAULT_DRAG_RETURN_ENABLED = 1
@@ -226,6 +226,31 @@ data class AppSettings(
         defaultValue = DEFAULT_SHOW_DEBUG_BAR.toString(),
     )
     val showDebugBar: Int = DEFAULT_SHOW_DEBUG_BAR,
+    @ColumnInfo(
+        name = "backdrop_enabled",
+        defaultValue = DEFAULT_BACKDROP_ENABLED.toString(),
+    )
+    val backdropEnabled: Int = DEFAULT_BACKDROP_ENABLED,
+    @ColumnInfo(
+        name = "key_padding",
+        defaultValue = DEFAULT_KEY_PADDING.toString(),
+    )
+    val keyPadding: Int = DEFAULT_KEY_PADDING,
+    @ColumnInfo(
+        name = "key_border_width",
+        defaultValue = DEFAULT_KEY_BORDER_WIDTH.toString(),
+    )
+    val keyBorderWidth: Int = DEFAULT_KEY_BORDER_WIDTH,
+    @ColumnInfo(
+        name = "key_radius",
+        defaultValue = DEFAULT_KEY_RADIUS.toString(),
+    )
+    val keyRadius: Int = DEFAULT_KEY_RADIUS,
+    @ColumnInfo(
+        name = "pushup_size",
+        defaultValue = DEFAULT_PUSHUP_SIZE.toString(),
+    )
+    val pushupSize: Int = DEFAULT_PUSHUP_SIZE,
 )
 
 data class LayoutsUpdate(
@@ -260,6 +285,16 @@ data class LookAndFeelUpdate(
     val vibrateOnTap: Int,
     @ColumnInfo(name = "vibrate_on_slide")
     val vibrateOnSlide: Int,
+    @ColumnInfo(name = "backdrop_enabled")
+    val backdropEnabled: Int,
+    @ColumnInfo(name = "key_padding")
+    val keyPadding: Int,
+    @ColumnInfo(name = "key_border_width")
+    val keyBorderWidth: Int,
+    @ColumnInfo(name = "key_radius")
+    val keyRadius: Int,
+    @ColumnInfo(name = "pushup_size")
+    val pushupSize: Int,
 )
 
 data class BehaviorUpdate(
@@ -397,7 +432,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 33,
+    version = 34,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -452,6 +487,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_30_31,
                             MIGRATION_31_32,
                             MIGRATION_32_33,
+                            MIGRATION_33_34,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.BorderBottom
+import androidx.compose.material.icons.outlined.BorderOuter
 import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.Crop75
 import androidx.compose.material.icons.outlined.EmojiEmotions
@@ -16,8 +17,12 @@ import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.LinearScale
 import androidx.compose.material.icons.outlined.Numbers
+import androidx.compose.material.icons.outlined.Padding
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.RoundedCorner
+import androidx.compose.material.icons.outlined.VerticalAlignTop
 import androidx.compose.material.icons.outlined.Vibration
+import androidx.compose.material.icons.outlined.ViewDay
 import androidx.compose.material.icons.outlined.WebAssetOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -41,10 +46,15 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.navigation.NavController
 import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
+import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
+import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
+import com.suave.s12.db.DEFAULT_KEY_PADDING
+import com.suave.s12.db.DEFAULT_KEY_RADIUS
+import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_THEME
 import com.suave.s12.db.DEFAULT_THEME_COLOR
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
@@ -92,6 +102,15 @@ fun LookAndFeelScreen(
     var hideLettersState = (settings?.hideLetters ?: DEFAULT_HIDE_LETTERS).toBool()
     var ignoreBottomPaddingState = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
     var disableFullscreenEditorState = (settings?.disableFullscreenEditor ?: DEFAULT_DISABLE_FULLSCREEN_EDITOR).toBool()
+    var backdropEnabledState = (settings?.backdropEnabled ?: DEFAULT_BACKDROP_ENABLED).toBool()
+    var keyPaddingState = (settings?.keyPadding ?: DEFAULT_KEY_PADDING).toFloat()
+    var keyPaddingSliderState by remember { mutableFloatStateOf(keyPaddingState) }
+    var keyBorderWidthState = (settings?.keyBorderWidth ?: DEFAULT_KEY_BORDER_WIDTH).toFloat()
+    var keyBorderWidthSliderState by remember { mutableFloatStateOf(keyBorderWidthState) }
+    var keyRadiusState = (settings?.keyRadius ?: DEFAULT_KEY_RADIUS).toFloat()
+    var keyRadiusSliderState by remember { mutableFloatStateOf(keyRadiusState) }
+    var pushupSizeState = (settings?.pushupSize ?: DEFAULT_PUSHUP_SIZE).toFloat()
+    var pushupSizeSliderState by remember { mutableFloatStateOf(pushupSizeState) }
     var layerHeightsState = settings?.layerHeights ?: DEFAULT_LAYER_HEIGHTS
     val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
     val layerHeightOverrides = parseLayerHeightOverrides(layerHeightsState)
@@ -109,6 +128,11 @@ fun LookAndFeelScreen(
                 keyHeight = keyHeightState.toInt(),
                 layerHeights = layerHeightsState,
                 disableFullscreenEditor = disableFullscreenEditorState.toInt(),
+                backdropEnabled = backdropEnabledState.toInt(),
+                keyPadding = keyPaddingState.toInt(),
+                keyBorderWidth = keyBorderWidthState.toInt(),
+                keyRadius = keyRadiusState.toInt(),
+                pushupSize = pushupSizeState.toInt(),
             ),
         )
     }
@@ -218,6 +242,28 @@ fun LookAndFeelScreen(
 
                     SettingRow {
                         SwitchPreference(
+                            value = backdropEnabledState,
+                            onValueChange = {
+                                backdropEnabledState = it
+                                updateLookAndFeel()
+                            },
+                            title = {
+                                Text(stringResource(R.string.backdrop))
+                            },
+                            summary = {
+                                Text(stringResource(if (backdropEnabledState) R.string.backdrop_on else R.string.backdrop_off))
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.ViewDay,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+
+                    SettingRow {
+                        SwitchPreference(
                             value = ignoreBottomPaddingState,
                             onValueChange = {
                                 ignoreBottomPaddingState = it
@@ -240,6 +286,47 @@ fun LookAndFeelScreen(
                             icon = {
                                 Icon(
                                     imageVector = Icons.Outlined.BorderBottom,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+
+                    SettingRow(
+                        infoText = stringResource(R.string.raise_from_bottom_info),
+                        onReset = {
+                            pushupSizeState = DEFAULT_PUSHUP_SIZE.toFloat()
+                            pushupSizeSliderState = DEFAULT_PUSHUP_SIZE.toFloat()
+                            updateLookAndFeel()
+                        },
+                    ) {
+                        SliderPreference(
+                            value = pushupSizeState,
+                            sliderValue = pushupSizeSliderState,
+                            onValueChange = {
+                                pushupSizeState = it
+                                updateLookAndFeel()
+                            },
+                            onSliderValueChange = {
+                                pushupSizeSliderState = it
+                            },
+                            valueRange = 0f..250f,
+                            title = {
+                                Text(stringResource(R.string.raise_from_bottom))
+                            },
+                            summary = {
+                                val dp = pushupSizeSliderState.toInt()
+                                Text(
+                                    if (dp == 0) {
+                                        stringResource(R.string.raise_from_bottom_summary_none)
+                                    } else {
+                                        stringResource(R.string.raise_from_bottom_summary, dp.toString())
+                                    },
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.VerticalAlignTop,
                                     contentDescription = null,
                                 )
                             },
@@ -322,6 +409,130 @@ fun LookAndFeelScreen(
                                 },
                             )
                         }
+                    }
+
+                    SettingRow(
+                        onReset = {
+                            keyPaddingState = DEFAULT_KEY_PADDING.toFloat()
+                            keyPaddingSliderState = DEFAULT_KEY_PADDING.toFloat()
+                            updateLookAndFeel()
+                        },
+                    ) {
+                        SliderPreference(
+                            value = keyPaddingState,
+                            sliderValue = keyPaddingSliderState,
+                            onValueChange = {
+                                keyPaddingState = it
+                                updateLookAndFeel()
+                            },
+                            onSliderValueChange = {
+                                keyPaddingSliderState = it
+                            },
+                            valueRange = 0f..10f,
+                            title = {
+                                Text(stringResource(R.string.key_spacing))
+                            },
+                            summary = {
+                                val dp = keyPaddingSliderState.toInt()
+                                Text(
+                                    if (dp == 0) {
+                                        stringResource(R.string.key_spacing_summary_none)
+                                    } else {
+                                        stringResource(R.string.key_spacing_summary, dp.toString())
+                                    },
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Padding,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+
+                    SettingRow(
+                        infoText = stringResource(R.string.border_thickness_info),
+                        onReset = {
+                            keyBorderWidthState = DEFAULT_KEY_BORDER_WIDTH.toFloat()
+                            keyBorderWidthSliderState = DEFAULT_KEY_BORDER_WIDTH.toFloat()
+                            updateLookAndFeel()
+                        },
+                    ) {
+                        SliderPreference(
+                            value = keyBorderWidthState,
+                            sliderValue = keyBorderWidthSliderState,
+                            onValueChange = {
+                                keyBorderWidthState = it
+                                updateLookAndFeel()
+                            },
+                            onSliderValueChange = {
+                                keyBorderWidthSliderState = it
+                            },
+                            valueRange = 0f..50f,
+                            title = {
+                                Text(stringResource(R.string.border_thickness))
+                            },
+                            summary = {
+                                val tenths = keyBorderWidthSliderState.toInt()
+                                Text(
+                                    if (tenths == 0) {
+                                        stringResource(R.string.border_thickness_summary_none)
+                                    } else {
+                                        stringResource(
+                                            R.string.border_thickness_summary,
+                                            tenthsOfDpLabel(tenths),
+                                        )
+                                    },
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.BorderOuter,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+
+                    SettingRow(
+                        onReset = {
+                            keyRadiusState = DEFAULT_KEY_RADIUS.toFloat()
+                            keyRadiusSliderState = DEFAULT_KEY_RADIUS.toFloat()
+                            updateLookAndFeel()
+                        },
+                    ) {
+                        SliderPreference(
+                            value = keyRadiusState,
+                            sliderValue = keyRadiusSliderState,
+                            onValueChange = {
+                                keyRadiusState = it
+                                updateLookAndFeel()
+                            },
+                            onSliderValueChange = {
+                                keyRadiusSliderState = it
+                            },
+                            valueRange = 0f..100f,
+                            title = {
+                                Text(stringResource(R.string.corner_roundness))
+                            },
+                            summary = {
+                                val percent = keyRadiusSliderState.toInt()
+                                Text(
+                                    if (percent == 0) {
+                                        stringResource(R.string.corner_roundness_summary_none)
+                                    } else {
+                                        stringResource(R.string.corner_roundness_summary, percent.toString())
+                                    },
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.RoundedCorner,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
                     }
 
                     SettingsDivider()
@@ -454,3 +665,9 @@ private fun LayoutLayer.heightIcon(): ImageVector =
         LayoutLayer.NUMERIC -> Icons.Outlined.Numbers
         LayoutLayer.EMOJI -> Icons.Outlined.EmojiEmotions
     }
+
+private fun tenthsOfDpLabel(tenths: Int): String {
+    val whole = tenths / 10
+    val frac = tenths % 10
+    return if (frac == 0) whole.toString() else "$whole.$frac"
+}

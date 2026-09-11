@@ -2,6 +2,7 @@ package com.suave.s12.ui.engine
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +20,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
@@ -32,13 +34,18 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.suave.s12.IMEService
 import com.suave.s12.db.AppSettings
 import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
+import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
+import com.suave.s12.db.DEFAULT_KEY_PADDING
+import com.suave.s12.db.DEFAULT_KEY_RADIUS
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_POSITION
+import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
@@ -100,6 +107,11 @@ fun EngineKeyboardScreen(
     val minSwipeDistancePx = (settings?.minSwipeLength ?: DEFAULT_MIN_SWIPE_LENGTH).toFloat()
     val ignoreBottomPadding = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
     val showDebugBar = (settings?.showDebugBar ?: DEFAULT_SHOW_DEBUG_BAR).toBool()
+    val backdropEnabled = (settings?.backdropEnabled ?: DEFAULT_BACKDROP_ENABLED).toBool()
+    val keyPadding = settings?.keyPadding ?: DEFAULT_KEY_PADDING
+    val keyBorderWidthDp = (settings?.keyBorderWidth ?: DEFAULT_KEY_BORDER_WIDTH) / 10f
+    val keyRadiusPercent = settings?.keyRadius ?: DEFAULT_KEY_RADIUS
+    val pushupSize = (settings?.pushupSize ?: DEFAULT_PUSHUP_SIZE).dp
     val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
     val keyboardPosition =
         KeyboardPosition.entries.getOrElse(settings?.position ?: DEFAULT_POSITION) { KeyboardPosition.Center }
@@ -122,6 +134,7 @@ fun EngineKeyboardScreen(
     // Row height is always keyHeight. Horizontal size is each key's columnSpan as a Row
     // weight, so a span-2 Enter fills two letter-columns without a separate width setting.
     val keyHeight = (settings?.keyHeight ?: DEFAULT_KEY_HEIGHT).dp
+    val keyCornerRadius = keyHeight * (keyRadiusPercent / 200f)
     val layerHeightOverrides = parseLayerHeightOverrides(settings?.layerHeights ?: DEFAULT_LAYER_HEIGHTS)
 
     val feedbackSettings =
@@ -169,12 +182,7 @@ fun EngineKeyboardScreen(
             },
         )
 
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .then(if (!ignoreBottomPadding) Modifier.safeDrawingPadding() else Modifier),
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         if (showDebugBar) {
             // Shows the APK's actual install timestamp (read from PackageManager at runtime,
             // not baked in at Gradle configuration time - this project's Gradle configuration
@@ -222,18 +230,53 @@ fun EngineKeyboardScreen(
                 minSwipeDistancePx = minSwipeDistancePx,
                 hideLetters = hideLetters,
                 modifierBehaviors = behaviors,
+                keyPadding = keyPadding,
+                keyBorderWidthDp = keyBorderWidthDp,
+                keyCornerRadius = keyCornerRadius,
                 vibrateOnTap = vibrateOnTap,
                 capabilities = capabilities,
                 ime = ime,
             )
         }
-        if (keyboardPosition == KeyboardPosition.Dual) {
-            Row(modifier = Modifier.fillMaxWidth()) {
-                renderPanel(Modifier.weight(1f))
-                renderPanel(Modifier.weight(1f))
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .then(
+                        if (backdropEnabled) {
+                            Modifier.background(MaterialTheme.colorScheme.background)
+                        } else {
+                            Modifier
+                        },
+                    ),
+        ) {
+            if (backdropEnabled) {
+                Box(
+                    modifier =
+                        Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                )
             }
-        } else {
-            renderPanel(Modifier.fillMaxWidth())
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .then(if (!ignoreBottomPadding) Modifier.safeDrawingPadding() else Modifier)
+                        .padding(bottom = pushupSize)
+                        .then(if (backdropEnabled) Modifier.padding(top = 6.dp) else Modifier),
+            ) {
+                if (keyboardPosition == KeyboardPosition.Dual) {
+                    Row(modifier = Modifier.fillMaxWidth()) {
+                        renderPanel(Modifier.weight(1f))
+                        renderPanel(Modifier.weight(1f))
+                    }
+                } else {
+                    renderPanel(Modifier.fillMaxWidth())
+                }
+            }
         }
     }
 }
@@ -252,6 +295,9 @@ private fun EngineKeyboardPanel(
     minSwipeDistancePx: Float,
     hideLetters: Boolean,
     modifierBehaviors: Map<ModifierId, ModifierBehavior>,
+    keyPadding: Int,
+    keyBorderWidthDp: Float,
+    keyCornerRadius: Dp,
     vibrateOnTap: Boolean,
     capabilities: EditorCapabilities,
     ime: IMEService,
@@ -280,6 +326,9 @@ private fun EngineKeyboardPanel(
             minSwipeDistancePx = minSwipeDistancePx,
             hideLetters = hideLetters,
             modifierBehaviors = modifierBehaviors,
+            keyPadding = keyPadding,
+            keyBorderWidthDp = keyBorderWidthDp,
+            keyCornerRadius = keyCornerRadius,
         )
     }
 }
@@ -342,6 +391,9 @@ private fun LayoutGrid(
     minSwipeDistancePx: Float,
     hideLetters: Boolean,
     modifierBehaviors: Map<ModifierId, ModifierBehavior>,
+    keyPadding: Int,
+    keyBorderWidthDp: Float,
+    keyCornerRadius: Dp,
 ) {
     for (row in layoutRows(layout)) {
         Row(modifier = Modifier.fillMaxWidth().height(keyHeight)) {
@@ -357,6 +409,9 @@ private fun LayoutGrid(
                     minSwipeDistancePx = minSwipeDistancePx,
                     hideLetters = hideLetters,
                     modifierBehaviors = modifierBehaviors,
+                    keyPadding = keyPadding,
+                    keyBorderWidthDp = keyBorderWidthDp,
+                    keyCornerRadius = keyCornerRadius,
                     modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
                 )
             }

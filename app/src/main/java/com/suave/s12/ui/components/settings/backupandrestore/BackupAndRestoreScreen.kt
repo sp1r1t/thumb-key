@@ -36,6 +36,7 @@ import com.suave.s12.db.AppDB
 import com.suave.s12.db.AppSettings
 import com.suave.s12.db.AppSettingsViewModel
 import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_CLIPBOARD_AUTO_CLEANUP_ENABLED
 import com.suave.s12.db.DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES
 import com.suave.s12.db.DEFAULT_CLIPBOARD_HISTORY_ENABLED
@@ -47,9 +48,13 @@ import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEYBOARD_LAYOUT
+import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
+import com.suave.s12.db.DEFAULT_KEY_PADDING
+import com.suave.s12.db.DEFAULT_KEY_RADIUS
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_POSITION
+import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
 import com.suave.s12.db.DEFAULT_SHOW_ON_SCREEN_KEYBOARD
@@ -237,6 +242,11 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             usePrivateClipboard = DEFAULT_USE_PRIVATE_CLIPBOARD,
             showOnScreenKeyboard = DEFAULT_SHOW_ON_SCREEN_KEYBOARD,
             showDebugBar = DEFAULT_SHOW_DEBUG_BAR,
+            backdropEnabled = DEFAULT_BACKDROP_ENABLED,
+            keyPadding = DEFAULT_KEY_PADDING,
+            keyBorderWidth = DEFAULT_KEY_BORDER_WIDTH,
+            keyRadius = DEFAULT_KEY_RADIUS,
+            pushupSize = DEFAULT_PUSHUP_SIZE,
         ),
     )
 }
