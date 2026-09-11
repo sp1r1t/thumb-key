@@ -86,7 +86,7 @@ class KeyDispatcherTest {
     }
 
     @Test
-    fun `a plain character key executes and reports tap feedback, not modifier feedback`() {
+    fun `a plain character key executes its text and fires no feedback on its own (Pressed already covered it)`() {
         val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Text("a")))
         val dispatcher = KeyDispatcher(key)
         val executed = mutableListOf<SemanticAction>()
@@ -95,11 +95,11 @@ class KeyDispatcherTest {
         dispatcher.handle(Gesture.Tap(Zone.Center), ModifierState(), executed::add, {}, feedback::add)
 
         assertEquals(listOf(SemanticAction.TypeText("a")), executed)
-        assertEquals(listOf(FeedbackEvent.TapRecognized), feedback)
+        assertEquals(emptyList<FeedbackEvent>(), feedback)
     }
 
     @Test
-    fun `a swipe fires feedback at lock time, and does not double-buzz when the swipe commits on release`() {
+    fun `a full swipe press buzzes exactly twice - once on press, once on swipe lock - never a third time on commit`() {
         val key =
             KeyMapping(
                 CONFIG,
@@ -109,14 +109,28 @@ class KeyDispatcherTest {
         val executed = mutableListOf<SemanticAction>()
         val feedback = mutableListOf<FeedbackEvent>()
 
-        // The lock, mid-drag - feedback fires here, nothing executes yet.
+        // Touch-down - buzz #1, before anything about this press is known.
+        dispatcher.handle(Gesture.Pressed, ModifierState(), executed::add, {}, feedback::add)
+        // The lock, mid-drag - buzz #2, nothing executes yet.
         dispatcher.handle(Gesture.SwipeLocked(Direction.UP), ModifierState(), executed::add, {}, feedback::add)
-        // The eventual commit on release - executes the character, but the buzz already
-        // happened at lock time, so no second feedback event here.
+        // The eventual commit on release - executes the character, but no third buzz: that
+        // would land right as the finger lifts, the worst moment to feel it.
         dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.UP)), ModifierState(), executed::add, {}, feedback::add)
 
-        assertEquals(listOf(FeedbackEvent.SwipeLocked(Direction.UP)), feedback)
+        assertEquals(listOf(FeedbackEvent.TapRecognized, FeedbackEvent.SwipeLocked(Direction.UP)), feedback)
         assertEquals(listOf(SemanticAction.TypeText("1")), executed)
+    }
+
+    @Test
+    fun `a plain tap (no swipe) buzzes exactly once, on press, not again on commit`() {
+        val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Text("o")))
+        val dispatcher = KeyDispatcher(key)
+        val feedback = mutableListOf<FeedbackEvent>()
+
+        dispatcher.handle(Gesture.Pressed, ModifierState(), {}, {}, feedback::add)
+        dispatcher.handle(Gesture.Tap(Zone.Center), ModifierState(), {}, {}, feedback::add)
+
+        assertEquals(listOf(FeedbackEvent.TapRecognized), feedback)
     }
 
     @Test

@@ -24,13 +24,23 @@ enum class SlideAxis { HORIZONTAL, VERTICAL }
  */
 sealed class Gesture {
     /**
+     * Fired once, immediately on touch-down, before anything about this press is known - not
+     * just for a plain tap, for every press regardless of what it turns into (swipe, hold,
+     * slide, a modifier key). Purely a "something was touched" feedback signal: acknowledges
+     * the press itself, independent of whatever else fires later for what the press resolves
+     * to (e.g. [SwipeLocked] for a swipe that follows it).
+     */
+    object Pressed : Gesture()
+
+    /**
      * Fired once, the instant a swipe locks onto a compass direction - mid-drag, while the
-     * finger still has good tactile contact with the screen. Purely an early feedback signal:
-     * the actual committed intent for this zone still resolves later via [Tap]/[Hold] at
-     * release, same as ever. Firing feedback only at that later commit (as this used to)
-     * meant swipe feedback landed right as the finger was lifting off - the worst possible
-     * moment to feel a buzz, which is why it read as "swipe never vibrates" even though the
-     * call was succeeding every time.
+     * finger still has good tactile contact with the screen. Purely an early feedback signal,
+     * additional to [Pressed] (a swipe should feel like two distinct buzzes: one on press, one
+     * when the swipe registers) - the actual committed intent for this zone still resolves
+     * later via [Tap]/[Hold] at release, same as ever. Firing feedback only at that later
+     * commit (as this used to) meant swipe feedback landed right as the finger was lifting off
+     * - the worst possible moment to feel a buzz, which is why it read as "swipe never
+     * vibrates" even though the call was succeeding every time.
      */
     data class SwipeLocked(
         val direction: Direction,

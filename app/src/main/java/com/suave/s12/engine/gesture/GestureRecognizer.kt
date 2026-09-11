@@ -52,7 +52,7 @@ class GestureRecognizer(
                 lastY = event.y
                 startTimeMs = event.timeMs
                 lastHoldTickMs = event.timeMs
-                emptyList()
+                listOf(Gesture.Pressed)
             }
 
             TouchPhase.MOVE -> {

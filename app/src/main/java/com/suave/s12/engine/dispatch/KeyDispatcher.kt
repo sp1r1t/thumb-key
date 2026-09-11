@@ -50,6 +50,15 @@ class KeyDispatcher(
         onFeedback: (FeedbackEvent) -> Unit,
     ): ModifierState =
         when (gesture) {
+            Gesture.Pressed -> {
+                // Unconditional - fires for every press regardless of what mapping.intents has
+                // at any zone, before any of that is even known. See Gesture.Pressed's doc for
+                // why this is intentionally separate from whatever fires later (SwipeLocked,
+                // ModifierActivated, etc.) rather than folded into it.
+                onFeedback(FeedbackEvent.TapRecognized)
+                modifierState
+            }
+
             is Gesture.Tap -> {
                 dispatchZone(gesture.zone, gesture, modifierState, consumeOneShot = true, onExecute, onLegacyAction, onFeedback)
             }
@@ -102,13 +111,11 @@ class KeyDispatcher(
                 // Only fire once per press, on Tap or the first Hold - never on HoldRepeat, same
                 // reasoning as a held modifier not spamming its own toggle: repeating "open
                 // settings" or "toggle emoji mode" on every repeat tick isn't meaningful.
+                // Feedback for the press itself already happened on Gesture.Pressed, and (for a
+                // directional zone) on Gesture.SwipeLocked - nothing further fires here, this
+                // just performs the actual action.
                 if (gesture is Gesture.Tap || gesture is Gesture.Hold) {
                     onLegacyAction(intent.action)
-                    // Directional zones already got their feedback at lock time (Gesture.
-                    // SwipeLocked, fired mid-drag - see its doc); firing again here on commit
-                    // would double-buzz right as the finger lifts, the worst moment to feel it.
-                    // Center has no separate lock moment, so it still fires here.
-                    if (zone == Zone.Center) onFeedback(FeedbackEvent.TapRecognized)
                 }
                 modifierState
             }
@@ -116,18 +123,9 @@ class KeyDispatcher(
             is KeyIntent.Text, is KeyIntent.Command, KeyIntent.Noop -> {
                 val resolved = ModifierEngine.resolve(modifierState, intent, shiftMappings)
                 onExecute(IntentCompiler.compile(resolved))
-                when {
-                    gesture is Gesture.HoldRepeat -> {
-                        onFeedback(FeedbackEvent.RepeatTick)
-                    }
-
-                    zone == Zone.Center -> {
-                        onFeedback(FeedbackEvent.TapRecognized)
-                    }
-
-                    // Directional zones already got their feedback at lock time - see above.
-                    else -> {}
-                }
+                // Feedback for the press/swipe itself already happened on Gesture.Pressed/
+                // SwipeLocked; only an ongoing hold-repeat gets its own (quieter) tick here.
+                if (gesture is Gesture.HoldRepeat) onFeedback(FeedbackEvent.RepeatTick)
                 if (consumeOneShot) ModifierEngine.consumeOneShots(modifierState) else modifierState
             }
         }

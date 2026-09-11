@@ -33,6 +33,14 @@ class GestureRecognizerTest {
         )
 
     @Test
+    fun `touch-down emits Pressed immediately, before anything else about the press is known`() {
+        val recognizer = GestureRecognizer(plainKeyConfig)
+        val result = recognizer.process(down())
+
+        assertEquals(listOf(Gesture.Pressed), result)
+    }
+
+    @Test
     fun `quick tap with no movement emits Tap on Center then Released`() {
         val recognizer = GestureRecognizer(plainKeyConfig)
         recognizer.process(down())
