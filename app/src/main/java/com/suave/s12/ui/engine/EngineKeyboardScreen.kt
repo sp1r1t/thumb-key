@@ -39,9 +39,6 @@ import com.suave.s12.layout.SUAVE_LAYOUT
 import com.suave.s12.layout.SUAVE_SHIFT_MAPPINGS
 import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.toBool
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 /**
  * Renders [SUAVE_LAYOUT] on the new engine end to end. Owns the one piece of state every key on
@@ -102,23 +99,12 @@ fun EngineKeyboardScreen(
                 .then(if (!ignoreBottomPadding) Modifier.safeDrawingPadding() else Modifier),
     ) {
         if (BuildConfig.DEBUG) {
-            // Exists to make "which build is actually on the phone" a glance rather than an adb
-            // round-trip. Reads the APK's actual install timestamp from PackageManager at
-            // runtime rather than baking a timestamp in at Gradle configuration time - this
-            // project's Gradle configuration cache gets reused whenever only source files
-            // change, which skips re-running the build script (and any Date() call in it)
-            // entirely, so a config-time timestamp went stale exactly when it mattered most:
-            // confirming a fresh `adb install` actually took effect. PackageManager's
-            // lastUpdateTime always reflects the real install, regardless of Gradle caching.
-            // Debug builds only; never shows in a release build.
-            val installTime =
-                remember {
-                    val info = ime.packageManager.getPackageInfo(ime.packageName, 0)
-                    SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault()).format(Date(info.lastUpdateTime))
-                }
+            // Shows which app the IME thinks it's connected to and how its editor was
+            // classified - useful for confirming capability-driven output degradation (e.g.
+            // Termux resolving to RAW) without an adb round-trip. Debug builds only.
             val targetApp = ime.currentInputEditorInfo?.packageName ?: "?"
             Text(
-                text = "installed $installTime | $targetApp (${capabilities.level})",
+                text = "$targetApp (${capabilities.level})",
                 modifier =
                     Modifier
                         .fillMaxWidth()

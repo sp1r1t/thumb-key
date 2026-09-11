@@ -70,7 +70,10 @@ class KeyDispatcherTest {
 
         assertTrue(state.isActive(ModifierId.ALT))
         assertFalse(state.isActive(ModifierId.CTRL))
-        assertEquals(listOf(FeedbackEvent.ModifierActivated(ModifierId.ALT, ActivationMode.ONE_SHOT)), feedback)
+        // No feedback from a bare Tap call in this test - in real use Gesture.Pressed/
+        // SwipeLocked already buzz for this exact moment before Tap ever runs; firing
+        // ModifierActivated here too was the "too many vibrations" bug.
+        assertEquals(emptyList<FeedbackEvent>(), feedback)
     }
 
     @Test
@@ -161,6 +164,56 @@ class KeyDispatcherTest {
         dispatcher.handle(Gesture.HoldRepeat(Zone.Center), ModifierState(), {}, fired::add, {})
 
         assertEquals(listOf(KeyAction.Copy), fired)
+    }
+
+    @Test
+    fun `pressing Ctrl and immediately pressing a letter applies Ctrl without waiting for hold`() {
+        val ctrlDispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY)
+        val letterDispatcher = KeyDispatcher(LETTER_KEY)
+        val executed = mutableListOf<SemanticAction>()
+
+        // Ctrl's own Hold threshold never fires here - only Pressed does - matching the real
+        // "tap+hold Ctrl, then immediately press a" scenario the user reported as a delay.
+        var state = ctrlDispatcher.handle(Gesture.Pressed, ModifierState(), executed::add, {}, {})
+        state = letterDispatcher.handle(Gesture.Pressed, state, executed::add, {}, {})
+        state = letterDispatcher.handle(Gesture.Tap(Zone.Center), state, executed::add, {}, {})
+
+        assertEquals(listOf(SemanticAction.TypeText("s", setOf(ModifierId.CTRL))), executed)
+    }
+
+    @Test
+    fun `a quick tap on Ctrl (no hold reached) buzzes once and reclassifies to a sticky one-shot`() {
+        val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY)
+        val feedback = mutableListOf<FeedbackEvent>()
+
+        var state = dispatcher.handle(Gesture.Pressed, ModifierState(), {}, {}, feedback::add)
+        state = dispatcher.handle(Gesture.Tap(Zone.Center), state, {}, {}, feedback::add)
+        state = dispatcher.handle(Gesture.Released, state, {}, {}, feedback::add)
+
+        // Exactly one buzz for the whole press - the "on tap in vibrates twice" bug was Pressed's
+        // TapRecognized plus a second ModifierActivated fired from the Tap branch itself.
+        assertEquals(listOf(FeedbackEvent.TapRecognized), feedback)
+        assertTrue(state.isActive(ModifierId.CTRL))
+        assertEquals(ActivationMode.ONE_SHOT, state.active.getValue(ModifierId.CTRL).mode)
+    }
+
+    @Test
+    fun `pressing then swiping from Ctrl to Alt leaves only Alt active, never both`() {
+        val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY)
+
+        var state = dispatcher.handle(Gesture.Pressed, ModifierState(), {}, {}, {})
+        assertTrue("Pressed provisionally guesses the center zone's modifier", state.isActive(ModifierId.CTRL))
+
+        state = dispatcher.handle(Gesture.SwipeLocked(Direction.RIGHT), state, {}, {}, {})
+
+        assertFalse("hand-off to the zone the swipe actually locked must undo the provisional guess", state.isActive(ModifierId.CTRL))
+        assertTrue(state.isActive(ModifierId.ALT))
+
+        state = dispatcher.handle(Gesture.Hold(Zone.Directional(Direction.RIGHT)), state, {}, {}, {})
+        state = dispatcher.handle(Gesture.Released, state, {}, {}, {})
+
+        assertFalse(state.isActive(ModifierId.ALT))
+        assertFalse("Ctrl must never have leaked back active after the hand-off", state.isActive(ModifierId.CTRL))
     }
 
     @Test
