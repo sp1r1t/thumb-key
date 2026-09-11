@@ -36,25 +36,10 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.navigation.NavController
 import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
-import com.suave.s12.db.DEFAULT_ANIMATION_HELPER_SPEED
-import com.suave.s12.db.DEFAULT_ANIMATION_SPEED
-import com.suave.s12.db.DEFAULT_AUTO_SIZE_KEYS
-import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
-import com.suave.s12.db.DEFAULT_HIDE_SYMBOLS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
-import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
-import com.suave.s12.db.DEFAULT_KEY_PADDING
-import com.suave.s12.db.DEFAULT_KEY_RADIUS
-import com.suave.s12.db.DEFAULT_KEY_WIDTH
-import com.suave.s12.db.DEFAULT_NON_SQUARE_KEYS
-import com.suave.s12.db.DEFAULT_POSITION
-import com.suave.s12.db.DEFAULT_POSITION_PADDING
-import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
-import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH
-import com.suave.s12.db.DEFAULT_SOUND_ON_TAP
 import com.suave.s12.db.DEFAULT_THEME
 import com.suave.s12.db.DEFAULT_THEME_COLOR
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
@@ -108,26 +93,6 @@ fun LookAndFeelScreen(
                 themeColor = themeColorState.ordinal,
                 keyHeight = keyHeightState.toInt(),
                 disableFullscreenEditor = disableFullscreenEditorState.toInt(),
-                // Everything below is a read-through of whatever's already in the DB, not an
-                // editable setting any more - see CLAUDE.md's UI principles and this screen's
-                // audit history for why (dead fields from the pre-rewrite engine, with no live
-                // reader left anywhere). Passing the stored value instead of the bare default
-                // avoids silently resetting it just because an unrelated live control changed.
-                pushupSize = settings?.pushupSize ?: DEFAULT_PUSHUP_SIZE,
-                animationSpeed = settings?.animationSpeed ?: DEFAULT_ANIMATION_SPEED,
-                animationHelperSpeed = settings?.animationHelperSpeed ?: DEFAULT_ANIMATION_HELPER_SPEED,
-                position = settings?.position ?: DEFAULT_POSITION,
-                positionPadding = settings?.positionPadding ?: DEFAULT_POSITION_PADDING,
-                soundOnTap = settings?.soundOnTap ?: DEFAULT_SOUND_ON_TAP,
-                hideSymbols = settings?.hideSymbols ?: DEFAULT_HIDE_SYMBOLS,
-                backdropEnabled = settings?.backdropEnabled ?: DEFAULT_BACKDROP_ENABLED,
-                keyPadding = settings?.keyPadding ?: DEFAULT_KEY_PADDING,
-                keyBorderWidth = settings?.keyBorderWidth ?: DEFAULT_KEY_BORDER_WIDTH,
-                keyRadius = settings?.keyRadius ?: DEFAULT_KEY_RADIUS,
-                autoSizeKeys = settings?.autoSizeKeys ?: DEFAULT_AUTO_SIZE_KEYS,
-                nonSquareKeys = settings?.nonSquareKeys ?: DEFAULT_NON_SQUARE_KEYS,
-                keyWidth = settings?.keyWidth ?: DEFAULT_KEY_WIDTH,
-                showToastOnLayoutSwitch = settings?.showToastOnLayoutSwitch ?: DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH,
             ),
         )
     }

@@ -30,23 +30,10 @@ import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
 import com.suave.s12.db.BehaviorUpdate
 import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
-import com.suave.s12.db.DEFAULT_AUTO_CAPITALIZE
-import com.suave.s12.db.DEFAULT_CIRCULAR_DRAG_ENABLED
-import com.suave.s12.db.DEFAULT_CLOCKWISE_DRAG_ACTION
-import com.suave.s12.db.DEFAULT_COUNTERCLOCKWISE_DRAG_ACTION
 import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
-import com.suave.s12.db.DEFAULT_DRAG_RETURN_ENABLED
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
-import com.suave.s12.db.DEFAULT_GHOST_KEYS_ENABLED
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
-import com.suave.s12.db.DEFAULT_SLIDE_BACKSPACE_DEADZONE_ENABLED
-import com.suave.s12.db.DEFAULT_SLIDE_CURSOR_MOVEMENT_MODE
-import com.suave.s12.db.DEFAULT_SLIDE_ENABLED
-import com.suave.s12.db.DEFAULT_SLIDE_HOLD_ENABLED
-import com.suave.s12.db.DEFAULT_SLIDE_SENSITIVITY
-import com.suave.s12.db.DEFAULT_SLIDE_SPACEBAR_DEADZONE_ENABLED
-import com.suave.s12.db.DEFAULT_SPACEBAR_MULTITAPS
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.TestOutTextField
 import com.suave.s12.ui.components.settings.about.SettingsDivider
@@ -85,24 +72,6 @@ fun BehaviorScreen(
             BehaviorUpdate(
                 id = 1,
                 minSwipeLength = minSwipeLengthState.toInt(),
-                // Everything below is a read-through of whatever's already in the DB, not an
-                // editable setting any more - see CLAUDE.md's UI principles and this screen's
-                // audit history for why (dead fields from the pre-rewrite engine, with no live
-                // reader left anywhere). Passing the stored value instead of the bare default
-                // avoids silently resetting it just because an unrelated live control changed.
-                slideSensitivity = settings?.slideSensitivity ?: DEFAULT_SLIDE_SENSITIVITY,
-                slideEnabled = settings?.slideEnabled ?: DEFAULT_SLIDE_ENABLED,
-                slideCursorMovementMode = settings?.slideCursorMovementMode ?: DEFAULT_SLIDE_CURSOR_MOVEMENT_MODE,
-                slideSpacebarDeadzoneEnabled = settings?.slideSpacebarDeadzoneEnabled ?: DEFAULT_SLIDE_SPACEBAR_DEADZONE_ENABLED,
-                slideBackspaceDeadzoneEnabled = settings?.slideBackspaceDeadzoneEnabled ?: DEFAULT_SLIDE_BACKSPACE_DEADZONE_ENABLED,
-                autoCapitalize = settings?.autoCapitalize ?: DEFAULT_AUTO_CAPITALIZE,
-                spacebarMultiTaps = settings?.spacebarMultiTaps ?: DEFAULT_SPACEBAR_MULTITAPS,
-                dragReturnEnabled = settings?.dragReturnEnabled ?: DEFAULT_DRAG_RETURN_ENABLED,
-                circularDragEnabled = settings?.circularDragEnabled ?: DEFAULT_CIRCULAR_DRAG_ENABLED,
-                clockwiseDragAction = settings?.clockwiseDragAction ?: DEFAULT_CLOCKWISE_DRAG_ACTION,
-                counterclockwiseDragAction = settings?.counterclockwiseDragAction ?: DEFAULT_COUNTERCLOCKWISE_DRAG_ACTION,
-                ghostKeysEnabled = settings?.ghostKeysEnabled ?: DEFAULT_GHOST_KEYS_ENABLED,
-                slideHoldEnabled = settings?.slideHoldEnabled ?: DEFAULT_SLIDE_HOLD_ENABLED,
                 escAsModifier = escAsModifierState.toInt(),
                 ctrlAsModifier = ctrlAsModifierState.toInt(),
                 altAsModifier = altAsModifierState.toInt(),

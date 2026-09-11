@@ -89,72 +89,6 @@ const val DEFAULT_SHIFT_AS_MODIFIER = 1
 @Entity
 data class AppSettings(
     @PrimaryKey(autoGenerate = true) val id: Int,
-    // These columns exist in the database schema because we can't drop them without recreating tables.
-    // They still have to be handled nearly identically to active columns, but they are actually defunct.
-    @ColumnInfo(
-        name = "key_size_defunct",
-        defaultValue = DEFAULT_KEY_WIDTH.toString(),
-    )
-    val keySizeDefunct: Int = DEFAULT_KEY_WIDTH,
-    @ColumnInfo(
-        name = "key_width_defunct",
-    )
-    val keyWidthDefunct: Int? = null,
-    @ColumnInfo(
-        name = "animation_speed",
-        defaultValue = DEFAULT_ANIMATION_SPEED.toString(),
-    )
-    val animationSpeed: Int,
-    @ColumnInfo(
-        name = "animation_helper_speed",
-        defaultValue = DEFAULT_ANIMATION_HELPER_SPEED.toString(),
-    )
-    val animationHelperSpeed: Int,
-    @ColumnInfo(
-        name = "position",
-        defaultValue = DEFAULT_POSITION.toString(),
-    )
-    val position: Int,
-    @ColumnInfo(
-        name = "auto_capitalize",
-        defaultValue = DEFAULT_AUTO_CAPITALIZE.toString(),
-    )
-    val autoCapitalize: Int,
-    @ColumnInfo(
-        name = "keyboard_layout",
-        defaultValue = DEFAULT_KEYBOARD_LAYOUT.toString(),
-    )
-    val keyboardLayout: Int,
-    @ColumnInfo(
-        name = "vibrate_on_tap",
-        defaultValue = DEFAULT_VIBRATE_ON_TAP.toString(),
-    )
-    val vibrateOnTap: Int,
-    @ColumnInfo(
-        name = "slide_enabled",
-        defaultValue = DEFAULT_SLIDE_ENABLED.toString(),
-    )
-    val slideEnabled: Int,
-    @ColumnInfo(
-        name = "slide_cursor_movement_mode",
-        defaultValue = DEFAULT_SLIDE_CURSOR_MOVEMENT_MODE.toString(),
-    )
-    val slideCursorMovementMode: Int,
-    @ColumnInfo(
-        name = "slide_spacebar_deadzone_enabled",
-        defaultValue = DEFAULT_SLIDE_SPACEBAR_DEADZONE_ENABLED.toString(),
-    )
-    val slideSpacebarDeadzoneEnabled: Int,
-    @ColumnInfo(
-        name = "slide_backspace_deadzone_enabled",
-        defaultValue = DEFAULT_SLIDE_BACKSPACE_DEADZONE_ENABLED.toString(),
-    )
-    val slideBackspaceDeadzoneEnabled: Int,
-    @ColumnInfo(
-        name = "sound_on_tap",
-        defaultValue = DEFAULT_SOUND_ON_TAP.toString(),
-    )
-    val soundOnTap: Int,
     @ColumnInfo(
         name = "theme",
         defaultValue = DEFAULT_THEME.toString(),
@@ -165,153 +99,86 @@ data class AppSettings(
         defaultValue = DEFAULT_THEME_COLOR.toString(),
     )
     val themeColor: Int,
-    // TODO get rid of this column next time you regenerate the app
-    @ColumnInfo(
-        name = "viewed_changelog",
-        defaultValue = "0",
-    )
-    val viewedChangelog: Int,
-    @ColumnInfo(
-        name = "min_swipe_length",
-        defaultValue = DEFAULT_MIN_SWIPE_LENGTH.toString(),
-    )
-    val minSwipeLength: Int,
-    @ColumnInfo(
-        name = "slide_sensitivity",
-        defaultValue = DEFAULT_SLIDE_SENSITIVITY.toString(),
-    )
-    val slideSensitivity: Int,
-    @ColumnInfo(
-        name = "pushup_size",
-        defaultValue = DEFAULT_PUSHUP_SIZE.toString(),
-    )
-    val pushupSize: Int,
     @ColumnInfo(
         name = "hide_letters",
         defaultValue = DEFAULT_HIDE_LETTERS.toString(),
     )
     val hideLetters: Int,
     @ColumnInfo(
-        name = "keyboard_layouts",
-        defaultValue = "$DEFAULT_KEYBOARD_LAYOUT",
-    )
-    val keyboardLayouts: String,
-    // TODO this needs to be gotten rid of in the next DB update
-    @ColumnInfo(
-        name = "key_borders",
-        defaultValue = DEFAULT_KEY_BORDERS.toString(),
-    )
-    val keyBorders: Int,
-    @ColumnInfo(
-        name = "spacebar_multitaps",
-        defaultValue = DEFAULT_SPACEBAR_MULTITAPS.toString(),
-    )
-    val spacebarMultiTaps: Int,
-    @ColumnInfo(
-        name = "hide_symbols",
-        defaultValue = DEFAULT_HIDE_SYMBOLS.toString(),
-    )
-    val hideSymbols: Int,
-    @ColumnInfo(
-        name = "last_version_code_viewed",
-        defaultValue = "0",
-    )
-    val lastVersionCodeViewed: Int,
-    @ColumnInfo(
-        name = "backdrop_enabled",
-        defaultValue = DEFAULT_BACKDROP_ENABLED.toString(),
-    )
-    val backdropEnabled: Int,
-    @ColumnInfo(
-        name = "key_padding",
-        defaultValue = DEFAULT_KEY_PADDING.toString(),
-    )
-    val keyPadding: Int,
-    @ColumnInfo(
-        name = "key_border_width",
-        defaultValue = DEFAULT_KEY_BORDER_WIDTH.toString(),
-    )
-    val keyBorderWidth: Int,
-    @ColumnInfo(
-        name = "key_radius",
-        defaultValue = DEFAULT_KEY_RADIUS.toString(),
-    )
-    val keyRadius: Int,
-    @ColumnInfo(
-        name = "drag_return_enabled",
-        defaultValue = DEFAULT_DRAG_RETURN_ENABLED.toString(),
-    )
-    val dragReturnEnabled: Int,
-    @ColumnInfo(
-        name = "circular_drag_enabled",
-        defaultValue = DEFAULT_CIRCULAR_DRAG_ENABLED.toString(),
-    )
-    val circularDragEnabled: Int,
-    @ColumnInfo(
-        name = "clockwise_drag_action",
-        defaultValue = DEFAULT_CLOCKWISE_DRAG_ACTION.toString(),
-    )
-    val clockwiseDragAction: Int,
-    @ColumnInfo(
-        name = "counterclockwise_drag_action",
-        defaultValue = DEFAULT_COUNTERCLOCKWISE_DRAG_ACTION.toString(),
-    )
-    val counterclockwiseDragAction: Int,
-    @ColumnInfo(
-        name = "ghost_keys_enabled",
-        defaultValue = DEFAULT_GHOST_KEYS_ENABLED.toString(),
-    )
-    val ghostKeysEnabled: Int,
-    @ColumnInfo(
-        name = "slide_hold_enabled",
-        defaultValue = DEFAULT_SLIDE_HOLD_ENABLED.toString(),
-    )
-    val slideHoldEnabled: Int,
-    @ColumnInfo(
-        name = "key_modifications",
-        defaultValue = "",
-    )
-    val keyModifications: String,
-    @ColumnInfo(
-        name = "auto_size_keys",
-        defaultValue = DEFAULT_AUTO_SIZE_KEYS.toString(),
-    )
-    val autoSizeKeys: Int,
-    @ColumnInfo(
-        name = "non_square_keys",
-        defaultValue = DEFAULT_NON_SQUARE_KEYS.toString(),
-    )
-    val nonSquareKeys: Int,
-    @ColumnInfo(
-        name = "key_width_v18",
-        defaultValue = DEFAULT_KEY_WIDTH.toString(),
-    )
-    val keyWidth: Int,
-    @ColumnInfo(
-        name = "key_height_v18",
-        defaultValue = DEFAULT_KEY_HEIGHT.toString(),
-    )
-    val keyHeight: Int,
-    @ColumnInfo(
         name = "ignore_bottom_padding",
         defaultValue = DEFAULT_IGNORE_BOTTOM_PADDING.toString(),
     )
     val ignoreBottomPadding: Int,
-    @ColumnInfo(
-        name = "show_toast_on_layout_switch",
-        defaultValue = DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH.toString(),
-    )
-    val showToastOnLayoutSwitch: Int,
     @ColumnInfo(
         name = "disable_fullscreen_editor",
         defaultValue = DEFAULT_DISABLE_FULLSCREEN_EDITOR.toString(),
     )
     val disableFullscreenEditor: Int,
     @ColumnInfo(
+        name = "key_height",
+        defaultValue = DEFAULT_KEY_HEIGHT.toString(),
+    )
+    val keyHeight: Int,
+    @ColumnInfo(
+        name = "vibrate_on_tap",
+        defaultValue = DEFAULT_VIBRATE_ON_TAP.toString(),
+    )
+    val vibrateOnTap: Int,
+    @ColumnInfo(
         name = "vibrate_on_slide",
         defaultValue = DEFAULT_VIBRATE_ON_SLIDE.toString(),
     )
     val vibrateOnSlide: Int,
+    @ColumnInfo(
+        name = "min_swipe_length",
+        defaultValue = DEFAULT_MIN_SWIPE_LENGTH.toString(),
+    )
+    val minSwipeLength: Int,
+    @ColumnInfo(
+        name = "esc_as_modifier",
+        defaultValue = DEFAULT_ESC_AS_MODIFIER.toString(),
+    )
+    val escAsModifier: Int,
+    @ColumnInfo(
+        name = "ctrl_as_modifier",
+        defaultValue = DEFAULT_CTRL_AS_MODIFIER.toString(),
+    )
+    val ctrlAsModifier: Int = DEFAULT_CTRL_AS_MODIFIER,
+    @ColumnInfo(
+        name = "alt_as_modifier",
+        defaultValue = DEFAULT_ALT_AS_MODIFIER.toString(),
+    )
+    val altAsModifier: Int = DEFAULT_ALT_AS_MODIFIER,
+    @ColumnInfo(
+        name = "shift_as_modifier",
+        defaultValue = DEFAULT_SHIFT_AS_MODIFIER.toString(),
+    )
+    val shiftAsModifier: Int = DEFAULT_SHIFT_AS_MODIFIER,
+    @ColumnInfo(
+        name = "keyboard_layout",
+        defaultValue = DEFAULT_KEYBOARD_LAYOUT.toString(),
+    )
+    val keyboardLayout: Int,
+    @ColumnInfo(
+        name = "keyboard_layouts",
+        defaultValue = "$DEFAULT_KEYBOARD_LAYOUT",
+    )
+    val keyboardLayouts: String,
+    @ColumnInfo(
+        name = "show_toast_on_layout_switch",
+        defaultValue = DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH.toString(),
+    )
+    val showToastOnLayoutSwitch: Int,
+    @ColumnInfo(
+        name = "position",
+        defaultValue = DEFAULT_POSITION.toString(),
+    )
+    val position: Int,
+    @ColumnInfo(
+        name = "last_version_code_viewed",
+        defaultValue = "0",
+    )
+    val lastVersionCodeViewed: Int,
     @ColumnInfo(
         name = "clipboard_history_enabled",
         defaultValue = DEFAULT_CLIPBOARD_HISTORY_ENABLED.toString(),
@@ -338,11 +205,6 @@ data class AppSettings(
     )
     val clipboardMaxSize: Int,
     @ColumnInfo(
-        name = "position_padding",
-        defaultValue = DEFAULT_POSITION_PADDING.toString(),
-    )
-    val positionPadding: Int,
-    @ColumnInfo(
         name = "use_private_clipboard",
         defaultValue = DEFAULT_USE_PRIVATE_CLIPBOARD.toString(),
     )
@@ -352,26 +214,6 @@ data class AppSettings(
         defaultValue = DEFAULT_SHOW_ON_SCREEN_KEYBOARD.toString(),
     )
     val showOnScreenKeyboard: Int,
-    @ColumnInfo(
-        name = "esc_as_modifier",
-        defaultValue = DEFAULT_ESC_AS_MODIFIER.toString(),
-    )
-    val escAsModifier: Int,
-    @ColumnInfo(
-        name = "ctrl_as_modifier",
-        defaultValue = DEFAULT_CTRL_AS_MODIFIER.toString(),
-    )
-    val ctrlAsModifier: Int = DEFAULT_CTRL_AS_MODIFIER,
-    @ColumnInfo(
-        name = "alt_as_modifier",
-        defaultValue = DEFAULT_ALT_AS_MODIFIER.toString(),
-    )
-    val altAsModifier: Int = DEFAULT_ALT_AS_MODIFIER,
-    @ColumnInfo(
-        name = "shift_as_modifier",
-        defaultValue = DEFAULT_SHIFT_AS_MODIFIER.toString(),
-    )
-    val shiftAsModifier: Int = DEFAULT_SHIFT_AS_MODIFIER,
 )
 
 data class LayoutsUpdate(
@@ -388,130 +230,28 @@ data class LayoutsUpdate(
 
 data class LookAndFeelUpdate(
     val id: Int,
-    @ColumnInfo(
-        name = "animation_speed",
-    )
-    val animationSpeed: Int,
-    @ColumnInfo(
-        name = "animation_helper_speed",
-    )
-    val animationHelperSpeed: Int,
-    @ColumnInfo(
-        name = "position",
-    )
-    val position: Int,
-    @ColumnInfo(
-        name = "vibrate_on_tap",
-    )
-    val vibrateOnTap: Int,
-    @ColumnInfo(
-        name = "sound_on_tap",
-    )
-    val soundOnTap: Int,
-    @ColumnInfo(
-        name = "theme",
-    )
+    @ColumnInfo(name = "theme")
     val theme: Int,
-    @ColumnInfo(
-        name = "theme_color",
-    )
+    @ColumnInfo(name = "theme_color")
     val themeColor: Int,
-    @ColumnInfo(
-        name = "pushup_size",
-    )
-    val pushupSize: Int,
-    @ColumnInfo(
-        name = "hide_letters",
-    )
+    @ColumnInfo(name = "hide_letters")
     val hideLetters: Int,
-    @ColumnInfo(
-        name = "hide_symbols",
-    )
-    val hideSymbols: Int,
-    @ColumnInfo(
-        name = "backdrop_enabled",
-    )
-    val backdropEnabled: Int,
-    @ColumnInfo(
-        name = "key_padding",
-    )
-    val keyPadding: Int,
-    @ColumnInfo(
-        name = "key_border_width",
-    )
-    val keyBorderWidth: Int,
-    @ColumnInfo(
-        name = "key_radius",
-    )
-    val keyRadius: Int,
-    @ColumnInfo(
-        name = "auto_size_keys",
-    )
-    val autoSizeKeys: Int,
-    @ColumnInfo(
-        name = "non_square_keys",
-    )
-    val nonSquareKeys: Int,
-    @ColumnInfo(
-        name = "key_width_v18",
-    )
-    val keyWidth: Int,
-    @ColumnInfo(
-        name = "key_height_v18",
-    )
-    val keyHeight: Int,
-    @ColumnInfo(
-        name = "ignore_bottom_padding",
-    )
+    @ColumnInfo(name = "ignore_bottom_padding")
     val ignoreBottomPadding: Int,
-    @ColumnInfo(
-        name = "show_toast_on_layout_switch",
-    )
-    val showToastOnLayoutSwitch: Int,
-    @ColumnInfo(
-        name = "disable_fullscreen_editor",
-    )
+    @ColumnInfo(name = "disable_fullscreen_editor")
     val disableFullscreenEditor: Int,
-    @ColumnInfo(
-        name = "vibrate_on_slide",
-    )
+    @ColumnInfo(name = "key_height")
+    val keyHeight: Int,
+    @ColumnInfo(name = "vibrate_on_tap")
+    val vibrateOnTap: Int,
+    @ColumnInfo(name = "vibrate_on_slide")
     val vibrateOnSlide: Int,
-    @ColumnInfo(
-        name = "position_padding",
-    )
-    val positionPadding: Int,
 )
 
 data class BehaviorUpdate(
     val id: Int,
     @ColumnInfo(name = "min_swipe_length")
     val minSwipeLength: Int,
-    @ColumnInfo(name = "slide_sensitivity")
-    val slideSensitivity: Int,
-    @ColumnInfo(name = "slide_enabled")
-    val slideEnabled: Int,
-    @ColumnInfo(name = "slide_cursor_movement_mode")
-    val slideCursorMovementMode: Int,
-    @ColumnInfo(name = "slide_spacebar_deadzone_enabled")
-    val slideSpacebarDeadzoneEnabled: Int,
-    @ColumnInfo(name = "slide_backspace_deadzone_enabled")
-    val slideBackspaceDeadzoneEnabled: Int,
-    @ColumnInfo(name = "auto_capitalize")
-    val autoCapitalize: Int,
-    @ColumnInfo(name = "spacebar_multitaps")
-    val spacebarMultiTaps: Int,
-    @ColumnInfo(name = "drag_return_enabled")
-    val dragReturnEnabled: Int,
-    @ColumnInfo(name = "circular_drag_enabled")
-    val circularDragEnabled: Int,
-    @ColumnInfo(name = "clockwise_drag_action")
-    val clockwiseDragAction: Int,
-    @ColumnInfo(name = "counterclockwise_drag_action")
-    val counterclockwiseDragAction: Int,
-    @ColumnInfo(name = "ghost_keys_enabled")
-    val ghostKeysEnabled: Int,
-    @ColumnInfo(name = "slide_hold_enabled")
-    val slideHoldEnabled: Int,
     @ColumnInfo(name = "esc_as_modifier")
     val escAsModifier: Int,
     @ColumnInfo(name = "ctrl_as_modifier")
@@ -520,14 +260,6 @@ data class BehaviorUpdate(
     val altAsModifier: Int,
     @ColumnInfo(name = "shift_as_modifier")
     val shiftAsModifier: Int,
-)
-
-data class KeyModificationsUpdate(
-    val id: Int,
-    @ColumnInfo(
-        name = "key_modifications",
-    )
-    val keyModifications: String,
 )
 
 data class ClipboardSettingsUpdate(
@@ -575,9 +307,6 @@ interface AppSettingsDao {
     fun updateBehavior(behavior: BehaviorUpdate)
 
     @Update(entity = AppSettings::class)
-    fun updateKeyModifications(behavior: KeyModificationsUpdate)
-
-    @Update(entity = AppSettings::class)
     fun updateClipboardSettings(clipboardSettings: ClipboardSettingsUpdate)
 
     @Update(entity = AppSettings::class)
@@ -620,11 +349,6 @@ class AppSettingsRepository(
     }
 
     @WorkerThread
-    fun updateKeyModifications(behavior: KeyModificationsUpdate) {
-        appSettingsDao.updateKeyModifications(behavior)
-    }
-
-    @WorkerThread
     fun updateClipboardSettings(clipboardSettings: ClipboardSettingsUpdate) {
         appSettingsDao.updateClipboardSettings(clipboardSettings)
     }
@@ -657,7 +381,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 29,
+    version = 30,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -708,6 +432,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_26_27,
                             MIGRATION_27_28,
                             MIGRATION_28_29,
+                            MIGRATION_29_30,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(
@@ -763,11 +488,6 @@ class AppSettingsViewModel(
     fun updateBehavior(behavior: BehaviorUpdate) =
         viewModelScope.launch {
             repository.updateBehavior(behavior)
-        }
-
-    fun updateKeyModifications(behavior: KeyModificationsUpdate) =
-        viewModelScope.launch {
-            repository.updateKeyModifications(behavior)
         }
 
     fun updateClipboardSettings(clipboardSettings: ClipboardSettingsUpdate) =

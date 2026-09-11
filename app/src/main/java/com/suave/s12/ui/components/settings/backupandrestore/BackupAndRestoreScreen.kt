@@ -35,52 +35,24 @@ import com.suave.s12.R
 import com.suave.s12.db.AppDB
 import com.suave.s12.db.AppSettings
 import com.suave.s12.db.AppSettingsViewModel
-import com.suave.s12.db.DEFAULT_ANIMATION_HELPER_SPEED
-import com.suave.s12.db.DEFAULT_ANIMATION_SPEED
-import com.suave.s12.db.DEFAULT_AUTO_CAPITALIZE
-import com.suave.s12.db.DEFAULT_AUTO_SIZE_KEYS
-import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
-import com.suave.s12.db.DEFAULT_CIRCULAR_DRAG_ENABLED
+import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_CLIPBOARD_AUTO_CLEANUP_ENABLED
 import com.suave.s12.db.DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES
 import com.suave.s12.db.DEFAULT_CLIPBOARD_HISTORY_ENABLED
 import com.suave.s12.db.DEFAULT_CLIPBOARD_MAX_SIZE
 import com.suave.s12.db.DEFAULT_CLIPBOARD_SIZE_LIMIT_ENABLED
-import com.suave.s12.db.DEFAULT_CLOCKWISE_DRAG_ACTION
-import com.suave.s12.db.DEFAULT_COUNTERCLOCKWISE_DRAG_ACTION
-import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
-import com.suave.s12.db.DEFAULT_DRAG_RETURN_ENABLED
-import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
-import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
-import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
-import com.suave.s12.db.DEFAULT_GHOST_KEYS_ENABLED
+import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
+import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
-import com.suave.s12.db.DEFAULT_HIDE_SYMBOLS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEYBOARD_LAYOUT
-import com.suave.s12.db.DEFAULT_KEY_BORDERS
-import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
-import com.suave.s12.db.DEFAULT_KEY_MODIFICATIONS
-import com.suave.s12.db.DEFAULT_KEY_PADDING
-import com.suave.s12.db.DEFAULT_KEY_RADIUS
-import com.suave.s12.db.DEFAULT_KEY_WIDTH
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
-import com.suave.s12.db.DEFAULT_NON_SQUARE_KEYS
 import com.suave.s12.db.DEFAULT_POSITION
-import com.suave.s12.db.DEFAULT_POSITION_PADDING
-import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
+import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_SHOW_ON_SCREEN_KEYBOARD
 import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH
-import com.suave.s12.db.DEFAULT_SLIDE_BACKSPACE_DEADZONE_ENABLED
-import com.suave.s12.db.DEFAULT_SLIDE_CURSOR_MOVEMENT_MODE
-import com.suave.s12.db.DEFAULT_SLIDE_ENABLED
-import com.suave.s12.db.DEFAULT_SLIDE_HOLD_ENABLED
-import com.suave.s12.db.DEFAULT_SLIDE_SENSITIVITY
-import com.suave.s12.db.DEFAULT_SLIDE_SPACEBAR_DEADZONE_ENABLED
-import com.suave.s12.db.DEFAULT_SOUND_ON_TAP
-import com.suave.s12.db.DEFAULT_SPACEBAR_MULTITAPS
 import com.suave.s12.db.DEFAULT_THEME
 import com.suave.s12.db.DEFAULT_THEME_COLOR
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
@@ -236,48 +208,24 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
     appSettingsViewModel.update(
         AppSettings(
             id = 1,
-            animationHelperSpeed = DEFAULT_ANIMATION_HELPER_SPEED,
-            autoCapitalize = DEFAULT_AUTO_CAPITALIZE,
-            animationSpeed = DEFAULT_ANIMATION_SPEED,
-            slideEnabled = DEFAULT_SLIDE_ENABLED,
-            slideCursorMovementMode = DEFAULT_SLIDE_CURSOR_MOVEMENT_MODE,
-            slideSpacebarDeadzoneEnabled = DEFAULT_SLIDE_SPACEBAR_DEADZONE_ENABLED,
-            slideBackspaceDeadzoneEnabled = DEFAULT_SLIDE_BACKSPACE_DEADZONE_ENABLED,
-            slideSensitivity = DEFAULT_SLIDE_SENSITIVITY,
-            soundOnTap = DEFAULT_SOUND_ON_TAP,
-            position = DEFAULT_POSITION,
-            positionPadding = DEFAULT_POSITION_PADDING,
-            pushupSize = DEFAULT_PUSHUP_SIZE,
-            minSwipeLength = DEFAULT_MIN_SWIPE_LENGTH,
-            keyboardLayout = DEFAULT_KEYBOARD_LAYOUT,
-            keyboardLayouts = setOf(DEFAULT_KEYBOARD_LAYOUT).joinToString(),
-            hideLetters = DEFAULT_HIDE_LETTERS,
-            hideSymbols = DEFAULT_HIDE_SYMBOLS,
-            keyBorders = DEFAULT_KEY_BORDERS,
-            spacebarMultiTaps = DEFAULT_SPACEBAR_MULTITAPS,
             theme = DEFAULT_THEME,
             themeColor = DEFAULT_THEME_COLOR,
+            hideLetters = DEFAULT_HIDE_LETTERS,
+            ignoreBottomPadding = DEFAULT_IGNORE_BOTTOM_PADDING,
+            disableFullscreenEditor = DEFAULT_DISABLE_FULLSCREEN_EDITOR,
+            keyHeight = DEFAULT_KEY_HEIGHT,
             vibrateOnTap = DEFAULT_VIBRATE_ON_TAP,
             vibrateOnSlide = DEFAULT_VIBRATE_ON_SLIDE,
-            lastVersionCodeViewed = appSettingsViewModel.appSettings.value?.lastVersionCodeViewed ?: 0,
-            viewedChangelog = appSettingsViewModel.appSettings.value?.viewedChangelog ?: 1,
-            backdropEnabled = DEFAULT_BACKDROP_ENABLED,
-            keyPadding = DEFAULT_KEY_PADDING,
-            keyBorderWidth = DEFAULT_KEY_BORDER_WIDTH,
-            keyRadius = DEFAULT_KEY_RADIUS,
-            dragReturnEnabled = DEFAULT_DRAG_RETURN_ENABLED,
-            circularDragEnabled = DEFAULT_CIRCULAR_DRAG_ENABLED,
-            clockwiseDragAction = DEFAULT_CLOCKWISE_DRAG_ACTION,
-            counterclockwiseDragAction = DEFAULT_COUNTERCLOCKWISE_DRAG_ACTION,
-            ghostKeysEnabled = DEFAULT_GHOST_KEYS_ENABLED,
-            keyModifications = DEFAULT_KEY_MODIFICATIONS,
-            autoSizeKeys = DEFAULT_AUTO_SIZE_KEYS,
-            nonSquareKeys = DEFAULT_NON_SQUARE_KEYS,
-            keyWidth = DEFAULT_KEY_WIDTH,
-            keyHeight = DEFAULT_KEY_HEIGHT,
-            ignoreBottomPadding = DEFAULT_IGNORE_BOTTOM_PADDING,
+            minSwipeLength = DEFAULT_MIN_SWIPE_LENGTH,
+            escAsModifier = DEFAULT_ESC_AS_MODIFIER,
+            ctrlAsModifier = DEFAULT_CTRL_AS_MODIFIER,
+            altAsModifier = DEFAULT_ALT_AS_MODIFIER,
+            shiftAsModifier = DEFAULT_SHIFT_AS_MODIFIER,
+            keyboardLayout = DEFAULT_KEYBOARD_LAYOUT,
+            keyboardLayouts = setOf(DEFAULT_KEYBOARD_LAYOUT).joinToString(),
             showToastOnLayoutSwitch = DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH,
-            disableFullscreenEditor = DEFAULT_DISABLE_FULLSCREEN_EDITOR,
+            position = DEFAULT_POSITION,
+            lastVersionCodeViewed = appSettingsViewModel.appSettings.value?.lastVersionCodeViewed ?: 0,
             clipboardHistoryEnabled = DEFAULT_CLIPBOARD_HISTORY_ENABLED,
             clipboardAutoCleanupEnabled = DEFAULT_CLIPBOARD_AUTO_CLEANUP_ENABLED,
             clipboardCleanupAfterMinutes = DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES,
@@ -285,11 +233,6 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             clipboardMaxSize = DEFAULT_CLIPBOARD_MAX_SIZE,
             usePrivateClipboard = DEFAULT_USE_PRIVATE_CLIPBOARD,
             showOnScreenKeyboard = DEFAULT_SHOW_ON_SCREEN_KEYBOARD,
-            slideHoldEnabled = DEFAULT_SLIDE_HOLD_ENABLED,
-            escAsModifier = DEFAULT_ESC_AS_MODIFIER,
-            ctrlAsModifier = DEFAULT_CTRL_AS_MODIFIER,
-            altAsModifier = DEFAULT_ALT_AS_MODIFIER,
-            shiftAsModifier = DEFAULT_SHIFT_AS_MODIFIER,
         ),
     )
 }
