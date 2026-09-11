@@ -9,12 +9,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardBackspace
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material.icons.outlined.BorderBottom
 import androidx.compose.material.icons.outlined.BorderOuter
 import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Crop75
 import androidx.compose.material.icons.outlined.EmojiEmotions
+import androidx.compose.material.icons.outlined.Highlight
 import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
@@ -25,6 +27,7 @@ import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.Padding
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.RoundedCorner
+import androidx.compose.material.icons.outlined.South
 import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.VerticalAlignTop
 import androidx.compose.material.icons.outlined.Vibration
@@ -50,6 +53,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.navigation.NavController
 import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
+import com.suave.s12.db.DEFAULT_ANIMATION_LETTER_DROP
+import com.suave.s12.db.DEFAULT_ANIMATION_PRESS_HIGHLIGHT
+import com.suave.s12.db.DEFAULT_ANIMATION_RELEASE_FLASH
 import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
 import com.suave.s12.db.DEFAULT_HIDE_EDITING
@@ -110,6 +116,12 @@ fun LookAndFeelScreen(
 
     var vibrateOnTapState = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
     var vibrateOnSlideState = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
+    var animationPressHighlightState =
+        (settings?.animationPressHighlight ?: DEFAULT_ANIMATION_PRESS_HIGHLIGHT).toBool()
+    var animationReleaseFlashState =
+        (settings?.animationReleaseFlash ?: DEFAULT_ANIMATION_RELEASE_FLASH).toBool()
+    var animationLetterDropState =
+        (settings?.animationLetterDrop ?: DEFAULT_ANIMATION_LETTER_DROP).toBool()
     var hideLettersState = (settings?.hideLetters ?: DEFAULT_HIDE_LETTERS).toBool()
     var hideSymbolsState = (settings?.hideSymbols ?: DEFAULT_HIDE_SYMBOLS).toBool()
     var hideNumbersState = (settings?.hideNumbers ?: DEFAULT_HIDE_NUMBERS).toBool()
@@ -154,6 +166,9 @@ fun LookAndFeelScreen(
                 keyBorderWidth = keyBorderWidthState,
                 keyRadius = keyRadiusState,
                 pushupSize = pushupSizeState,
+                animationPressHighlight = animationPressHighlightState.toInt(),
+                animationReleaseFlash = animationReleaseFlashState.toInt(),
+                animationLetterDrop = animationLetterDropState.toInt(),
             ),
         )
     }
@@ -669,6 +684,102 @@ fun LookAndFeelScreen(
                             )
                         },
                     )
+                    }
+
+                    SettingsSection(
+                        title = stringResource(R.string.settings_section_animations),
+                        initiallyExpanded = false,
+                    ) {
+                        SwitchPreference(
+                            value = animationPressHighlightState,
+                            onValueChange = {
+                                animationPressHighlightState = it
+                                updateLookAndFeel()
+                            },
+                            title = {
+                                SettingTitle(
+                                    text = stringResource(R.string.animation_press_highlight),
+                                    infoText = stringResource(R.string.animation_press_highlight_info),
+                                )
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (animationPressHighlightState) {
+                                            R.string.animation_press_highlight_on
+                                        } else {
+                                            R.string.animation_press_highlight_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Highlight,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                        SwitchPreference(
+                            value = animationReleaseFlashState,
+                            onValueChange = {
+                                animationReleaseFlashState = it
+                                updateLookAndFeel()
+                            },
+                            title = {
+                                SettingTitle(
+                                    text = stringResource(R.string.animation_release_flash),
+                                    infoText = stringResource(R.string.animation_release_flash_info),
+                                )
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (animationReleaseFlashState) {
+                                            R.string.animation_release_flash_on
+                                        } else {
+                                            R.string.animation_release_flash_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.AutoAwesome,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                        SwitchPreference(
+                            value = animationLetterDropState,
+                            onValueChange = {
+                                animationLetterDropState = it
+                                updateLookAndFeel()
+                            },
+                            title = {
+                                SettingTitle(
+                                    text = stringResource(R.string.animation_letter_drop),
+                                    infoText = stringResource(R.string.animation_letter_drop_info),
+                                )
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (animationLetterDropState) {
+                                            R.string.animation_letter_drop_on
+                                        } else {
+                                            R.string.animation_letter_drop_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.South,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
                     }
 
                     TestOutTextField()

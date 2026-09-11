@@ -34,6 +34,7 @@
     <string name="settings_section_keys">Tasten</string>
     <string name="settings_section_layers">Ebenen</string>
     <string name="settings_section_feedback">Feedback</string>
+    <string name="settings_section_animations">Animationen</string>
     <string name="settings_section_gestures">Gesten</string>
     <string name="settings_section_modifiers">Modifikatoren</string>
     <string name="settings_section_history">Verlauf</string>
@@ -85,6 +86,18 @@
     <string name="hide_editing_on">An - Tasten zeigen keine Bearbeitungsbeschriftung</string>
     <string name="hide_editing_off">Aus - Tasten zeigen ihre Bearbeitungsbeschriftung</string>
     <string name="hide_labels_info">Eine Kategorie zu verstecken entfernt nur Beschriftungen und Icons. Die Tasten selbst funktionieren weiter. Die Verstecken-Taste auf der Tastatur schaltet nur Buchstabenbeschriftungen um.</string>
+    <string name="animation_press_highlight">Tastendruck-Hervorhebung</string>
+    <string name="animation_press_highlight_on">An - die Tastenfläche leuchtet, solange der Finger darauf ist</string>
+    <string name="animation_press_highlight_off">Aus - die Taste behält beim Drücken ihre normale Farbe</string>
+    <string name="animation_press_highlight_info">Solange eine Taste gehalten wird, wechselt ihr Hintergrund zur Theme-Druckfarbe. Das betrifft die ganze Taste, nicht den Buchstaben.</string>
+    <string name="animation_release_flash">Loslassen-Blitz</string>
+    <string name="animation_release_flash_on">An - die Taste blitzt auf, nachdem ein Zeichen getippt wurde</string>
+    <string name="animation_release_flash_off">Aus - die Taste blitzt nach einem Zeichen nicht auf</string>
+    <string name="animation_release_flash_info">Nach einem getippten Zeichen füllt eine kurze Overlay-Farbe die Taste und verblasst. Befehle wie Rücktaste lösen das nicht aus. In Passwortfeldern erscheint es nie.</string>
+    <string name="animation_letter_drop">Fallender Buchstabe</string>
+    <string name="animation_letter_drop_on">An - das getippte Zeichen fällt die Taste hinunter und verblasst</string>
+    <string name="animation_letter_drop_off">Aus - nach dem Tippen erscheint kein extra Zeichen auf der Taste</string>
+    <string name="animation_letter_drop_info">Nach einem getippten Zeichen gleitet eine Kopie dieses Zeichens die Taste hinunter und verblasst. Nur getippter Text, keine Befehle. In Passwortfeldern erscheint es nie.</string>
     <string name="spacebar_multitaps">Leertaste Mehrfachtippen</string>
     <string name="twilight">Dämmerung</string>
     <string name="high_contrast_colorful">Kontrastreich bunt</string>

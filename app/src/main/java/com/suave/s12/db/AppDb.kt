@@ -84,6 +84,9 @@ const val MAX_CLIPBOARD_MAX_SIZE = 100
 const val DEFAULT_USE_PRIVATE_CLIPBOARD = 0
 const val DEFAULT_SHOW_ON_SCREEN_KEYBOARD = 0
 const val DEFAULT_SHOW_DEBUG_BAR = 1
+const val DEFAULT_ANIMATION_PRESS_HIGHLIGHT = 1
+const val DEFAULT_ANIMATION_RELEASE_FLASH = 1
+const val DEFAULT_ANIMATION_LETTER_DROP = 1
 
 // Default true (matches the modifier behavior this engine had before this setting existed): a
 // quick Esc tap queues as a Meta-via-Escape combo prefix for the next key, and Esc+Esc (tapping
@@ -292,6 +295,21 @@ data class AppSettings(
         defaultValue = DEFAULT_PUSHUP_SIZE.toString(),
     )
     val pushupSize: Int = DEFAULT_PUSHUP_SIZE,
+    @ColumnInfo(
+        name = "animation_press_highlight",
+        defaultValue = DEFAULT_ANIMATION_PRESS_HIGHLIGHT.toString(),
+    )
+    val animationPressHighlight: Int = DEFAULT_ANIMATION_PRESS_HIGHLIGHT,
+    @ColumnInfo(
+        name = "animation_release_flash",
+        defaultValue = DEFAULT_ANIMATION_RELEASE_FLASH.toString(),
+    )
+    val animationReleaseFlash: Int = DEFAULT_ANIMATION_RELEASE_FLASH,
+    @ColumnInfo(
+        name = "animation_letter_drop",
+        defaultValue = DEFAULT_ANIMATION_LETTER_DROP.toString(),
+    )
+    val animationLetterDrop: Int = DEFAULT_ANIMATION_LETTER_DROP,
 )
 
 data class LayoutsUpdate(
@@ -350,6 +368,12 @@ data class LookAndFeelUpdate(
     val keyRadius: Int,
     @ColumnInfo(name = "pushup_size")
     val pushupSize: Int,
+    @ColumnInfo(name = "animation_press_highlight")
+    val animationPressHighlight: Int,
+    @ColumnInfo(name = "animation_release_flash")
+    val animationReleaseFlash: Int,
+    @ColumnInfo(name = "animation_letter_drop")
+    val animationLetterDrop: Int,
 )
 
 data class BehaviorUpdate(
@@ -487,7 +511,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 35,
+    version = 36,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -567,6 +591,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_32_33,
                             MIGRATION_33_34,
                             MIGRATION_34_35,
+                            MIGRATION_35_36,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

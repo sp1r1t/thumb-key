@@ -35,6 +35,7 @@
     <string name="settings_section_keys">Keys</string>
     <string name="settings_section_layers">Layers</string>
     <string name="settings_section_feedback">Feedback</string>
+    <string name="settings_section_animations">Animations</string>
     <string name="settings_section_gestures">Gestures</string>
     <string name="settings_section_modifiers">Modifiers</string>
     <string name="settings_section_history">History</string>
@@ -120,6 +121,18 @@
     <string name="hide_editing_on">On - keys show no editing labels</string>
     <string name="hide_editing_off">Off - keys show their editing labels</string>
     <string name="hide_labels_info">Hiding a category removes its labels and icons from the keys. The keys themselves still work. The hide-letters key on the keyboard only toggles letter labels.</string>
+    <string name="animation_press_highlight">Press highlight</string>
+    <string name="animation_press_highlight_on">On - the keycap fill flashes while your finger is down</string>
+    <string name="animation_press_highlight_off">Off - the keycap keeps its normal fill while pressed</string>
+    <string name="animation_press_highlight_info">While a key is held, its background switches to the theme press color. This is the whole keycap, not the letter.</string>
+    <string name="animation_release_flash">Release flash</string>
+    <string name="animation_release_flash_on">On - the keycap flashes after you type a character</string>
+    <string name="animation_release_flash_off">Off - the keycap does not flash after a character</string>
+    <string name="animation_release_flash_info">After a character is typed, the key fills with a brief overlay and fades. Commands such as Backspace do not trigger it. Password fields never show it.</string>
+    <string name="animation_letter_drop">Falling letter</string>
+    <string name="animation_letter_drop_on">On - the typed character drops down the key and fades</string>
+    <string name="animation_letter_drop_off">Off - no extra letter appears on the key after typing</string>
+    <string name="animation_letter_drop_info">After a character is typed, a copy of that character slides down the keycap and fades. Only typed text, not commands. Password fields never show it.</string>
     <string name="spacebar_multitaps">Spacebar multi-taps</string>
     <string name="done">Done</string>
     <string name="backdrop">Keyboard background</string>

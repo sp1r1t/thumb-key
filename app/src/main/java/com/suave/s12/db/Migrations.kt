@@ -525,3 +525,18 @@ val MIGRATION_34_35 =
             )
         }
     }
+
+val MIGRATION_35_36 =
+    object : Migration(35, 36) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN animation_press_highlight INTEGER NOT NULL DEFAULT $DEFAULT_ANIMATION_PRESS_HIGHLIGHT",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN animation_release_flash INTEGER NOT NULL DEFAULT $DEFAULT_ANIMATION_RELEASE_FLASH",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN animation_letter_drop INTEGER NOT NULL DEFAULT $DEFAULT_ANIMATION_LETTER_DROP",
+            )
+        }
+    }

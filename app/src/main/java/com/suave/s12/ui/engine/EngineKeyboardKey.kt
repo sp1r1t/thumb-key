@@ -1,5 +1,10 @@
 package com.suave.s12.ui.engine
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -14,17 +19,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import com.suave.s12.db.DEFAULT_ANIMATION_HELPER_SPEED
+import com.suave.s12.db.DEFAULT_ANIMATION_SPEED
 import com.suave.s12.engine.action.SemanticAction
 import com.suave.s12.engine.dispatch.KeyDispatcher
 import com.suave.s12.engine.feedback.FeedbackEvent
@@ -43,6 +54,8 @@ import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.utils.ColorVariant
 import com.suave.s12.utils.colorVariantToColor
 import com.suave.s12.utils.fontSizeVariantToFontSize
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 private const val TICK_INTERVAL_MS = 30L
@@ -78,6 +91,8 @@ fun EngineKeyboardKey(
     keyPadding: Int,
     keyBorderWidthDp: Float,
     keyCornerRadius: Dp,
+    animations: KeyAnimationSettings = KeyAnimationSettings(),
+    isPasswordField: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val dispatcher =
@@ -94,14 +109,19 @@ fun EngineKeyboardKey(
     val currentOnFeedback by rememberUpdatedState(onFeedback)
     val currentDispatcher by rememberUpdatedState(dispatcher)
     val currentMapping by rememberUpdatedState(mapping)
+    val currentAnimations by rememberUpdatedState(animations)
+    val currentIsPasswordField by rememberUpdatedState(isPasswordField)
+    val scope = rememberCoroutineScope()
+    var isPressed by remember { mutableStateOf(false) }
+    var releasedKey by remember { mutableStateOf<String?>(null) }
 
     val isModifierKeyActive =
         mapping.intents.values.any { it is KeyIntent.ModifierPress && modifierState.isActive(it.modifier) }
     val backgroundColor =
-        if (isModifierKeyActive) {
-            MaterialTheme.colorScheme.primary
-        } else {
-            colorVariantToColor(ColorVariant.SURFACE_VARIANT)
+        when {
+            animations.pressHighlight && isPressed -> MaterialTheme.colorScheme.inversePrimary
+            isModifierKeyActive -> MaterialTheme.colorScheme.primary
+            else -> colorVariantToColor(ColorVariant.SURFACE_VARIANT)
         }
     val keyShape = RoundedCornerShape(keyCornerRadius)
     val keyBorderColour = MaterialTheme.colorScheme.outline
@@ -160,16 +180,38 @@ fun EngineKeyboardKey(
                         var localState = currentModifierState
 
                         fun handle(gesture: Gesture) {
+                            if (gesture is Gesture.Pressed && currentAnimations.pressHighlight) {
+                                isPressed = true
+                            }
                             val before = localState
+                            var typed: String? = null
                             val newState =
                                 currentDispatcher.handle(
                                     gesture,
                                     before,
-                                    currentOnExecute,
+                                    { action ->
+                                        if (currentAnimations.playsRelease &&
+                                            !currentIsPasswordField &&
+                                            (gesture is Gesture.Tap || gesture is Gesture.Hold)
+                                        ) {
+                                            typedTextForReleaseAnimation(action)?.let { typed = it }
+                                        }
+                                        currentOnExecute(action)
+                                    },
                                     currentOnFeedback,
                                 )
                             localState = newState
                             currentOnModifierStateChange(newState)
+                            if (gesture is Gesture.Released || gesture is Gesture.Cancelled) {
+                                isPressed = false
+                            }
+                            typed?.let { text ->
+                                releasedKey = text
+                                scope.launch {
+                                    delay(DEFAULT_ANIMATION_HELPER_SPEED.toLong())
+                                    releasedKey = null
+                                }
+                            }
                         }
 
                         recognizer
@@ -252,6 +294,43 @@ fun EngineKeyboardKey(
                     color = centerColor,
                     modifier = Modifier.align(Alignment.Center),
                 )
+            }
+        }
+        val showRelease = releasedKey != null && !isPasswordField
+        if (animations.releaseFlash) {
+            AnimatedVisibility(
+                modifier = Modifier.fillMaxSize(),
+                visible = showRelease,
+                enter = EnterTransition.None,
+                exit = fadeOut(tween(DEFAULT_ANIMATION_SPEED)),
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.tertiaryContainer),
+                )
+            }
+        }
+        if (animations.letterDrop) {
+            AnimatedVisibility(
+                modifier = Modifier.fillMaxSize(),
+                visible = showRelease,
+                enter = slideInVertically(tween(DEFAULT_ANIMATION_SPEED)),
+                exit = fadeOut(tween(DEFAULT_ANIMATION_SPEED)),
+            ) {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                    releasedKey?.let { text ->
+                        val dropSize =
+                            fontSizeVariantToFontSize(legendFontSizeVariant(isCenter = true), keyHeight, isUpperCase = false)
+                        Text(
+                            text = text,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = with(density) { dropSize.toSp() },
+                            color = MaterialTheme.colorScheme.tertiary,
+                        )
+                    }
+                }
             }
         }
     }

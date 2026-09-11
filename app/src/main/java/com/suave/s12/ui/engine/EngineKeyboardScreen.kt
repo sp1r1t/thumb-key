@@ -34,6 +34,9 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.suave.s12.IMEService
 import com.suave.s12.db.AppSettings
 import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_ANIMATION_LETTER_DROP
+import com.suave.s12.db.DEFAULT_ANIMATION_PRESS_HIGHLIGHT
+import com.suave.s12.db.DEFAULT_ANIMATION_RELEASE_FLASH
 import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
@@ -77,6 +80,7 @@ import com.suave.s12.layout.LayoutLayer
 import com.suave.s12.layout.NamedLayout
 import com.suave.s12.layout.parseLayerHeightOverrides
 import com.suave.s12.utils.KeyboardPosition
+import com.suave.s12.utils.isPasswordField
 import com.suave.s12.utils.toBool
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -153,6 +157,13 @@ fun EngineKeyboardScreen(
     val keyHeight = (settings?.keyHeight ?: DEFAULT_KEY_HEIGHT).dp
     val keyCornerRadius = keyHeight * (keyRadiusPercent / 200f)
     val layerHeightOverrides = parseLayerHeightOverrides(settings?.layerHeights ?: DEFAULT_LAYER_HEIGHTS)
+    val animations =
+        KeyAnimationSettings(
+            pressHighlight = (settings?.animationPressHighlight ?: DEFAULT_ANIMATION_PRESS_HIGHLIGHT).toBool(),
+            releaseFlash = (settings?.animationReleaseFlash ?: DEFAULT_ANIMATION_RELEASE_FLASH).toBool(),
+            letterDrop = (settings?.animationLetterDrop ?: DEFAULT_ANIMATION_LETTER_DROP).toBool(),
+        )
+    val passwordField = remember { isPasswordField(ime) }
 
     val feedbackSettings =
         remember(vibrateOnTap, vibrateOnSlide) {
@@ -253,6 +264,8 @@ fun EngineKeyboardScreen(
                 vibrateOnTap = vibrateOnTap,
                 capabilities = capabilities,
                 ime = ime,
+                animations = animations,
+                isPasswordField = passwordField,
             )
         }
         Box(
@@ -318,6 +331,8 @@ private fun EngineKeyboardPanel(
     vibrateOnTap: Boolean,
     capabilities: EditorCapabilities,
     ime: IMEService,
+    animations: KeyAnimationSettings,
+    isPasswordField: Boolean,
 ) {
     val grid = namedLayout.gridFor(layer)
     val overrideRows = layerHeightOverrides[layer] ?: 0
@@ -346,6 +361,8 @@ private fun EngineKeyboardPanel(
             keyPadding = keyPadding,
             keyBorderWidthDp = keyBorderWidthDp,
             keyCornerRadius = keyCornerRadius,
+            animations = animations,
+            isPasswordField = isPasswordField,
         )
     }
 }
@@ -411,6 +428,8 @@ private fun LayoutGrid(
     keyPadding: Int,
     keyBorderWidthDp: Float,
     keyCornerRadius: Dp,
+    animations: KeyAnimationSettings,
+    isPasswordField: Boolean,
 ) {
     for (row in layoutRows(layout)) {
         Row(modifier = Modifier.fillMaxWidth().height(keyHeight)) {
@@ -430,6 +449,8 @@ private fun LayoutGrid(
                     keyPadding = keyPadding,
                     keyBorderWidthDp = keyBorderWidthDp,
                     keyCornerRadius = keyCornerRadius,
+                    animations = animations,
+                    isPasswordField = isPasswordField,
                     modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
                 )
             }
