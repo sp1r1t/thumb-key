@@ -97,6 +97,16 @@ android {
     namespace = "com.suave.s12"
 }
 
+// Name the built APKs "suave-<variant>.apk" instead of AGP's default "app-<variant>.apk",
+// which just echoes this Gradle module's directory name and has nothing to do with the app.
+androidComponents {
+    onVariants { variant ->
+        variant.outputs.forEach { output ->
+            output.outputFileName.set("suave-${variant.name}.apk")
+        }
+    }
+}
+
 dependencies {
     // Freedroidwarn
     implementation("com.github.woheller69:FreeDroidWarn:V1.13")
