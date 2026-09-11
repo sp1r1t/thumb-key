@@ -146,6 +146,7 @@ fun EngineKeyboardScreen(
                             dispatchLegacyAction(
                                 action = action,
                                 ime = ime,
+                                capabilities = capabilities,
                                 onToggleHideLetters = onToggleHideLetters,
                                 onToggleEmojiMode = onToggleEmojiMode,
                                 onToggleNumericMode = onToggleNumericMode,
