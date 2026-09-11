@@ -120,6 +120,7 @@ private fun key(
     bottomRight: String? = null,
     gesture: GestureConfig = EIGHT_WAY_KEY,
     slideBehavior: SlideBehavior? = null,
+    columnSpan: Int = 1,
 ): KeyMapping {
     val intents =
         buildMap {
@@ -133,16 +134,15 @@ private fun key(
             bottomLeft?.let { put(Zone.Directional(Direction.DOWN_LEFT), token(it)) }
             bottomRight?.let { put(Zone.Directional(Direction.DOWN_RIGHT), token(it)) }
         }
-    return KeyMapping(gesture, intents, slideBehavior)
+    return KeyMapping(gesture, intents, slideBehavior, columnSpan)
 }
 
 /**
  * Suave, ported to pure data: position + gesture -> intent, nothing else. Compare to the
  * pre-rewrite `generateSuaveLayout` (~360 lines of mode-branching Kotlin) - this is what "a
  * layout should be a flat table of data" actually looks like once modifier composition isn't the
- * layout's job. Row/col indices match the original grid exactly (row 3's fourth key, ENTER, is
- * double-width in the original - width isn't part of this data yet, that's Step 5's rendering
- * concern, not a gesture/intent one).
+ * layout's job. Row/col indices match the original grid; Enter's [KeyMapping.columnSpan] of 2 is
+ * what makes the 4-key bottom row fill the same width as the 5-key letter rows.
  */
 val SUAVE_LAYOUT: Layout =
     mapOf(
@@ -213,5 +213,5 @@ val SUAVE_LAYOUT: Layout =
                 bottomRight = "redo",
                 bottom = "paste",
             ),
-        KeyPosition(3, 3) to key("return", top = "tab", left = "enter", gesture = FOUR_WAY_KEY),
+        KeyPosition(3, 3) to key("return", top = "tab", left = "enter", gesture = FOUR_WAY_KEY, columnSpan = 2),
     )

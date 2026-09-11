@@ -61,10 +61,10 @@ import java.util.Locale
  * another.
  *
  * Phase 1 scope, deliberately not attempted here: the "Dual" split-both-hands position mode
- * (this always renders a single instance regardless of the position setting), ENTER's
- * double-width sizing, and emoji/numeric-mode's own screens (those keys are first-class
- * commands and fire their host callbacks, but this screen has no emoji/numeric layout to
- * switch to yet).
+ * (this always renders a single instance regardless of the position setting), and
+ * emoji/numeric-mode's own screens (those keys are first-class commands and fire their host
+ * callbacks, but this screen has no emoji/numeric layout to switch to yet). Key width comes
+ * from [com.suave.s12.engine.intent.KeyMapping.columnSpan].
  */
 @Composable
 fun EngineKeyboardScreen(
@@ -103,9 +103,8 @@ fun EngineKeyboardScreen(
                 ),
             )
         }
-    // Unlike the old engine, key width here is always auto-fit (Modifier.weight(1f)) - there's
-    // no manual-width/square-vs-non-square distinction to gate this behind, so keyHeight always
-    // applies directly as each row's height.
+    // Row height is always keyHeight. Horizontal size is each key's columnSpan as a Row
+    // weight, so a span-2 Enter fills two letter-columns without a separate width setting.
     val keyHeight = (settings?.keyHeight ?: DEFAULT_KEY_HEIGHT).dp
 
     val feedbackSettings =
@@ -186,7 +185,7 @@ fun EngineKeyboardScreen(
                         minSwipeDistancePx = minSwipeDistancePx,
                         hideLetters = hideLetters,
                         modifierBehaviors = behaviors,
-                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
                     )
                 }
             }

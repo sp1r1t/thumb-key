@@ -23,12 +23,21 @@ enum class SlideBehavior { MOVE_CURSOR, SELECT_AND_DELETE }
  * and [Gesture.HoldRepeat] for the same [Zone] all resolve through the same [intents] entry -
  * repeat-on-hold isn't a distinct layout concept, it's the gesture recognizer emitting the same
  * zone's intent multiple times (see [GestureRecognizer]). A zone with no entry does nothing.
+ *
+ * [columnSpan] is how many grid columns this key occupies in its row (Enter is 2 on Suave so
+ * the 4-key bottom row still fills the same width as the 5-key letter rows). The renderer
+ * weights keys by this value; it is layout data, not a special-case in the screen.
  */
 data class KeyMapping(
     val gestureConfig: GestureConfig,
     val intents: Map<Zone, KeyIntent>,
     val slideBehavior: SlideBehavior? = null,
-)
+    val columnSpan: Int = 1,
+) {
+    init {
+        require(columnSpan >= 1) { "columnSpan must be at least 1, got $columnSpan" }
+    }
+}
 
 /**
  * A layout is pure data: position -> gesture shape + zone -> intent. No mode branching, no

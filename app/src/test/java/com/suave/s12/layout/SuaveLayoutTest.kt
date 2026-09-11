@@ -104,4 +104,19 @@ class SuaveLayoutTest {
         assertEquals(listOf(BuiltinLayouts.SUAVE), BuiltinLayouts.enabledFromDb("0"))
         assertEquals(listOf(BuiltinLayouts.SUAVE), BuiltinLayouts.enabledFromDb(null))
     }
+
+    @Test
+    fun `Enter spans two columns so the bottom row fills the same width as the letter rows`() {
+        val enter = SUAVE_LAYOUT.getValue(KeyPosition(3, 3))
+
+        assertEquals(2, enter.columnSpan)
+        assertEquals(KeyIntent.Command(CommandId.ENTER), enter.intents[Zone.Center])
+
+        val spansByRow =
+            SUAVE_LAYOUT.entries
+                .groupBy { it.key.row }
+                .mapValues { (_, keys) -> keys.sumOf { it.value.columnSpan } }
+
+        assertEquals(setOf(5), spansByRow.values.toSet())
+    }
 }
