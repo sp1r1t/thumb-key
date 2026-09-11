@@ -9,7 +9,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.ColorInt
 import androidx.emoji2.emojipicker.EmojiPickerView
-import androidx.recyclerview.widget.RecyclerView
 import com.suave.s12.R
 
 /**
@@ -60,25 +59,24 @@ private fun View.tintChrome(
         }
     }
 
-    fun tintTree(view: View) {
-        tintThis(view)
-        if (view is ViewGroup) {
-            for (i in 0 until view.childCount) tintTree(view.getChildAt(i))
-        }
-    }
-
     fun hook(view: View) {
         tintThis(view)
-        if (view is RecyclerView) {
-            view.addOnChildAttachStateChangeListener(
-                object : RecyclerView.OnChildAttachStateChangeListener {
-                    override fun onChildViewAttachedToWindow(child: View) = tintTree(child)
+        if (view is ViewGroup) {
+            view.setOnHierarchyChangeListener(
+                object : ViewGroup.OnHierarchyChangeListener {
+                    override fun onChildViewAdded(
+                        parent: View,
+                        child: View,
+                    ) {
+                        hook(child)
+                    }
 
-                    override fun onChildViewDetachedFromWindow(child: View) = Unit
+                    override fun onChildViewRemoved(
+                        parent: View,
+                        child: View,
+                    ) = Unit
                 },
             )
-        }
-        if (view is ViewGroup) {
             for (i in 0 until view.childCount) hook(view.getChildAt(i))
         }
     }
