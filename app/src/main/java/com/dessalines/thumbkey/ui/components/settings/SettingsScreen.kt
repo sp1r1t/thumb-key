@@ -14,7 +14,6 @@ import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.InstallMobile
-import androidx.compose.material.icons.outlined.KeyboardAlt
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.TouchApp
@@ -33,20 +32,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.navigation.NavController
 import com.dessalines.thumbkey.R
 import com.dessalines.thumbkey.db.AppSettingsViewModel
-import com.dessalines.thumbkey.db.DEFAULT_KEYBOARD_LAYOUT
 import com.dessalines.thumbkey.ui.components.common.TestOutTextField
 import com.dessalines.thumbkey.ui.components.settings.about.SettingsDivider
 import com.dessalines.thumbkey.ui.components.settings.about.USER_GUIDE_URL
-import com.dessalines.thumbkey.utils.KeyboardLayout
 import com.dessalines.thumbkey.utils.TAG
-import com.dessalines.thumbkey.utils.keyboardLayoutsSetFromDbIndexString
 import com.dessalines.thumbkey.utils.openLink
-import com.dessalines.thumbkey.utils.updateLayouts
-import me.zhanghai.compose.preference.MultiSelectListPreference
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
 
@@ -66,8 +59,6 @@ fun SettingsScreen(
     val settings by appSettingsViewModel.appSettings.observeAsState()
 
     val scrollState = rememberScrollState()
-
-    val layoutsState = keyboardLayoutsSetFromDbIndexString(settings?.keyboardLayouts)
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -102,38 +93,6 @@ fun SettingsScreen(
                         )
                     }
 
-                    MultiSelectListPreference(
-                        value = layoutsState,
-                        values = KeyboardLayout.entries.sortedBy { it.keyboardDefinition.title },
-                        valueToText = {
-                            AnnotatedString(it.keyboardDefinition.title)
-                        },
-                        onValueChange = {
-                            val update =
-                                it.ifEmpty {
-                                    keyboardLayoutsSetFromDbIndexString(DEFAULT_KEYBOARD_LAYOUT.toString())
-                                }
-
-                            updateLayouts(
-                                appSettingsViewModel,
-                                update,
-                            )
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.KeyboardAlt,
-                                contentDescription = null,
-                            )
-                        },
-                        title = {
-                            Text(stringResource(R.string.layouts))
-                        },
-                        summary = {
-                            val layoutsStr =
-                                layoutsState.joinToString(", ") { it.keyboardDefinition.title }
-                            Text(layoutsStr)
-                        },
-                    )
                     Preference(
                         title = { Text(stringResource(R.string.look_and_feel)) },
                         icon = {

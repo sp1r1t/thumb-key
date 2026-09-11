@@ -75,7 +75,7 @@ import com.dessalines.thumbkey.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.dessalines.thumbkey.db.DEFAULT_VIBRATE_ON_TAP
 import com.dessalines.thumbkey.keyboards.BACKSPACE_KEY_ITEM
 import com.dessalines.thumbkey.keyboards.EMOJI_BACK_KEY_ITEM
-import com.dessalines.thumbkey.keyboards.KB_EN_THUMBKEY_MAIN
+import com.dessalines.thumbkey.keyboards.KB_DE_TYPESPLIT_SUAVE_MAIN
 import com.dessalines.thumbkey.keyboards.NUMERIC_KEY_ITEM
 import com.dessalines.thumbkey.keyboards.RETURN_KEY_ITEM
 import com.dessalines.thumbkey.utils.CircularDragAction
@@ -179,7 +179,7 @@ fun KeyboardScreen(
 
             else -> {
                 // Emoji and Clipboard modes use their own rendering, which does not depend on this value
-                KB_EN_THUMBKEY_MAIN
+                KB_DE_TYPESPLIT_SUAVE_MAIN
             }
         }
 
