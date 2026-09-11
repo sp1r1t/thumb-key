@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import com.suave.s12.IMEService
 import com.suave.s12.db.AppSettings
@@ -57,6 +58,7 @@ fun EngineKeyboardScreen(
 ) {
     val ctx = LocalContext.current
     val ime = ctx as IMEService
+    val view = LocalView.current
 
     var modifierState by remember { mutableStateOf(ModifierState()) }
 
@@ -68,12 +70,9 @@ fun EngineKeyboardScreen(
 
     val feedbackSettings =
         remember(vibrateOnTap, vibrateOnSlide) {
-            // No per-user duration/amplitude setting exists on this branch (that's the separate
-            // haptics-settings branch) - these are reasonable fixed defaults for Phase 1. Now
-            // that VibratorHapticPlayer applies amplitude for real (unlike the old
-            // HapticFeedbackConstants-based player, where these numbers only picked which fixed
-            // constant to use), a low value here reads as genuinely weak, not just "a certain
-            // constant" - picked to feel like a firm tap, not a buzz.
+            // baseDurationMs/baseAmplitude are currently inert - HapticFeedbackPlayer's
+            // underlying primitive doesn't expose either (see its doc for why) - kept so this
+            // doesn't need touching if a real second lever ever turns up.
             FeedbackSettings(
                 tapVibrationEnabled = vibrateOnTap,
                 slideVibrationEnabled = vibrateOnSlide,
@@ -81,7 +80,7 @@ fun EngineKeyboardScreen(
                 baseAmplitude = 130,
             )
         }
-    val hapticPlayer = remember(ime) { VibratorHapticPlayer(ime) }
+    val hapticPlayer = remember(view) { HapticFeedbackPlayer(view) }
     // Resolved once per IME session (onStartInput recreates this whole screen on every new
     // input focus), matching how the old engine treated editor capability too.
     val capabilities = remember { EditorCapabilityResolver.resolve(ime.currentInputEditorInfo) }
