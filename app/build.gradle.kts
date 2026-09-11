@@ -157,4 +157,7 @@ dependencies {
     // Arrow-kt for mutating deeply nested data classes
     implementation("io.arrow-kt:arrow-optics:2.2.2.1")
     ksp("io.arrow-kt:arrow-optics-ksp-plugin:2.2.2.1")
+
+    // Unit tests for the engine/ package (pure Kotlin, no Android dependency needed)
+    testImplementation("junit:junit:4.13.2")
 }

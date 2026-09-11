@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
+import com.roomdbexportimport.RoomDBExportImport
 import com.suave.s12.R
 import com.suave.s12.db.AppDB
 import com.suave.s12.db.AppSettings
@@ -84,7 +85,6 @@ import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.keyboardLayoutsSetFromDbIndexString
 import com.suave.s12.utils.updateLayouts
-import com.roomdbexportimport.RoomDBExportImport
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
 
