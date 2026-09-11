@@ -4,7 +4,6 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -71,7 +70,8 @@ import java.util.Locale
  *
  * The grid is derived from the layout data ([layoutRows]), not a hardcoded 4x5. Suave is one
  * [BuiltinLayouts] entry; switching [AppSettings.keyboardLayout] selects another.
- * [AppSettings.position] parks a half-width panel left or right, or draws two copies for Dual.
+ * [AppSettings.position] Dual draws two copies that share modifier and layer state; Left, Right,
+ * and Center are all full width until the layout has a real (narrower) key width to park.
  * Key width comes from [com.suave.s12.engine.intent.KeyMapping.columnSpan].
  */
 @Composable
@@ -193,17 +193,9 @@ fun EngineKeyboardScreen(
                 color = MaterialTheme.colorScheme.onError,
             )
         }
-        Row(modifier = Modifier.fillMaxWidth()) {
-            if (keyboardPosition == KeyboardPosition.Right) {
-                Spacer(modifier = Modifier.weight(1f))
-            }
+        val renderPanel: @Composable (Modifier) -> Unit = { panelModifier ->
             EngineKeyboardPanel(
-                modifier =
-                    if (keyboardPosition == KeyboardPosition.Center) {
-                        Modifier.fillMaxWidth()
-                    } else {
-                        Modifier.weight(1f)
-                    },
+                modifier = panelModifier,
                 namedLayout = namedLayout,
                 layer = layer,
                 keyHeight = keyHeight,
@@ -225,34 +217,14 @@ fun EngineKeyboardScreen(
                 capabilities = capabilities,
                 ime = ime,
             )
-            if (keyboardPosition == KeyboardPosition.Dual) {
-                EngineKeyboardPanel(
-                    modifier = Modifier.weight(1f),
-                    namedLayout = namedLayout,
-                    layer = layer,
-                    keyHeight = keyHeight,
-                    modifierState = modifierState,
-                    onModifierStateChange = { modifierState = it },
-                    onExecute = { action ->
-                        ActionExecutor.execute(
-                            action = action,
-                            capabilities = capabilities,
-                            ime = ime,
-                            host = appHost,
-                        )
-                    },
-                    onFeedback = { event -> FeedbackDispatcher.dispatch(event, feedbackSettings, hapticPlayer) },
-                    minSwipeDistancePx = minSwipeDistancePx,
-                    hideLetters = hideLetters,
-                    modifierBehaviors = behaviors,
-                    vibrateOnTap = vibrateOnTap,
-                    capabilities = capabilities,
-                    ime = ime,
-                )
+        }
+        if (keyboardPosition == KeyboardPosition.Dual) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                renderPanel(Modifier.weight(1f))
+                renderPanel(Modifier.weight(1f))
             }
-            if (keyboardPosition == KeyboardPosition.Left) {
-                Spacer(modifier = Modifier.weight(1f))
-            }
+        } else {
+            renderPanel(Modifier.fillMaxWidth())
         }
     }
 }
