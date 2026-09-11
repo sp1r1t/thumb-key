@@ -22,8 +22,8 @@ object OutputExecutor {
         inputConnection: InputConnection,
     ) {
         when (action) {
-            is SemanticAction.TypeCharacter -> {
-                typeCharacter(action, capabilities, inputConnection)
+            is SemanticAction.TypeText -> {
+                typeText(action, capabilities, inputConnection)
             }
 
             is SemanticAction.TypeCommand -> {
@@ -42,23 +42,33 @@ object OutputExecutor {
         }
     }
 
-    private fun typeCharacter(
-        action: SemanticAction.TypeCharacter,
+    private fun typeText(
+        action: SemanticAction.TypeText,
         capabilities: EditorCapabilities,
         ic: InputConnection,
     ) {
+        if (action.text.length != 1) {
+            // Multi-character text (e.g. Suave's "sch"/"ch" keys) has no KeyEvent representation
+            // - there's no such thing as "Ctrl+sch" or a raw KeyEvent for three characters at
+            // once. Always commits as plain text; on a RAW editor this is a known gap inherited
+            // unchanged from before this rewrite; only single-character keys get raw-editor
+            // fallback below.
+            ic.commitText(action.text, 1)
+            return
+        }
+        val char = action.text[0]
         if (action.modifiers.isEmpty() && capabilities.supportsCommitText) {
-            ic.commitText(action.char.toString(), 1)
+            ic.commitText(action.text, 1)
             return
         }
         // A real modifier combo (Ctrl/Alt/Esc), or a RAW editor that doesn't observe commitText
         // at all: needs an actual KeyEvent, since commitText can't carry meta state.
-        val keyCode = charToKeyCode(action.char)
+        val keyCode = charToKeyCode(char)
         if (keyCode == null) {
             // No known KeyEvent code for this character (e.g. punctuation outside a-z/0-9) - the
             // only thing left to try is commitText, which silently drops any modifiers and does
             // nothing at all on a RAW editor. A real gap, not a guess at app-specific behavior.
-            ic.commitText(action.char.toString(), 1)
+            ic.commitText(action.text, 1)
             return
         }
         sendEscIfNeeded(action.modifiers, ic)

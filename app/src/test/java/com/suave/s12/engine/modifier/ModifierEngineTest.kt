@@ -30,10 +30,10 @@ class ModifierEngineTest {
     fun `one-shot Ctrl transforms exactly the next character then consumeOneShots clears it`() {
         var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.CTRL, TAP_CENTER)
 
-        val resolved = ModifierEngine.resolve(state, KeyIntent.Character('c'))
+        val resolved = ModifierEngine.resolve(state, KeyIntent.Text("c"))
         state = ModifierEngine.consumeOneShots(state)
 
-        assertEquals(ResolvedIntent.TypedCharacter('c', setOf(ModifierId.CTRL)), resolved)
+        assertEquals(ResolvedIntent.TypedText("c", setOf(ModifierId.CTRL)), resolved)
         assertFalse("one-shot Ctrl must not still be active for the key after it", state.isActive(ModifierId.CTRL))
     }
 
@@ -49,13 +49,13 @@ class ModifierEngineTest {
         assertEquals(ActivationMode.HELD, state.active.getValue(ModifierId.CTRL).mode)
 
         // Two separate other-key presses, both while still held: both get Ctrl.
-        val firstKey = ModifierEngine.resolve(state, KeyIntent.Character('x'))
+        val firstKey = ModifierEngine.resolve(state, KeyIntent.Text("x"))
         state = ModifierEngine.consumeOneShots(state) // no-op for HELD
-        val secondKey = ModifierEngine.resolve(state, KeyIntent.Character('s'))
+        val secondKey = ModifierEngine.resolve(state, KeyIntent.Text("s"))
         state = ModifierEngine.consumeOneShots(state)
 
-        assertEquals(ResolvedIntent.TypedCharacter('x', setOf(ModifierId.CTRL)), firstKey)
-        assertEquals(ResolvedIntent.TypedCharacter('s', setOf(ModifierId.CTRL)), secondKey)
+        assertEquals(ResolvedIntent.TypedText("x", setOf(ModifierId.CTRL)), firstKey)
+        assertEquals(ResolvedIntent.TypedText("s", setOf(ModifierId.CTRL)), secondKey)
         assertTrue("held Ctrl must survive across multiple key presses while still down", state.isActive(ModifierId.CTRL))
     }
 
@@ -68,13 +68,13 @@ class ModifierEngineTest {
         // to a state a subsequent key event will clear, not just flip an unread tracking flag.
         assertEquals(ActivationMode.ONE_SHOT, state.active.getValue(ModifierId.CTRL).mode)
 
-        val oneMoreKey = ModifierEngine.resolve(state, KeyIntent.Character('a'))
+        val oneMoreKey = ModifierEngine.resolve(state, KeyIntent.Text("a"))
         state = ModifierEngine.consumeOneShots(state)
-        val nextKeyAfterThat = ModifierEngine.resolve(state, KeyIntent.Character('b'))
+        val nextKeyAfterThat = ModifierEngine.resolve(state, KeyIntent.Text("b"))
 
-        assertEquals(ResolvedIntent.TypedCharacter('a', setOf(ModifierId.CTRL)), oneMoreKey)
+        assertEquals(ResolvedIntent.TypedText("a", setOf(ModifierId.CTRL)), oneMoreKey)
         assertFalse(state.isActive(ModifierId.CTRL))
-        assertEquals(ResolvedIntent.TypedCharacter('b', emptySet()), nextKeyAfterThat)
+        assertEquals(ResolvedIntent.TypedText("b", emptySet()), nextKeyAfterThat)
     }
 
     @Test
@@ -91,10 +91,10 @@ class ModifierEngineTest {
     fun `tapping Shift capitalizes exactly the next character via uppercase, not a modifier flag`() {
         var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.SHIFT, TAP_CENTER)
 
-        val resolved = ModifierEngine.resolve(state, KeyIntent.Character('a'))
+        val resolved = ModifierEngine.resolve(state, KeyIntent.Text("a"))
         state = ModifierEngine.consumeOneShots(state)
 
-        assertEquals(ResolvedIntent.TypedCharacter('A', emptySet()), resolved)
+        assertEquals(ResolvedIntent.TypedText("A", emptySet()), resolved)
         assertFalse(state.isActive(ModifierId.SHIFT))
     }
 
@@ -112,7 +112,7 @@ class ModifierEngineTest {
 
         // Typing several letters while locked: caps lock is untouched by consumeOneShots.
         repeat(3) {
-            ModifierEngine.resolve(state, KeyIntent.Character('a'))
+            ModifierEngine.resolve(state, KeyIntent.Text("a"))
             state = ModifierEngine.consumeOneShots(state)
         }
         assertTrue(state.isActive(ModifierId.SHIFT))
@@ -122,15 +122,27 @@ class ModifierEngineTest {
     fun `a custom shift mapping table overrides plain uppercasing`() {
         val state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.SHIFT, TAP_CENTER)
 
-        val resolved = ModifierEngine.resolve(state, KeyIntent.Character('1'), shiftMappings = mapOf('1' to '!'))
+        val resolved = ModifierEngine.resolve(state, KeyIntent.Text("1"), shiftMappings = mapOf("1" to "!"))
 
-        assertEquals(ResolvedIntent.TypedCharacter('!', emptySet()), resolved)
+        assertEquals(ResolvedIntent.TypedText("!", emptySet()), resolved)
+    }
+
+    @Test
+    fun `multi-character text ignores held modifiers but still gets shift-mapped`() {
+        var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.CTRL, HOLD_CENTER)
+        state = ModifierEngine.applyModifierGesture(state, ModifierId.SHIFT, TAP_CENTER)
+
+        // "sch" has no KeyEvent representation for a Ctrl combo, so Ctrl is dropped for this key
+        // - but the shift mapping table (analogous to Suave's SHIFT_MAPPINGS) still applies.
+        val resolved = ModifierEngine.resolve(state, KeyIntent.Text("sch"), shiftMappings = mapOf("sch" to "Sch"))
+
+        assertEquals(ResolvedIntent.TypedText("Sch", emptySet()), resolved)
     }
 
     // --- Commands keep Shift as a real modifier flag, since there's no "shifted backspace" char ---
 
     @Test
-    fun `shift stays in the modifier set for command intents instead of transforming a character`() {
+    fun `shift stays in the modifier set for command intents instead of transforming text`() {
         val state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.SHIFT, TAP_CENTER)
 
         val resolved = ModifierEngine.resolve(state, KeyIntent.Command(CommandId.TAB))
@@ -145,9 +157,9 @@ class ModifierEngineTest {
         var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.CTRL, HOLD_CENTER)
         state = ModifierEngine.applyModifierGesture(state, ModifierId.ALT, HOLD_CENTER)
 
-        val resolved = ModifierEngine.resolve(state, KeyIntent.Character('z'))
+        val resolved = ModifierEngine.resolve(state, KeyIntent.Text("z"))
 
-        assertEquals(ResolvedIntent.TypedCharacter('z', setOf(ModifierId.CTRL, ModifierId.ALT)), resolved)
+        assertEquals(ResolvedIntent.TypedText("z", setOf(ModifierId.CTRL, ModifierId.ALT)), resolved)
     }
 
     @Test

@@ -24,28 +24,38 @@ object ModifierEngine {
     fun resolve(
         state: ModifierState,
         intent: KeyIntent,
-        shiftMappings: Map<Char, Char> = emptyMap(),
+        shiftMappings: Map<String, String> = emptyMap(),
     ): ResolvedIntent =
         when (intent) {
-            is KeyIntent.Character -> {
-                val char =
+            is KeyIntent.Text -> {
+                // Ctrl/Alt/Esc-combo and raw-editor KeyEvent treatment only make sense for a
+                // single character - there's no KeyEvent for "Ctrl+sch". Multi-character text
+                // (Suave's "sch"/"ch" keys) always ignores those modifiers and just commits as
+                // text, matching the layout's own pre-rewrite behavior. The check uses the
+                // *original* text, before Shift's transform below - Shift can itself change
+                // length (e.g. German "ß" -> "SS").
+                val modifiersApply = intent.text.length == 1
+                val text =
                     if (state.isActive(ModifierId.SHIFT)) {
-                        shiftMappings[intent.char] ?: intent.char.uppercaseChar()
+                        shiftMappings[intent.text] ?: if (intent.text.length == 1) intent.text.uppercase() else intent.text
                     } else {
-                        intent.char
+                        intent.text
                     }
-                ResolvedIntent.TypedCharacter(char, state.active.keys - ModifierId.SHIFT)
+                val modifiers = if (modifiersApply) state.active.keys - ModifierId.SHIFT else emptySet()
+                ResolvedIntent.TypedText(text, modifiers)
             }
 
             is KeyIntent.Command -> {
                 ResolvedIntent.TypedCommand(intent.id, state.active.keys)
             }
 
-            is KeyIntent.ModifierPress -> {
+            // Neither routes through resolve() in practice - ModifierPress goes through
+            // applyModifierGesture, LegacyAction is unwrapped directly by the UI wiring (Step 5)
+            // before it would ever reach here. Both are inert if resolve() is called anyway.
+            is KeyIntent.ModifierPress, is KeyIntent.LegacyAction -> {
                 ResolvedIntent.Noop
             }
 
-            // route through applyModifierGesture instead
             KeyIntent.Noop -> {
                 ResolvedIntent.Noop
             }

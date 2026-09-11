@@ -6,7 +6,7 @@ import com.suave.s12.engine.modifier.ResolvedIntent
 object IntentCompiler {
     fun compile(resolved: ResolvedIntent): SemanticAction =
         when (resolved) {
-            is ResolvedIntent.TypedCharacter -> SemanticAction.TypeCharacter(resolved.char, resolved.modifiers)
+            is ResolvedIntent.TypedText -> SemanticAction.TypeText(resolved.text, resolved.modifiers)
             is ResolvedIntent.TypedCommand -> SemanticAction.TypeCommand(resolved.id, resolved.modifiers)
             ResolvedIntent.Noop -> SemanticAction.Noop
         }
