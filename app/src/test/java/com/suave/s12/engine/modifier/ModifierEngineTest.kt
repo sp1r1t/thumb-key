@@ -60,21 +60,19 @@ class ModifierEngineTest {
     }
 
     @Test
-    fun `releasing a held Ctrl grants exactly one more key then reverts`() {
+    fun `releasing a held Ctrl deactivates it immediately, unlike a quick tap's one-shot`() {
         var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.CTRL, HOLD_CENTER)
         state = ModifierEngine.applyModifierGesture(state, ModifierId.CTRL, Gesture.Released)
 
         // This is the exact fix for the old engine's bug: releasing Ctrl must actually transition
-        // to a state a subsequent key event will clear, not just flip an unread tracking flag.
-        assertEquals(ActivationMode.ONE_SHOT, state.active.getValue(ModifierId.CTRL).mode)
-
-        val oneMoreKey = ModifierEngine.resolve(state, KeyIntent.Text("a"))
-        state = ModifierEngine.consumeOneShots(state)
-        val nextKeyAfterThat = ModifierEngine.resolve(state, KeyIntent.Text("b"))
-
-        assertEquals(ResolvedIntent.TypedText("a", setOf(ModifierId.CTRL)), oneMoreKey)
+        // to inactive, not just flip an unread tracking flag. Deliberately immediate, not a
+        // one-more-key grace period - the hold+release itself is the explicit signal, unlike a
+        // quick tap (which has no separate "held" moment, so it stays ONE_SHOT - see the
+        // one-shot test above, an entirely different path this doesn't touch).
         assertFalse(state.isActive(ModifierId.CTRL))
-        assertEquals(ResolvedIntent.TypedText("b", emptySet()), nextKeyAfterThat)
+
+        val nextKey = ModifierEngine.resolve(state, KeyIntent.Text("a"))
+        assertEquals(ResolvedIntent.TypedText("a", emptySet()), nextKey)
     }
 
     @Test

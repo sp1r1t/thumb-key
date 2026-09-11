@@ -96,11 +96,12 @@ object ModifierEngine {
 
             Gesture.Released -> {
                 if (currentlyActive?.mode == ActivationMode.HELD) {
-                    // Grace period: the very next key still gets it once, then auto-reverts -
-                    // this is the explicit transition the old engine never had, where releasing
-                    // Ctrl only updated a tracking flag that nothing ever consulted to turn the
-                    // rendered mode back off.
-                    state.activate(modifier, ActivationMode.ONE_SHOT)
+                    // Releasing a held modifier deactivates it immediately - the hold+release
+                    // itself is the explicit, deliberate signal, unlike a quick tap (which has
+                    // no separate "held" moment to distinguish from the tap, so it stays
+                    // ONE_SHOT and needs the next key to consume it - see the Tap branch above,
+                    // an entirely different path this doesn't touch).
+                    state.deactivate(modifier)
                 } else {
                     // LOCKED persists past release (caps lock); ONE_SHOT/inactive have nothing
                     // to do here - ONE_SHOT clears via consumeOneShots on the next typed key.

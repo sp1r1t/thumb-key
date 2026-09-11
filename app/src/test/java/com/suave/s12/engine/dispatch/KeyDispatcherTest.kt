@@ -35,7 +35,25 @@ private val CTRL_ALT_ESC_KEY =
             ),
     )
 
+private val LETTER_KEY = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Text("s")))
+
 class KeyDispatcherTest {
+    @Test
+    fun `hold Ctrl, fire a command, release Ctrl - deactivates immediately, not a one-shot grace key`() {
+        val ctrlDispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY)
+        val letterDispatcher = KeyDispatcher(LETTER_KEY)
+        val executed = mutableListOf<SemanticAction>()
+
+        var state = ctrlDispatcher.handle(Gesture.Hold(Zone.Center), ModifierState(), executed::add, {}, {})
+        state = letterDispatcher.handle(Gesture.Pressed, state, executed::add, {}, {})
+        state = letterDispatcher.handle(Gesture.Tap(Zone.Center), state, executed::add, {}, {})
+        state = letterDispatcher.handle(Gesture.Released, state, executed::add, {}, {})
+        state = ctrlDispatcher.handle(Gesture.Released, state, executed::add, {}, {})
+
+        assertEquals(listOf(SemanticAction.TypeText("s", setOf(ModifierId.CTRL))), executed)
+        assertFalse("holding Ctrl through a command then releasing must deactivate it outright", state.isActive(ModifierId.CTRL))
+    }
+
     @Test
     fun `swiping to Alt on a Ctrl-Alt-Esc key activates Alt, not Ctrl`() {
         val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY)
@@ -63,14 +81,13 @@ class KeyDispatcherTest {
         var state = dispatcher.handle(Gesture.Hold(Zone.Directional(Direction.RIGHT)), ModifierState(), {}, {}, {})
         assertEquals(ActivationMode.HELD, state.active.getValue(ModifierId.ALT).mode)
 
-        // Release: must transition ALT (the zone this press actually engaged) to the one-shot
-        // grace state, and must never have touched CTRL at all - this is the exact bug class
-        // from the old engine, where the center action fired unconditionally on press-down
-        // regardless of which zone the swipe eventually locked.
+        // Release: must deactivate ALT (the zone this press actually engaged), immediately, and
+        // must never have touched CTRL at all - this is the exact bug class from the old engine,
+        // where the center action fired unconditionally on press-down regardless of which zone
+        // the swipe eventually locked.
         state = dispatcher.handle(Gesture.Released, state, {}, {}, {})
 
-        assertTrue(state.isActive(ModifierId.ALT))
-        assertEquals(ActivationMode.ONE_SHOT, state.active.getValue(ModifierId.ALT).mode)
+        assertFalse(state.isActive(ModifierId.ALT))
         assertFalse("Ctrl must never have been touched by a press that locked onto the Alt zone", state.isActive(ModifierId.CTRL))
     }
 

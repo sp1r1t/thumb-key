@@ -192,8 +192,7 @@ class KeyDispatcher(
                 onFeedback(FeedbackEvent.ModifierDeactivated(id))
             }
 
-            // Notably NOT reported: HELD -> ONE_SHOT on release. The modifier is still active
-            // (one more key still gets it), so it hasn't deactivated yet.
+            // No change to report: HoldRepeat's own no-op, or LOCKED persisting through release.
             else -> {}
         }
     }

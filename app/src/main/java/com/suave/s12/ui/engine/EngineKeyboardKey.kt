@@ -1,6 +1,5 @@
 package com.suave.s12.ui.engine
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -32,7 +31,6 @@ import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.KeyMapping
 import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.utils.KeyAction
-import com.suave.s12.utils.TAG
 import kotlinx.coroutines.withTimeoutOrNull
 
 private const val TICK_INTERVAL_MS = 30L
@@ -105,8 +103,6 @@ fun EngineKeyboardKey(
                             )
                         val recognizer = GestureRecognizer(config)
 
-                        val keyLabel = mapping.intents[Zone.Center]?.toString() ?: "?"
-
                         // Seeded fresh per press from the latest cross-key state, then tracked
                         // locally for the rest of THIS press - not re-read from
                         // currentModifierState on every call. A single press can emit several
@@ -130,8 +126,6 @@ fun EngineKeyboardKey(
                                     currentOnLegacyAction,
                                     currentOnFeedback,
                                 )
-                            // Temporary diagnostic for the "ctrl got stuck" report.
-                            Log.d(TAG, "[$keyLabel] $gesture | before=${before.active} after=${newState.active}")
                             localState = newState
                             currentOnModifierStateChange(newState)
                         }
