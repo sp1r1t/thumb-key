@@ -208,7 +208,7 @@ val SUAVE_LAYOUT: Layout =
         KeyPosition(1, 1) to key("e", top = "v", topRight = "€", right = "c", bottom = "f", bottomRight = "ch", left = "z"),
         KeyPosition(1, 2) to SUAVE_SPACE,
         KeyPosition(1, 3) to key("n", top = "b", right = "k", bottom = "m", left = "g"),
-        KeyPosition(1, 4) to key("s", top = "~", topLeft = "$", bottom = "|", bottomLeft = "sch", left = "ß"),
+        KeyPosition(1, 4) to key("s", top = "~", topLeft = "$", bottomLeft = "sch", left = "ß"),
         // Row 2
         KeyPosition(2, 0) to key("u", top = "ü", topRight = "(", right = "[", bottomRight = "{"),
         KeyPosition(2, 1) to key("i", topLeft = "<", right = "x", bottom = "#", bottomLeft = "@", bottomRight = "$"),
@@ -225,7 +225,7 @@ val SUAVE_LAYOUT: Layout =
                 bottomRight = "&",
             ),
         KeyPosition(2, 3) to key("d", top = "j", topRight = ">", bottom = "=", bottomLeft = "*", bottomRight = "/", left = "y"),
-        KeyPosition(2, 4) to key("l", topLeft = ")", bottom = "\\", bottomLeft = "}", left = "]"),
+        KeyPosition(2, 4) to key("l", top = "|", topLeft = ")", bottom = "\\", bottomLeft = "}", left = "]"),
         // Row 3
         KeyPosition(3, 0) to SUAVE_CTRL,
         KeyPosition(3, 1) to SUAVE_EMOJI_KEY,
