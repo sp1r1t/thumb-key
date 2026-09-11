@@ -117,6 +117,7 @@ object OutputExecutor {
                 CommandId.ARROW_RIGHT -> KeyEvent.KEYCODE_DPAD_RIGHT
                 CommandId.ARROW_UP -> KeyEvent.KEYCODE_DPAD_UP
                 CommandId.ARROW_DOWN -> KeyEvent.KEYCODE_DPAD_DOWN
+                CommandId.ESCAPE -> KeyEvent.KEYCODE_ESCAPE
             }
         sendEscIfNeeded(action.modifiers, ic)
         sendKeyEvent(ic, keyCode, metaStateFor(action.modifiers))

@@ -107,6 +107,55 @@ class KeyDispatcherTest {
     }
 
     @Test
+    fun `tapping Esc again while it's still queued as a one-shot combo prefix sends a real Escape instead`() {
+        val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY)
+        val executed = mutableListOf<SemanticAction>()
+        val escZone = Zone.Directional(Direction.UP)
+
+        // First press: a normal quick swipe-tap to Esc, queuing it as a one-shot combo prefix.
+        var state = dispatcher.handle(Gesture.Pressed, ModifierState(), executed::add, {}, {})
+        state = dispatcher.handle(Gesture.SwipeLocked(Direction.UP), state, executed::add, {}, {})
+        state = dispatcher.handle(Gesture.Tap(escZone), state, executed::add, {}, {})
+        state = dispatcher.handle(Gesture.Released, state, executed::add, {}, {})
+        assertTrue("first tap queues a one-shot Esc combo prefix", state.isActive(ModifierId.ESC))
+
+        // Second, separate press on the same zone while that's still queued: Esc+Esc.
+        state = dispatcher.handle(Gesture.Pressed, state, executed::add, {}, {})
+        state = dispatcher.handle(Gesture.SwipeLocked(Direction.UP), state, executed::add, {}, {})
+        state = dispatcher.handle(Gesture.Tap(escZone), state, executed::add, {}, {})
+
+        assertEquals(listOf(SemanticAction.TypeCommand(CommandId.ESCAPE)), executed.filterIsInstance<SemanticAction.TypeCommand>())
+        assertFalse("Esc+Esc must consume the queued one-shot instead of leaving it active", state.isActive(ModifierId.ESC))
+    }
+
+    @Test
+    fun `with escAsModifier false, tapping the Esc zone sends a standalone Escape and never touches modifier state`() {
+        val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY, escAsModifier = false)
+        val executed = mutableListOf<SemanticAction>()
+
+        val state =
+            dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.UP)), ModifierState(), executed::add, {}, {})
+
+        assertEquals(listOf(SemanticAction.TypeCommand(CommandId.ESCAPE)), executed)
+        assertFalse("standalone mode never activates Esc as a modifier", state.isActive(ModifierId.ESC))
+    }
+
+    @Test
+    fun `with escAsModifier false, holding the Esc zone repeats the standalone Escape like any other command key`() {
+        val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY, escAsModifier = false)
+        val executed = mutableListOf<SemanticAction>()
+        val escZone = Zone.Directional(Direction.UP)
+
+        dispatcher.handle(Gesture.Hold(escZone), ModifierState(), executed::add, {}, {})
+        dispatcher.handle(Gesture.HoldRepeat(escZone), ModifierState(), executed::add, {}, {})
+
+        assertEquals(
+            listOf(SemanticAction.TypeCommand(CommandId.ESCAPE), SemanticAction.TypeCommand(CommandId.ESCAPE)),
+            executed,
+        )
+    }
+
+    @Test
     fun `a plain character key executes its text and fires no feedback on its own (Pressed already covered it)`() {
         val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Text("a")))
         val dispatcher = KeyDispatcher(key)

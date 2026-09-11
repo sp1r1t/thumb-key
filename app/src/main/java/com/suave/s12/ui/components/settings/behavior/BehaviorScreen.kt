@@ -45,6 +45,7 @@ import com.suave.s12.db.DEFAULT_CIRCULAR_DRAG_ENABLED
 import com.suave.s12.db.DEFAULT_CLOCKWISE_DRAG_ACTION
 import com.suave.s12.db.DEFAULT_COUNTERCLOCKWISE_DRAG_ACTION
 import com.suave.s12.db.DEFAULT_DRAG_RETURN_ENABLED
+import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_GHOST_KEYS_ENABLED
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_SLIDE_BACKSPACE_DEADZONE_ENABLED
@@ -100,6 +101,7 @@ fun BehaviorScreen(
         CircularDragAction.entries[settings?.counterclockwiseDragAction ?: DEFAULT_COUNTERCLOCKWISE_DRAG_ACTION]
     var ghostKeysEnabledState = (settings?.ghostKeysEnabled ?: DEFAULT_GHOST_KEYS_ENABLED).toBool()
     var slideHoldEnabledState = (settings?.slideHoldEnabled ?: DEFAULT_SLIDE_HOLD_ENABLED).toBool()
+    var escAsModifierState = (settings?.escAsModifier ?: DEFAULT_ESC_AS_MODIFIER).toBool()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -125,6 +127,7 @@ fun BehaviorScreen(
                 counterclockwiseDragAction = counterclockwiseDragActionState.ordinal,
                 ghostKeysEnabled = ghostKeysEnabledState.toInt(),
                 slideHoldEnabled = slideHoldEnabledState.toInt(),
+                escAsModifier = escAsModifierState.toInt(),
             ),
         )
     }
@@ -329,6 +332,25 @@ fun BehaviorScreen(
                             Icon(
                                 imageVector = Icons.Outlined.SwipeRight,
                                 contentDescription = stringResource(R.string.slide_hold_enable),
+                            )
+                        },
+                    )
+                    SwitchPreference(
+                        value = escAsModifierState,
+                        onValueChange = {
+                            escAsModifierState = it
+                            updateBehavior()
+                        },
+                        title = {
+                            Text(stringResource(R.string.esc_as_modifier))
+                        },
+                        summary = {
+                            Text(stringResource(R.string.esc_as_modifier_description))
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.SwapHoriz,
+                                contentDescription = stringResource(R.string.esc_as_modifier),
                             )
                         },
                     )

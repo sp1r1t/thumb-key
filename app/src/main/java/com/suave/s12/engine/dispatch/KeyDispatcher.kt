@@ -27,7 +27,9 @@ import kotlin.math.abs
  * Callbacks are parameters of [handle] itself, not constructor fields, deliberately: a
  * long-lived object holding onto Compose-recomposition-scoped lambdas is exactly the kind of
  * stale-closure hazard this rewrite exists to avoid (see [ModifierEngine]'s own doc). Only
- * [mapping] and [shiftMappings] - genuinely static for this key's lifetime - are held.
+ * [mapping], [shiftMappings], and [escAsModifier] - genuinely static for this key's lifetime,
+ * or a settings value the UI layer already re-creates this dispatcher for when it changes - are
+ * held.
  *
  * The state this class owns across a press: which [ModifierId] (if any) the press's locked zone
  * engaged, and whether *this specific press* is what activated it. The first matters because
@@ -42,6 +44,7 @@ import kotlin.math.abs
 class KeyDispatcher(
     private val mapping: KeyMapping,
     private val shiftMappings: Map<String, String> = emptyMap(),
+    private val escAsModifier: Boolean = true,
 ) {
     private var engagedModifier: ModifierId? = null
     private var freshlyActivatedByPressed = false
@@ -100,9 +103,27 @@ class KeyDispatcher(
         onFeedback: (FeedbackEvent) -> Unit,
     ): ModifierState {
         onFeedback(FeedbackEvent.TapRecognized)
-        val centerIntent = mapping.intents[Zone.Center]
+        val centerIntent = intentFor(Zone.Center)
         if (centerIntent !is KeyIntent.ModifierPress) return modifierState
         return provisionallyActivate(centerIntent.modifier, modifierState)
+    }
+
+    /**
+     * [mapping]'s intent for [zone], with one substitution: when [escAsModifier] is false, Esc's
+     * [KeyIntent.ModifierPress] is treated as a plain [KeyIntent.Command] instead - reusing the
+     * exact same generic Text/Command dispatch (repeat-on-hold, one-shot consumption, everything)
+     * a normal key already gets, rather than duplicating that behavior for a "standalone Esc"
+     * mode. This is the single point every zone lookup in this class goes through, so a
+     * substituted zone also correctly never triggers [handlePressed]/[handleSwipeLocked]'s
+     * provisional-modifier-activation guess - it no longer looks like a modifier at all.
+     */
+    private fun intentFor(zone: Zone): KeyIntent? {
+        val intent = mapping.intents[zone] ?: return null
+        return if (!escAsModifier && intent is KeyIntent.ModifierPress && intent.modifier == ModifierId.ESC) {
+            KeyIntent.Command(CommandId.ESCAPE)
+        } else {
+            intent
+        }
     }
 
     private fun provisionallyActivate(
@@ -120,7 +141,7 @@ class KeyDispatcher(
         onFeedback: (FeedbackEvent) -> Unit,
     ): ModifierState {
         onFeedback(FeedbackEvent.SwipeLocked(gesture.direction))
-        val zoneIntent = mapping.intents[Zone.Directional(gesture.direction)]
+        val zoneIntent = intentFor(Zone.Directional(gesture.direction))
         if (zoneIntent !is KeyIntent.ModifierPress || zoneIntent.modifier == engagedModifier) return modifierState
         // Hand off from whatever handlePressed guessed (this key's Ctrl/Alt/Esc all share one
         // physical key) to the modifier this swipe actually locked onto - undoing the guess
@@ -139,7 +160,7 @@ class KeyDispatcher(
         onLegacyAction: (KeyAction) -> Unit,
         onFeedback: (FeedbackEvent) -> Unit,
     ): ModifierState {
-        val intent = mapping.intents[zone] ?: return modifierState
+        val intent = intentFor(zone) ?: return modifierState
         return when (intent) {
             is KeyIntent.ModifierPress -> {
                 // No feedback here: Gesture.Pressed/SwipeLocked already buzzed for this exact
@@ -148,6 +169,20 @@ class KeyDispatcher(
                 // (finishPress, below) - that's a genuinely later, distinct moment for a real
                 // hold, not a duplicate of a buzz that just happened.
                 engagedModifier = intent.modifier
+                if (intent.modifier == ModifierId.ESC &&
+                    gesture is Gesture.Tap &&
+                    !freshlyActivatedByPressed &&
+                    modifierState.isActive(ModifierId.ESC)
+                ) {
+                    // Esc+Esc: tapping Esc again while it's already queued from an earlier,
+                    // separate press as a one-shot combo prefix sends a real Escape instead of
+                    // silently toggling that queued state off - the escape hatch for "I actually
+                    // just wanted to press Escape" without giving up combo behavior for every
+                    // other use. freshlyActivatedByPressed being false is what tells this apart
+                    // from the ordinary first tap that activates Esc in the first place.
+                    onExecute(SemanticAction.TypeCommand(CommandId.ESCAPE))
+                    return ModifierEngine.consumeOneShots(modifierState.deactivate(ModifierId.ESC))
+                }
                 ModifierEngine.applyModifierGesture(
                     modifierState,
                     intent.modifier,

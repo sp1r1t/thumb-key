@@ -302,3 +302,12 @@ val MIGRATION_26_27 =
             )
         }
     }
+
+val MIGRATION_27_28 =
+    object : Migration(27, 28) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN esc_as_modifier INTEGER NOT NULL DEFAULT $DEFAULT_ESC_AS_MODIFIER",
+            )
+        }
+    }

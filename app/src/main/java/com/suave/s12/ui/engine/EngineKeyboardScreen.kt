@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.sp
 import com.suave.s12.BuildConfig
 import com.suave.s12.IMEService
 import com.suave.s12.db.AppSettings
+import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
@@ -78,6 +79,7 @@ fun EngineKeyboardScreen(
     val hideLetters = (settings?.hideLetters ?: DEFAULT_HIDE_LETTERS).toBool()
     val minSwipeDistancePx = (settings?.minSwipeLength ?: DEFAULT_MIN_SWIPE_LENGTH).toFloat()
     val ignoreBottomPadding = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
+    val escAsModifier = (settings?.escAsModifier ?: DEFAULT_ESC_AS_MODIFIER).toBool()
     // Unlike the old engine, key width here is always auto-fit (Modifier.weight(1f)) - there's
     // no manual-width/square-vs-non-square distinction to gate this behind, so keyHeight always
     // applies directly as each row's height.
@@ -158,6 +160,7 @@ fun EngineKeyboardScreen(
                         shiftMappings = SUAVE_SHIFT_MAPPINGS,
                         minSwipeDistancePx = minSwipeDistancePx,
                         hideLetters = hideLetters,
+                        escAsModifier = escAsModifier,
                         modifier = Modifier.weight(1f).fillMaxHeight(),
                     )
                 }

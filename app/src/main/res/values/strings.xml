@@ -87,6 +87,8 @@
     <string name="ghost_keys_description">Access hidden symbol keys without switching to numeric view</string>
     <string name="slide_hold_enable">Slide-hold cursor movement</string>
     <string name="slide_hold_description">Slide and hold to repeat cursor movement, slide-return-hold for word movement. Backspace: slide-hold to repeat delete, slide-return-hold for word delete.</string>
+    <string name="esc_as_modifier">Esc acts as a modifier</string>
+    <string name="esc_as_modifier_description">A quick Esc tap queues as a Meta-via-Escape combo for the next key (Esc+Esc sends a real Escape instead). Off: Esc always just sends a real Escape.</string>
     <string name="backup_database">Backup database</string>
     <string name="restore_database">Restore database</string>
     <string name="restore_database_warning">Warning: This will clear out your current database</string>

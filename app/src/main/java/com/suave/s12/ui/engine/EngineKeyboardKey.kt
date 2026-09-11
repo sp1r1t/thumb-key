@@ -62,9 +62,11 @@ fun EngineKeyboardKey(
     shiftMappings: Map<String, String>,
     minSwipeDistancePx: Float,
     hideLetters: Boolean,
+    escAsModifier: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val dispatcher = remember(mapping, shiftMappings) { KeyDispatcher(mapping, shiftMappings) }
+    val dispatcher =
+        remember(mapping, shiftMappings, escAsModifier) { KeyDispatcher(mapping, shiftMappings, escAsModifier) }
 
     // The pointer-input loop below is long-lived (keyed on Unit, never restarts), so it must
     // read every value that can change across recomposition through rememberUpdatedState -
@@ -225,4 +227,5 @@ private fun commandLabel(id: CommandId): String =
         CommandId.ARROW_RIGHT -> "→"
         CommandId.ARROW_UP -> "↑"
         CommandId.ARROW_DOWN -> "↓"
+        CommandId.ESCAPE -> "esc"
     }

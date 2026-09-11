@@ -77,6 +77,12 @@ const val MAX_CLIPBOARD_MAX_SIZE = 100
 const val DEFAULT_USE_PRIVATE_CLIPBOARD = 0
 const val DEFAULT_SHOW_ON_SCREEN_KEYBOARD = 0
 
+// Default true (matches the modifier behavior this engine had before this setting existed): a
+// quick Esc tap queues as a Meta-via-Escape combo prefix for the next key, and Esc+Esc (tapping
+// again while that's still queued) sends a real Escape instead. False makes Esc a plain
+// standalone key that always just sends a real Escape, with no combo behavior at all.
+const val DEFAULT_ESC_AS_MODIFIER = 1
+
 @Entity
 data class AppSettings(
     @PrimaryKey(autoGenerate = true) val id: Int,
@@ -343,6 +349,11 @@ data class AppSettings(
         defaultValue = DEFAULT_SHOW_ON_SCREEN_KEYBOARD.toString(),
     )
     val showOnScreenKeyboard: Int,
+    @ColumnInfo(
+        name = "esc_as_modifier",
+        defaultValue = DEFAULT_ESC_AS_MODIFIER.toString(),
+    )
+    val escAsModifier: Int,
 )
 
 data class LayoutsUpdate(
@@ -483,6 +494,8 @@ data class BehaviorUpdate(
     val ghostKeysEnabled: Int,
     @ColumnInfo(name = "slide_hold_enabled")
     val slideHoldEnabled: Int,
+    @ColumnInfo(name = "esc_as_modifier")
+    val escAsModifier: Int,
 )
 
 data class KeyModificationsUpdate(
@@ -620,7 +633,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 27,
+    version = 28,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -669,6 +682,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_24_25,
                             MIGRATION_25_26,
                             MIGRATION_26_27,
+                            MIGRATION_27_28,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

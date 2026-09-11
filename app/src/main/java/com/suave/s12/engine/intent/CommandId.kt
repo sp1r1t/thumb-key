@@ -11,4 +11,5 @@ enum class CommandId {
     ARROW_RIGHT,
     ARROW_UP,
     ARROW_DOWN,
+    ESCAPE,
 }
