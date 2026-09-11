@@ -137,6 +137,57 @@ private fun key(
     return KeyMapping(gesture, intents, slideBehavior, columnSpan)
 }
 
+private val SUAVE_BACKSPACE =
+    key(
+        "backspace",
+        top = "'",
+        bottom = "\"",
+        gesture = FOUR_WAY_KEY.copy(slideAxis = SlideAxis.HORIZONTAL),
+        slideBehavior = SlideBehavior.SELECT_AND_DELETE,
+    )
+private val SUAVE_SPACE =
+    key(
+        " ",
+        top = "up",
+        bottom = "down",
+        left = "left",
+        right = "right",
+        gesture = FOUR_WAY_KEY.copy(slideAxis = SlideAxis.HORIZONTAL),
+        slideBehavior = SlideBehavior.MOVE_CURSOR,
+    )
+private val SUAVE_CTRL = key("ctrl", right = "alt", top = "esc", gesture = FOUR_WAY_KEY)
+private val SUAVE_EMOJI_KEY =
+    key(
+        "emoji",
+        top = "settings",
+        topLeft = "hide",
+        bottom = "ime",
+        bottomLeft = "voice",
+        left = "lang",
+        right = "move",
+    )
+private val SUAVE_NUMERIC_KEY =
+    key(
+        "numeric",
+        top = "copy",
+        topLeft = "selectAll",
+        topRight = "cut",
+        bottomLeft = "undo",
+        bottomRight = "redo",
+        bottom = "paste",
+    )
+private val SUAVE_ABC_KEY =
+    key(
+        "abc",
+        top = "copy",
+        topLeft = "selectAll",
+        topRight = "cut",
+        bottomLeft = "undo",
+        bottomRight = "redo",
+        bottom = "paste",
+    )
+private val SUAVE_ENTER = key("return", top = "tab", left = "enter", gesture = FOUR_WAY_KEY, columnSpan = 2)
+
 /**
  * Suave, ported to pure data: position + gesture -> intent, nothing else. Compare to the
  * pre-rewrite `generateSuaveLayout` (~360 lines of mode-branching Kotlin) - this is what "a
@@ -149,29 +200,13 @@ val SUAVE_LAYOUT: Layout =
         // Row 0
         KeyPosition(0, 0) to key("o", top = "1", right = "2", bottom = "ö"),
         KeyPosition(0, 1) to key("r", top = "4", right = "5", bottom = "w", bottomLeft = "?", bottomRight = ",", left = "3"),
-        KeyPosition(0, 2) to
-            key(
-                "backspace",
-                top = "'",
-                bottom = "\"",
-                gesture = FOUR_WAY_KEY.copy(slideAxis = SlideAxis.HORIZONTAL),
-                slideBehavior = SlideBehavior.SELECT_AND_DELETE,
-            ),
+        KeyPosition(0, 2) to SUAVE_BACKSPACE,
         KeyPosition(0, 3) to key("t", top = "7", right = "8", bottom = "p", bottomLeft = ".", bottomRight = "!", left = "6"),
         KeyPosition(0, 4) to key("h", top = "0", bottom = "q", left = "9"),
         // Row 1
         KeyPosition(1, 0) to key("a", right = "ä", bottom = "+"),
         KeyPosition(1, 1) to key("e", top = "v", topRight = "€", right = "c", bottom = "f", bottomRight = "ch", left = "z"),
-        KeyPosition(1, 2) to
-            key(
-                " ",
-                top = "up",
-                bottom = "down",
-                left = "left",
-                right = "right",
-                gesture = FOUR_WAY_KEY.copy(slideAxis = SlideAxis.HORIZONTAL),
-                slideBehavior = SlideBehavior.MOVE_CURSOR,
-            ),
+        KeyPosition(1, 2) to SUAVE_SPACE,
         KeyPosition(1, 3) to key("n", top = "b", right = "k", bottom = "m", left = "g"),
         KeyPosition(1, 4) to key("s", top = "~", topLeft = "$", bottom = "|", bottomLeft = "sch", left = "ß"),
         // Row 2
@@ -192,26 +227,94 @@ val SUAVE_LAYOUT: Layout =
         KeyPosition(2, 3) to key("d", top = "j", topRight = ">", bottom = "=", bottomLeft = "*", bottomRight = "/", left = "y"),
         KeyPosition(2, 4) to key("l", topLeft = ")", bottom = "\\", bottomLeft = "}", left = "]"),
         // Row 3
-        KeyPosition(3, 0) to key("ctrl", right = "alt", top = "esc", gesture = FOUR_WAY_KEY),
-        KeyPosition(3, 1) to
+        KeyPosition(3, 0) to SUAVE_CTRL,
+        KeyPosition(3, 1) to SUAVE_EMOJI_KEY,
+        KeyPosition(3, 2) to SUAVE_NUMERIC_KEY,
+        KeyPosition(3, 3) to SUAVE_ENTER,
+    )
+
+/**
+ * Suave's numeric layer: a full grid of the same shape as [SUAVE_LAYOUT], with abc on the
+ * cluster that numeric occupies on the main layer. Superscripts/subscripts are real typed
+ * characters; combining diacritics from the old overlay are omitted until keys can show a
+ * display label distinct from the committed text.
+ */
+val SUAVE_NUMERIC_LAYOUT: Layout =
+    mapOf(
+        KeyPosition(0, 0) to key("1", top = "\u00B9", bottom = "\u2081", gesture = FOUR_WAY_KEY),
+        KeyPosition(0, 1) to key("2", top = "\u00B2", bottom = "\u2082", gesture = FOUR_WAY_KEY),
+        KeyPosition(0, 2) to SUAVE_BACKSPACE,
+        KeyPosition(0, 3) to key("3", top = "\u00B3", bottom = "\u2083", gesture = FOUR_WAY_KEY),
+        KeyPosition(0, 4) to key("4", top = "\u2074", bottom = "\u2084", gesture = FOUR_WAY_KEY),
+        KeyPosition(1, 0) to key("5", top = "\u2075", bottom = "\u2085", gesture = FOUR_WAY_KEY),
+        KeyPosition(1, 1) to key("6", top = "\u2076", topRight = "\u20AC", bottom = "\u2086"),
+        KeyPosition(1, 2) to SUAVE_SPACE,
+        KeyPosition(1, 3) to key("7", top = "\u2077", bottom = "\u2087", gesture = FOUR_WAY_KEY),
+        KeyPosition(1, 4) to key("8", top = "\u2078", topLeft = "$", bottom = "\u2088"),
+        KeyPosition(2, 0) to
             key(
-                "emoji",
-                top = "settings",
-                topLeft = "hide",
-                bottom = "ime",
-                bottomLeft = "voice",
-                left = "lang",
-                right = "move",
+                "9",
+                top = "\u2079",
+                topRight = "(",
+                right = "[",
+                bottom = "\u2089",
+                bottomRight = "{",
             ),
-        KeyPosition(3, 2) to
+        KeyPosition(2, 1) to
             key(
-                "numeric",
-                top = "copy",
-                topLeft = "selectAll",
-                topRight = "cut",
-                bottomLeft = "undo",
-                bottomRight = "redo",
-                bottom = "paste",
+                ",",
+                top = ";",
+                topLeft = "<",
+                bottom = "#",
+                bottomLeft = "@",
+                bottomRight = "$",
+                gesture = FOUR_WAY_KEY,
             ),
-        KeyPosition(3, 3) to key("return", top = "tab", left = "enter", gesture = FOUR_WAY_KEY, columnSpan = 2),
+        KeyPosition(2, 2) to
+            key(
+                "+",
+                top = "-",
+                topLeft = ";",
+                topRight = ":",
+                right = "_",
+                bottom = "^",
+                bottomLeft = "%",
+                bottomRight = "&",
+            ),
+        KeyPosition(2, 3) to
+            key(
+                ".",
+                top = ":",
+                topRight = ">",
+                bottom = "=",
+                bottomLeft = "*",
+                bottomRight = "/",
+            ),
+        KeyPosition(2, 4) to
+            key(
+                "0",
+                top = "\u2070",
+                topLeft = ")",
+                left = "]",
+                bottom = "\u2080",
+                bottomLeft = "}",
+                gesture = FOUR_WAY_KEY,
+            ),
+        KeyPosition(3, 0) to SUAVE_CTRL,
+        KeyPosition(3, 1) to SUAVE_EMOJI_KEY,
+        KeyPosition(3, 2) to SUAVE_ABC_KEY,
+        KeyPosition(3, 3) to SUAVE_ENTER,
+    )
+
+/**
+ * Functional row shown under the system emoji picker. Same four bottom-row keys as main,
+ * except Ctrl is replaced by Backspace (the letter grid is gone, so delete still has to live
+ * on this row). Positions are a single row 0 so [layoutRows] yields one row.
+ */
+val SUAVE_EMOJI_BOTTOM_ROW: Layout =
+    mapOf(
+        KeyPosition(0, 0) to SUAVE_BACKSPACE,
+        KeyPosition(0, 1) to SUAVE_EMOJI_KEY,
+        KeyPosition(0, 2) to SUAVE_NUMERIC_KEY,
+        KeyPosition(0, 3) to SUAVE_ENTER,
     )

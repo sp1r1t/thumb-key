@@ -1,8 +1,10 @@
 package com.suave.s12.ui.engine
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,8 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.emoji2.emojipicker.EmojiPickerView
 import com.suave.s12.BuildConfig
 import com.suave.s12.IMEService
 import com.suave.s12.db.AppSettings
@@ -31,17 +37,26 @@ import com.suave.s12.db.DEFAULT_HIDE_LETTERS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
+import com.suave.s12.db.DEFAULT_POSITION
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
+import com.suave.s12.engine.action.SemanticAction
+import com.suave.s12.engine.capability.EditorCapabilities
 import com.suave.s12.engine.capability.EditorCapabilityResolver
 import com.suave.s12.engine.feedback.FeedbackDispatcher
+import com.suave.s12.engine.feedback.FeedbackEvent
 import com.suave.s12.engine.feedback.FeedbackSettings
+import com.suave.s12.engine.intent.Layout
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.intent.layoutRows
+import com.suave.s12.engine.modifier.ModifierBehavior
 import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.engine.modifier.modifierBehaviors
+import com.suave.s12.engine.output.OutputExecutor
 import com.suave.s12.layout.BuiltinLayouts
+import com.suave.s12.layout.LayoutLayer
+import com.suave.s12.layout.NamedLayout
 import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.toBool
 import java.text.SimpleDateFormat
@@ -49,29 +64,20 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Renders the selected [com.suave.s12.layout.NamedLayout] on the new engine end to end. Owns
- * the one piece of state every key on the keyboard shares - [ModifierState] - since modifiers
- * are no longer scoped to layout rendering (see `engine/modifier`). A single instance of this
- * state, read and written by whichever key's gesture touches it, is what makes
- * Ctrl/Alt/Esc/Shift correct across the whole keyboard without needing to swap what any other
- * key renders - there is no `mode` enum here at all, deliberately.
+ * Renders the selected [NamedLayout] on the new engine end to end. Owns the two pieces of
+ * state every key on the keyboard shares: [ModifierState] (modifiers are not a layout mode)
+ * and [LayoutLayer] (numeric/emoji are layout switches, not modifiers). Both survive Dual's
+ * second copy of the grid, so Ctrl held on the left half still applies on the right.
  *
  * The grid is derived from the layout data ([layoutRows]), not a hardcoded 4x5. Suave is one
- * [com.suave.s12.layout.BuiltinLayouts] entry; switching [AppSettings.keyboardLayout] selects
- * another.
- *
- * Phase 1 scope, deliberately not attempted here: the "Dual" split-both-hands position mode
- * (this always renders a single instance regardless of the position setting), and
- * emoji/numeric-mode's own screens (those keys are first-class commands and fire their host
- * callbacks, but this screen has no emoji/numeric layout to switch to yet). Key width comes
- * from [com.suave.s12.engine.intent.KeyMapping.columnSpan].
+ * [BuiltinLayouts] entry; switching [AppSettings.keyboardLayout] selects another.
+ * [AppSettings.position] parks a half-width panel left or right, or draws two copies for Dual.
+ * Key width comes from [com.suave.s12.engine.intent.KeyMapping.columnSpan].
  */
 @Composable
 fun EngineKeyboardScreen(
     settings: AppSettings?,
     onToggleHideLetters: () -> Unit,
-    onToggleEmojiMode: (enable: Boolean) -> Unit,
-    onToggleNumericMode: (enable: Boolean) -> Unit,
     onSwitchLanguage: () -> Unit,
     onChangePosition: ((old: KeyboardPosition) -> KeyboardPosition) -> Unit,
 ) {
@@ -80,6 +86,7 @@ fun EngineKeyboardScreen(
     val view = LocalView.current
 
     var modifierState by remember { mutableStateOf(ModifierState()) }
+    var layer by remember { mutableStateOf(LayoutLayer.MAIN) }
 
     val vibrateOnTap = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
     val vibrateOnSlide = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
@@ -87,6 +94,8 @@ fun EngineKeyboardScreen(
     val minSwipeDistancePx = (settings?.minSwipeLength ?: DEFAULT_MIN_SWIPE_LENGTH).toFloat()
     val ignoreBottomPadding = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
     val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
+    val keyboardPosition =
+        KeyboardPosition.entries.getOrElse(settings?.position ?: DEFAULT_POSITION) { KeyboardPosition.Center }
     val behaviors =
         remember(
             settings?.ctrlAsModifier,
@@ -123,13 +132,33 @@ fun EngineKeyboardScreen(
     // Resolved once per IME session (onStartInput recreates this whole screen on every new
     // input focus), matching how the old engine treated editor capability too.
     val capabilities = remember { EditorCapabilityResolver.resolve(ime.currentInputEditorInfo) }
+
+    LaunchedEffect(namedLayout.id) { layer = LayoutLayer.MAIN }
+
     val appHost =
         AppCommandHost(
             onToggleHideLetters = onToggleHideLetters,
-            onToggleEmojiMode = onToggleEmojiMode,
-            onToggleNumericMode = onToggleNumericMode,
-            onSwitchLanguage = onSwitchLanguage,
+            onSwitchLanguage = {
+                layer = LayoutLayer.MAIN
+                onSwitchLanguage()
+            },
             onChangePosition = onChangePosition,
+            onSelectLayer = { requested ->
+                layer =
+                    when (requested) {
+                        LayoutLayer.NUMERIC -> if (namedLayout.numericLayout != null) LayoutLayer.NUMERIC else layer
+                        LayoutLayer.EMOJI -> if (namedLayout.emojiBottomRow != null) LayoutLayer.EMOJI else layer
+                        LayoutLayer.MAIN -> LayoutLayer.MAIN
+                    }
+            },
+            onToggleEmojiLayer = {
+                layer =
+                    when {
+                        layer == LayoutLayer.EMOJI -> LayoutLayer.MAIN
+                        namedLayout.emojiBottomRow != null -> LayoutLayer.EMOJI
+                        else -> layer
+                    }
+            },
         )
 
     Column(
@@ -164,30 +193,166 @@ fun EngineKeyboardScreen(
                 color = MaterialTheme.colorScheme.onError,
             )
         }
-        for (row in layoutRows(namedLayout.layout)) {
-            Row(modifier = Modifier.fillMaxWidth().height(keyHeight)) {
-                for (position in row) {
-                    val mapping = namedLayout.layout[position] ?: continue
-                    EngineKeyboardKey(
-                        mapping = mapping,
-                        modifierState = modifierState,
-                        onModifierStateChange = { modifierState = it },
-                        onExecute = { action ->
-                            ActionExecutor.execute(
-                                action = action,
-                                capabilities = capabilities,
-                                ime = ime,
-                                host = appHost,
-                            )
-                        },
-                        onFeedback = { event -> FeedbackDispatcher.dispatch(event, feedbackSettings, hapticPlayer) },
-                        shiftMappings = namedLayout.shiftMappings,
-                        minSwipeDistancePx = minSwipeDistancePx,
-                        hideLetters = hideLetters,
-                        modifierBehaviors = behaviors,
-                        modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
+        Row(modifier = Modifier.fillMaxWidth()) {
+            if (keyboardPosition == KeyboardPosition.Right) {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+            EngineKeyboardPanel(
+                modifier =
+                    if (keyboardPosition == KeyboardPosition.Center) {
+                        Modifier.fillMaxWidth()
+                    } else {
+                        Modifier.weight(1f)
+                    },
+                namedLayout = namedLayout,
+                layer = layer,
+                keyHeight = keyHeight,
+                modifierState = modifierState,
+                onModifierStateChange = { modifierState = it },
+                onExecute = { action ->
+                    ActionExecutor.execute(
+                        action = action,
+                        capabilities = capabilities,
+                        ime = ime,
+                        host = appHost,
                     )
-                }
+                },
+                onFeedback = { event -> FeedbackDispatcher.dispatch(event, feedbackSettings, hapticPlayer) },
+                minSwipeDistancePx = minSwipeDistancePx,
+                hideLetters = hideLetters,
+                modifierBehaviors = behaviors,
+                vibrateOnTap = vibrateOnTap,
+                capabilities = capabilities,
+                ime = ime,
+            )
+            if (keyboardPosition == KeyboardPosition.Dual) {
+                EngineKeyboardPanel(
+                    modifier = Modifier.weight(1f),
+                    namedLayout = namedLayout,
+                    layer = layer,
+                    keyHeight = keyHeight,
+                    modifierState = modifierState,
+                    onModifierStateChange = { modifierState = it },
+                    onExecute = { action ->
+                        ActionExecutor.execute(
+                            action = action,
+                            capabilities = capabilities,
+                            ime = ime,
+                            host = appHost,
+                        )
+                    },
+                    onFeedback = { event -> FeedbackDispatcher.dispatch(event, feedbackSettings, hapticPlayer) },
+                    minSwipeDistancePx = minSwipeDistancePx,
+                    hideLetters = hideLetters,
+                    modifierBehaviors = behaviors,
+                    vibrateOnTap = vibrateOnTap,
+                    capabilities = capabilities,
+                    ime = ime,
+                )
+            }
+            if (keyboardPosition == KeyboardPosition.Left) {
+                Spacer(modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun EngineKeyboardPanel(
+    modifier: Modifier,
+    namedLayout: NamedLayout,
+    layer: LayoutLayer,
+    keyHeight: Dp,
+    modifierState: ModifierState,
+    onModifierStateChange: (ModifierState) -> Unit,
+    onExecute: (SemanticAction) -> Unit,
+    onFeedback: (FeedbackEvent) -> Unit,
+    minSwipeDistancePx: Float,
+    hideLetters: Boolean,
+    modifierBehaviors: Map<ModifierId, ModifierBehavior>,
+    vibrateOnTap: Boolean,
+    capabilities: EditorCapabilities,
+    ime: IMEService,
+) {
+    val view = LocalView.current
+    Column(modifier = modifier) {
+        if (layer == LayoutLayer.EMOJI && namedLayout.emojiBottomRow != null) {
+            val pickerHeight = keyHeight * 3
+            AndroidView(
+                factory = { context ->
+                    EmojiPickerView(context).apply {
+                        setOnEmojiPickedListener { picked ->
+                            if (vibrateOnTap) {
+                                view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                            }
+                            OutputExecutor.execute(
+                                SemanticAction.TypeText(picked.emoji),
+                                capabilities,
+                                ime.currentInputConnection,
+                            )
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(pickerHeight),
+            )
+            LayoutGrid(
+                layout = namedLayout.emojiBottomRow,
+                namedLayout = namedLayout,
+                keyHeight = keyHeight,
+                modifierState = modifierState,
+                onModifierStateChange = onModifierStateChange,
+                onExecute = onExecute,
+                onFeedback = onFeedback,
+                minSwipeDistancePx = minSwipeDistancePx,
+                hideLetters = hideLetters,
+                modifierBehaviors = modifierBehaviors,
+            )
+        } else {
+            LayoutGrid(
+                layout = namedLayout.gridFor(layer),
+                namedLayout = namedLayout,
+                keyHeight = keyHeight,
+                modifierState = modifierState,
+                onModifierStateChange = onModifierStateChange,
+                onExecute = onExecute,
+                onFeedback = onFeedback,
+                minSwipeDistancePx = minSwipeDistancePx,
+                hideLetters = hideLetters,
+                modifierBehaviors = modifierBehaviors,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LayoutGrid(
+    layout: Layout,
+    namedLayout: NamedLayout,
+    keyHeight: Dp,
+    modifierState: ModifierState,
+    onModifierStateChange: (ModifierState) -> Unit,
+    onExecute: (SemanticAction) -> Unit,
+    onFeedback: (FeedbackEvent) -> Unit,
+    minSwipeDistancePx: Float,
+    hideLetters: Boolean,
+    modifierBehaviors: Map<ModifierId, ModifierBehavior>,
+) {
+    for (row in layoutRows(layout)) {
+        Row(modifier = Modifier.fillMaxWidth().height(keyHeight)) {
+            for (position in row) {
+                val mapping = layout[position] ?: continue
+                EngineKeyboardKey(
+                    mapping = mapping,
+                    modifierState = modifierState,
+                    onModifierStateChange = onModifierStateChange,
+                    onExecute = onExecute,
+                    onFeedback = onFeedback,
+                    shiftMappings = namedLayout.shiftMappings,
+                    minSwipeDistancePx = minSwipeDistancePx,
+                    hideLetters = hideLetters,
+                    modifierBehaviors = modifierBehaviors,
+                    modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
+                )
             }
         }
     }

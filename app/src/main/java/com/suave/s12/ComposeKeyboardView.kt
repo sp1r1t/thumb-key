@@ -37,11 +37,6 @@ class ComposeKeyboardView(
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                 EngineKeyboardScreen(
                     settings = settings,
-                    // No emoji/numeric screen exists on the new engine yet - those keys are
-                    // first-class commands and fire these callbacks, there's just nothing
-                    // further to switch to here.
-                    onToggleEmojiMode = {},
-                    onToggleNumericMode = {},
                     onSwitchLanguage = {
                         ctx.lifecycleScope.launch {
                             val state = settingsState.value

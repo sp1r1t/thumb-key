@@ -17,19 +17,19 @@ import com.suave.s12.engine.capability.EditorCapabilityLevel
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.output.OutputExecutor
+import com.suave.s12.layout.LayoutLayer
 import com.suave.s12.utils.KeyboardPosition
 
 /**
  * Host callbacks for commands that are not editor I/O: settings, layout switch, IME picker,
- * keyboard position, hide-letters, and the emoji/numeric screens (those last two still have no
- * engine UI of their own; the commands are first-class so a future screen can listen here).
+ * keyboard position, hide-letters, and layer switches (numeric / emoji / abc).
  */
 data class AppCommandHost(
     val onToggleHideLetters: () -> Unit,
-    val onToggleEmojiMode: (enable: Boolean) -> Unit,
-    val onToggleNumericMode: (enable: Boolean) -> Unit,
     val onSwitchLanguage: () -> Unit,
     val onChangePosition: ((old: KeyboardPosition) -> KeyboardPosition) -> Unit,
+    val onSelectLayer: (LayoutLayer) -> Unit,
+    val onToggleEmojiLayer: () -> Unit,
 )
 
 /**
@@ -77,9 +77,9 @@ object ActionExecutor {
             CommandId.SWITCH_IME_VOICE -> switchToVoiceIme(ime)
             CommandId.SWITCH_LANGUAGE -> host.onSwitchLanguage()
             CommandId.MOVE_KEYBOARD -> cycleKeyboardRight(host)
-            CommandId.TOGGLE_EMOJI_MODE -> host.onToggleEmojiMode(true)
-            CommandId.TOGGLE_NUMERIC_MODE -> host.onToggleNumericMode(true)
-            CommandId.TOGGLE_ABC_MODE -> host.onToggleNumericMode(false)
+            CommandId.TOGGLE_EMOJI_MODE -> host.onToggleEmojiLayer()
+            CommandId.TOGGLE_NUMERIC_MODE -> host.onSelectLayer(LayoutLayer.NUMERIC)
+            CommandId.TOGGLE_ABC_MODE -> host.onSelectLayer(LayoutLayer.MAIN)
             else -> {}
         }
     }

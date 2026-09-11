@@ -119,4 +119,45 @@ class SuaveLayoutTest {
 
         assertEquals(setOf(5), spansByRow.values.toSet())
     }
+
+    @Test
+    fun `numeric is a layer of Suave, not a separate builtin layout`() {
+        val suave = BuiltinLayouts.SUAVE
+
+        assertEquals(SUAVE_NUMERIC_LAYOUT, suave.numericLayout)
+        assertEquals(SUAVE_EMOJI_BOTTOM_ROW, suave.emojiBottomRow)
+        assertEquals(SUAVE_LAYOUT, suave.gridFor(LayoutLayer.MAIN))
+        assertEquals(SUAVE_NUMERIC_LAYOUT, suave.gridFor(LayoutLayer.NUMERIC))
+        assertEquals(SUAVE_EMOJI_BOTTOM_ROW, suave.gridFor(LayoutLayer.EMOJI))
+        assertEquals(listOf(suave), BuiltinLayouts.ALL)
+    }
+
+    @Test
+    fun `numeric layer keeps the same grid shape and puts abc on the clipboard cluster`() {
+        val abc = SUAVE_NUMERIC_LAYOUT.getValue(KeyPosition(3, 2))
+        val enter = SUAVE_NUMERIC_LAYOUT.getValue(KeyPosition(3, 3))
+
+        assertEquals(KeyIntent.Command(CommandId.TOGGLE_ABC_MODE), abc.intents[Zone.Center])
+        assertEquals(KeyIntent.Command(CommandId.COPY), abc.intents[Zone.Directional(Direction.UP)])
+        assertEquals(2, enter.columnSpan)
+        assertEquals(KeyIntent.Text("1"), SUAVE_NUMERIC_LAYOUT.getValue(KeyPosition(0, 0)).intents[Zone.Center])
+
+        val spansByRow =
+            SUAVE_NUMERIC_LAYOUT.entries
+                .groupBy { it.key.row }
+                .mapValues { (_, keys) -> keys.sumOf { it.value.columnSpan } }
+        assertEquals(setOf(5), spansByRow.values.toSet())
+    }
+
+    @Test
+    fun `emoji layer is a picker plus the functional bottom row, with backspace instead of ctrl`() {
+        val bottom = SUAVE_EMOJI_BOTTOM_ROW
+
+        assertEquals(setOf(KeyPosition(0, 0), KeyPosition(0, 1), KeyPosition(0, 2), KeyPosition(0, 3)), bottom.keys)
+        assertEquals(KeyIntent.Command(CommandId.BACKSPACE), bottom.getValue(KeyPosition(0, 0)).intents[Zone.Center])
+        assertEquals(KeyIntent.Command(CommandId.TOGGLE_EMOJI_MODE), bottom.getValue(KeyPosition(0, 1)).intents[Zone.Center])
+        assertEquals(KeyIntent.Command(CommandId.TOGGLE_NUMERIC_MODE), bottom.getValue(KeyPosition(0, 2)).intents[Zone.Center])
+        assertEquals(2, bottom.getValue(KeyPosition(0, 3)).columnSpan)
+        assertEquals(5, bottom.values.sumOf { it.columnSpan })
+    }
 }
