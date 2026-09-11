@@ -18,9 +18,9 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        // Deliberately different from upstream's "com.dessalines.thumbkey" so Suave can be
+        // Distinct from upstream Thumb-Key's com.dessalines.thumbkey namespace so Suave can be
         // installed side-by-side with a stock Thumb-Key build during the engine rewrite.
-        applicationId = "com.dessalines.thumbkey.suave"
+        applicationId = "com.suave.s12"
         minSdk = 24
         targetSdk = 36
         versionCode = 179
@@ -94,7 +94,7 @@ android {
         compose = true
         buildConfig = true
     }
-    namespace = "com.dessalines.thumbkey"
+    namespace = "com.suave.s12"
 }
 
 dependencies {
