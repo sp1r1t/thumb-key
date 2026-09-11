@@ -68,7 +68,7 @@ fun EngineKeyboardKey(
     onFeedback: (FeedbackEvent) -> Unit,
     shiftMappings: Map<String, String>,
     minSwipeDistancePx: Float,
-    hideLetters: Boolean,
+    legendVisibility: LegendVisibility,
     modifierBehaviors: Map<ModifierId, ModifierBehavior>,
     keyPadding: Int,
     keyBorderWidthDp: Float,
@@ -193,7 +193,7 @@ fun EngineKeyboardKey(
             val legend =
                 keyLegend(
                     mapping.intents[Zone.Directional(direction)],
-                    hideLetters,
+                    legendVisibility,
                     modifierState,
                     shiftMappings,
                 )
@@ -210,7 +210,7 @@ fun EngineKeyboardKey(
         val centerLegend =
             keyLegend(
                 mapping.intents[Zone.Center],
-                hideLetters,
+                legendVisibility,
                 modifierState,
                 shiftMappings,
             )

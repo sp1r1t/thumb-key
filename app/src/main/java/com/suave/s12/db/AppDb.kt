@@ -47,6 +47,12 @@ const val DEFAULT_MIN_SWIPE_LENGTH = 40
 const val DEFAULT_PUSHUP_SIZE = 0
 const val DEFAULT_HIDE_LETTERS = 0
 const val DEFAULT_HIDE_SYMBOLS = 0
+const val DEFAULT_HIDE_NUMBERS = 0
+const val DEFAULT_HIDE_MODIFIERS = 0
+const val DEFAULT_HIDE_LAYER_SWITCHES = 0
+const val DEFAULT_HIDE_SPECIALS = 0
+const val DEFAULT_HIDE_NAVIGATION = 0
+const val DEFAULT_HIDE_EDITING = 0
 const val DEFAULT_KEY_BORDERS = 1
 const val DEFAULT_SPACEBAR_MULTITAPS = 1
 const val DEFAULT_SLIDE_SENSITIVITY = 9
@@ -106,6 +112,41 @@ data class AppSettings(
         defaultValue = DEFAULT_HIDE_LETTERS.toString(),
     )
     val hideLetters: Int,
+    @ColumnInfo(
+        name = "hide_symbols",
+        defaultValue = DEFAULT_HIDE_SYMBOLS.toString(),
+    )
+    val hideSymbols: Int = DEFAULT_HIDE_SYMBOLS,
+    @ColumnInfo(
+        name = "hide_numbers",
+        defaultValue = DEFAULT_HIDE_NUMBERS.toString(),
+    )
+    val hideNumbers: Int = DEFAULT_HIDE_NUMBERS,
+    @ColumnInfo(
+        name = "hide_modifiers",
+        defaultValue = DEFAULT_HIDE_MODIFIERS.toString(),
+    )
+    val hideModifiers: Int = DEFAULT_HIDE_MODIFIERS,
+    @ColumnInfo(
+        name = "hide_layer_switches",
+        defaultValue = DEFAULT_HIDE_LAYER_SWITCHES.toString(),
+    )
+    val hideLayerSwitches: Int = DEFAULT_HIDE_LAYER_SWITCHES,
+    @ColumnInfo(
+        name = "hide_specials",
+        defaultValue = DEFAULT_HIDE_SPECIALS.toString(),
+    )
+    val hideSpecials: Int = DEFAULT_HIDE_SPECIALS,
+    @ColumnInfo(
+        name = "hide_navigation",
+        defaultValue = DEFAULT_HIDE_NAVIGATION.toString(),
+    )
+    val hideNavigation: Int = DEFAULT_HIDE_NAVIGATION,
+    @ColumnInfo(
+        name = "hide_editing",
+        defaultValue = DEFAULT_HIDE_EDITING.toString(),
+    )
+    val hideEditing: Int = DEFAULT_HIDE_EDITING,
     @ColumnInfo(
         name = "ignore_bottom_padding",
         defaultValue = DEFAULT_IGNORE_BOTTOM_PADDING.toString(),
@@ -273,6 +314,20 @@ data class LookAndFeelUpdate(
     val themeColor: Int,
     @ColumnInfo(name = "hide_letters")
     val hideLetters: Int,
+    @ColumnInfo(name = "hide_symbols")
+    val hideSymbols: Int,
+    @ColumnInfo(name = "hide_numbers")
+    val hideNumbers: Int,
+    @ColumnInfo(name = "hide_modifiers")
+    val hideModifiers: Int,
+    @ColumnInfo(name = "hide_layer_switches")
+    val hideLayerSwitches: Int,
+    @ColumnInfo(name = "hide_specials")
+    val hideSpecials: Int,
+    @ColumnInfo(name = "hide_navigation")
+    val hideNavigation: Int,
+    @ColumnInfo(name = "hide_editing")
+    val hideEditing: Int,
     @ColumnInfo(name = "ignore_bottom_padding")
     val ignoreBottomPadding: Int,
     @ColumnInfo(name = "disable_fullscreen_editor")
@@ -432,7 +487,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 34,
+    version = 35,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -488,6 +543,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_31_32,
                             MIGRATION_32_33,
                             MIGRATION_33_34,
+                            MIGRATION_34_35,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

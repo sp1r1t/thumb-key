@@ -496,3 +496,32 @@ val MIGRATION_33_34 =
             )
         }
     }
+
+val MIGRATION_34_35 =
+    object : Migration(34, 35) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // hide_symbols existed in early Thumb-Key, then MIGRATION_29_30 dropped it when
+            // the table was rebuilt. Re-add it with the rest of the per-category hide flags.
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN hide_symbols INTEGER NOT NULL DEFAULT $DEFAULT_HIDE_SYMBOLS",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN hide_numbers INTEGER NOT NULL DEFAULT $DEFAULT_HIDE_NUMBERS",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN hide_modifiers INTEGER NOT NULL DEFAULT $DEFAULT_HIDE_MODIFIERS",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN hide_layer_switches INTEGER NOT NULL DEFAULT $DEFAULT_HIDE_LAYER_SWITCHES",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN hide_specials INTEGER NOT NULL DEFAULT $DEFAULT_HIDE_SPECIALS",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN hide_navigation INTEGER NOT NULL DEFAULT $DEFAULT_HIDE_NAVIGATION",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN hide_editing INTEGER NOT NULL DEFAULT $DEFAULT_HIDE_EDITING",
+            )
+        }
+    }

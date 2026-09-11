@@ -49,9 +49,48 @@ sealed class KeyLegend {
     ) : KeyLegend()
 }
 
+/**
+ * How a key zone's label is grouped for the Appearance hide toggles. Space is editing but has
+ * no legend, so hiding editing does not change how the space key looks. There is no ninth
+ * category: every [CommandId] and every [KeyIntent.Text] value lands in one of these.
+ */
+enum class LegendCategory {
+    LETTER,
+    NUMBER,
+    SYMBOL,
+    MODIFIER,
+    LAYER_SWITCH,
+    SPECIAL,
+    NAVIGATION,
+    EDITING,
+}
+
+data class LegendVisibility(
+    val hideLetters: Boolean = false,
+    val hideSymbols: Boolean = false,
+    val hideNumbers: Boolean = false,
+    val hideModifiers: Boolean = false,
+    val hideLayerSwitches: Boolean = false,
+    val hideSpecials: Boolean = false,
+    val hideNavigation: Boolean = false,
+    val hideEditing: Boolean = false,
+) {
+    fun hides(category: LegendCategory): Boolean =
+        when (category) {
+            LegendCategory.LETTER -> hideLetters
+            LegendCategory.NUMBER -> hideNumbers
+            LegendCategory.SYMBOL -> hideSymbols
+            LegendCategory.MODIFIER -> hideModifiers
+            LegendCategory.LAYER_SWITCH -> hideLayerSwitches
+            LegendCategory.SPECIAL -> hideSpecials
+            LegendCategory.NAVIGATION -> hideNavigation
+            LegendCategory.EDITING -> hideEditing
+        }
+}
+
 fun keyLegend(
     intent: KeyIntent?,
-    hideLetters: Boolean,
+    visibility: LegendVisibility,
     modifierState: ModifierState,
     shiftMappings: Map<String, String>,
 ): KeyLegend? =
@@ -67,14 +106,71 @@ fun keyLegend(
                 }
             when {
                 shown.isBlank() -> null
-                hideLetters && shown.any { it.isLetter() } -> null
+                visibility.hides(classifyText(shown)) -> null
                 else -> KeyLegend.Text(shown)
             }
         }
 
-        is KeyIntent.Command -> commandLegend(intent.id)
+        is KeyIntent.Command -> {
+            val legend = commandLegend(intent.id) ?: return null
+            if (visibility.hides(intent.id.legendCategory())) null else legend
+        }
 
-        is KeyIntent.ModifierPress -> modifierLegend(intent.modifier, modifierState)
+        is KeyIntent.ModifierPress -> {
+            if (visibility.hides(LegendCategory.MODIFIER)) {
+                null
+            } else {
+                modifierLegend(intent.modifier, modifierState)
+            }
+        }
+    }
+
+internal fun classifyText(shown: String): LegendCategory =
+    when {
+        shown.any { it.isLetter() } -> LegendCategory.LETTER
+        shown.any { it.isDigit() } -> LegendCategory.NUMBER
+        else -> LegendCategory.SYMBOL
+    }
+
+internal fun CommandId.legendCategory(): LegendCategory =
+    when (this) {
+        CommandId.ENTER,
+        CommandId.TAB,
+        CommandId.BACKSPACE,
+        CommandId.DELETE_FORWARD,
+        CommandId.SPACE,
+        -> LegendCategory.EDITING
+
+        CommandId.ARROW_LEFT,
+        CommandId.ARROW_RIGHT,
+        CommandId.ARROW_UP,
+        CommandId.ARROW_DOWN,
+        -> LegendCategory.NAVIGATION
+
+        CommandId.ESCAPE,
+        CommandId.CTRL,
+        CommandId.ALT,
+        CommandId.SHIFT,
+        -> LegendCategory.MODIFIER
+
+        CommandId.TOGGLE_EMOJI_MODE,
+        CommandId.TOGGLE_NUMERIC_MODE,
+        CommandId.TOGGLE_ABC_MODE,
+        -> LegendCategory.LAYER_SWITCH
+
+        CommandId.COPY,
+        CommandId.CUT,
+        CommandId.PASTE,
+        CommandId.SELECT_ALL,
+        CommandId.UNDO,
+        CommandId.REDO,
+        CommandId.GOTO_SETTINGS,
+        CommandId.TOGGLE_HIDE_LETTERS,
+        CommandId.SWITCH_IME,
+        CommandId.SWITCH_IME_VOICE,
+        CommandId.SWITCH_LANGUAGE,
+        CommandId.MOVE_KEYBOARD,
+        -> LegendCategory.SPECIAL
     }
 
 private fun commandLegend(id: CommandId): KeyLegend? =

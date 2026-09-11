@@ -45,7 +45,14 @@ import com.suave.s12.db.DEFAULT_CLIPBOARD_SIZE_LIMIT_ENABLED
 import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_HIDE_EDITING
+import com.suave.s12.db.DEFAULT_HIDE_LAYER_SWITCHES
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
+import com.suave.s12.db.DEFAULT_HIDE_MODIFIERS
+import com.suave.s12.db.DEFAULT_HIDE_NAVIGATION
+import com.suave.s12.db.DEFAULT_HIDE_NUMBERS
+import com.suave.s12.db.DEFAULT_HIDE_SPECIALS
+import com.suave.s12.db.DEFAULT_HIDE_SYMBOLS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEYBOARD_LAYOUT
 import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
@@ -218,6 +225,13 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             theme = DEFAULT_THEME,
             themeColor = DEFAULT_THEME_COLOR,
             hideLetters = DEFAULT_HIDE_LETTERS,
+            hideSymbols = DEFAULT_HIDE_SYMBOLS,
+            hideNumbers = DEFAULT_HIDE_NUMBERS,
+            hideModifiers = DEFAULT_HIDE_MODIFIERS,
+            hideLayerSwitches = DEFAULT_HIDE_LAYER_SWITCHES,
+            hideSpecials = DEFAULT_HIDE_SPECIALS,
+            hideNavigation = DEFAULT_HIDE_NAVIGATION,
+            hideEditing = DEFAULT_HIDE_EDITING,
             ignoreBottomPadding = DEFAULT_IGNORE_BOTTOM_PADDING,
             disableFullscreenEditor = DEFAULT_DISABLE_FULLSCREEN_EDITOR,
             keyHeight = DEFAULT_KEY_HEIGHT,

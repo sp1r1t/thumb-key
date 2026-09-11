@@ -8,18 +8,24 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardBackspace
 import androidx.compose.material.icons.outlined.BorderBottom
 import androidx.compose.material.icons.outlined.BorderOuter
 import androidx.compose.material.icons.outlined.Colorize
+import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Crop75
 import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.Keyboard
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.KeyboardControlKey
+import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.LinearScale
 import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.Padding
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.RoundedCorner
+import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.VerticalAlignTop
 import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material.icons.outlined.ViewDay
@@ -46,7 +52,14 @@ import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
 import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
+import com.suave.s12.db.DEFAULT_HIDE_EDITING
+import com.suave.s12.db.DEFAULT_HIDE_LAYER_SWITCHES
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
+import com.suave.s12.db.DEFAULT_HIDE_MODIFIERS
+import com.suave.s12.db.DEFAULT_HIDE_NAVIGATION
+import com.suave.s12.db.DEFAULT_HIDE_NUMBERS
+import com.suave.s12.db.DEFAULT_HIDE_SPECIALS
+import com.suave.s12.db.DEFAULT_HIDE_SYMBOLS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
@@ -97,6 +110,13 @@ fun LookAndFeelScreen(
     var vibrateOnTapState = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
     var vibrateOnSlideState = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
     var hideLettersState = (settings?.hideLetters ?: DEFAULT_HIDE_LETTERS).toBool()
+    var hideSymbolsState = (settings?.hideSymbols ?: DEFAULT_HIDE_SYMBOLS).toBool()
+    var hideNumbersState = (settings?.hideNumbers ?: DEFAULT_HIDE_NUMBERS).toBool()
+    var hideModifiersState = (settings?.hideModifiers ?: DEFAULT_HIDE_MODIFIERS).toBool()
+    var hideLayerSwitchesState = (settings?.hideLayerSwitches ?: DEFAULT_HIDE_LAYER_SWITCHES).toBool()
+    var hideSpecialsState = (settings?.hideSpecials ?: DEFAULT_HIDE_SPECIALS).toBool()
+    var hideNavigationState = (settings?.hideNavigation ?: DEFAULT_HIDE_NAVIGATION).toBool()
+    var hideEditingState = (settings?.hideEditing ?: DEFAULT_HIDE_EDITING).toBool()
     var ignoreBottomPaddingState = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
     var disableFullscreenEditorState = (settings?.disableFullscreenEditor ?: DEFAULT_DISABLE_FULLSCREEN_EDITOR).toBool()
     var backdropEnabledState = (settings?.backdropEnabled ?: DEFAULT_BACKDROP_ENABLED).toBool()
@@ -115,6 +135,13 @@ fun LookAndFeelScreen(
                 vibrateOnTap = vibrateOnTapState.toInt(),
                 vibrateOnSlide = vibrateOnSlideState.toInt(),
                 hideLetters = hideLettersState.toInt(),
+                hideSymbols = hideSymbolsState.toInt(),
+                hideNumbers = hideNumbersState.toInt(),
+                hideModifiers = hideModifiersState.toInt(),
+                hideLayerSwitches = hideLayerSwitchesState.toInt(),
+                hideSpecials = hideSpecialsState.toInt(),
+                hideNavigation = hideNavigationState.toInt(),
+                hideEditing = hideEditingState.toInt(),
                 ignoreBottomPadding = ignoreBottomPaddingState.toInt(),
                 theme = themeState.ordinal,
                 themeColor = themeColorState.ordinal,
@@ -211,27 +238,97 @@ fun LookAndFeelScreen(
 
                     SettingsDivider()
 
-                    SettingRow {
-                        SwitchPreference(
-                            value = hideLettersState,
-                            onValueChange = {
-                                hideLettersState = it
-                                updateLookAndFeel()
-                            },
-                            title = {
-                                Text(stringResource(R.string.hide_letters))
-                            },
-                            summary = {
-                                Text(stringResource(if (hideLettersState) R.string.hide_letters_on else R.string.hide_letters_off))
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.HideImage,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
+                    HideLabelSwitch(
+                        value = hideLettersState,
+                        onValueChange = {
+                            hideLettersState = it
+                            updateLookAndFeel()
+                        },
+                        title = R.string.hide_letters,
+                        onSummary = R.string.hide_letters_on,
+                        offSummary = R.string.hide_letters_off,
+                        icon = Icons.Outlined.HideImage,
+                        infoText = stringResource(R.string.hide_labels_info),
+                    )
+                    HideLabelSwitch(
+                        value = hideSymbolsState,
+                        onValueChange = {
+                            hideSymbolsState = it
+                            updateLookAndFeel()
+                        },
+                        title = R.string.hide_symbols,
+                        onSummary = R.string.hide_symbols_on,
+                        offSummary = R.string.hide_symbols_off,
+                        icon = Icons.Outlined.Tag,
+                    )
+                    HideLabelSwitch(
+                        value = hideNumbersState,
+                        onValueChange = {
+                            hideNumbersState = it
+                            updateLookAndFeel()
+                        },
+                        title = R.string.hide_numbers,
+                        onSummary = R.string.hide_numbers_on,
+                        offSummary = R.string.hide_numbers_off,
+                        icon = Icons.Outlined.Numbers,
+                    )
+                    HideLabelSwitch(
+                        value = hideModifiersState,
+                        onValueChange = {
+                            hideModifiersState = it
+                            updateLookAndFeel()
+                        },
+                        title = R.string.hide_modifiers,
+                        onSummary = R.string.hide_modifiers_on,
+                        offSummary = R.string.hide_modifiers_off,
+                        icon = Icons.Outlined.KeyboardControlKey,
+                    )
+                    HideLabelSwitch(
+                        value = hideLayerSwitchesState,
+                        onValueChange = {
+                            hideLayerSwitchesState = it
+                            updateLookAndFeel()
+                        },
+                        title = R.string.hide_layer_switches,
+                        onSummary = R.string.hide_layer_switches_on,
+                        offSummary = R.string.hide_layer_switches_off,
+                        icon = Icons.Outlined.Layers,
+                    )
+                    HideLabelSwitch(
+                        value = hideSpecialsState,
+                        onValueChange = {
+                            hideSpecialsState = it
+                            updateLookAndFeel()
+                        },
+                        title = R.string.hide_specials,
+                        onSummary = R.string.hide_specials_on,
+                        offSummary = R.string.hide_specials_off,
+                        icon = Icons.Outlined.ContentCopy,
+                    )
+                    HideLabelSwitch(
+                        value = hideNavigationState,
+                        onValueChange = {
+                            hideNavigationState = it
+                            updateLookAndFeel()
+                        },
+                        title = R.string.hide_navigation,
+                        onSummary = R.string.hide_navigation_on,
+                        offSummary = R.string.hide_navigation_off,
+                        icon = Icons.Outlined.KeyboardArrowUp,
+                    )
+                    HideLabelSwitch(
+                        value = hideEditingState,
+                        onValueChange = {
+                            hideEditingState = it
+                            updateLookAndFeel()
+                        },
+                        title = R.string.hide_editing,
+                        onSummary = R.string.hide_editing_on,
+                        offSummary = R.string.hide_editing_off,
+                        icon = Icons.AutoMirrored.Outlined.KeyboardBackspace,
+                    )
+
+                    SettingsDivider()
 
                     SettingRow {
                         SwitchPreference(
@@ -553,6 +650,36 @@ fun LookAndFeelScreen(
             }
         },
     )
+}
+
+@Composable
+private fun HideLabelSwitch(
+    value: Boolean,
+    onValueChange: (Boolean) -> Unit,
+    @androidx.annotation.StringRes title: Int,
+    @androidx.annotation.StringRes onSummary: Int,
+    @androidx.annotation.StringRes offSummary: Int,
+    icon: ImageVector,
+    infoText: String? = null,
+) {
+    SettingRow(infoText = infoText) {
+        SwitchPreference(
+            value = value,
+            onValueChange = onValueChange,
+            title = {
+                Text(stringResource(title))
+            },
+            summary = {
+                Text(stringResource(if (value) onSummary else offSummary))
+            },
+            icon = {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                )
+            },
+        )
+    }
 }
 
 @Composable

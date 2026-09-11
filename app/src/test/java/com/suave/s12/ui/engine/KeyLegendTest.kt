@@ -1,6 +1,8 @@
 package com.suave.s12.ui.engine
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.outlined.KeyboardReturn
 import androidx.compose.material.icons.outlined.Abc
 import androidx.compose.material.icons.outlined.ArrowDropUp
 import androidx.compose.material.icons.outlined.ContentCopy
@@ -19,63 +21,146 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class KeyLegendTest {
+    private val idle = ModifierState()
+    private val shown = LegendVisibility()
+
     @Test
     fun `letter keys preview the shift mapping while Shift is active`() {
         val shiftOn = ModifierState().activate(ModifierId.SHIFT, ActivationMode.ONE_SHOT)
 
-        assertEquals(KeyLegend.Text("a"), keyLegend(KeyIntent.Text("a"), false, ModifierState(), emptyMap()))
-        assertEquals(KeyLegend.Text("A"), keyLegend(KeyIntent.Text("a"), false, shiftOn, emptyMap()))
-        assertEquals(KeyLegend.Text("Sch"), keyLegend(KeyIntent.Text("sch"), false, shiftOn, SUAVE_SHIFT_MAPPINGS))
-        assertEquals(KeyLegend.Text("SS"), keyLegend(KeyIntent.Text("ß"), false, shiftOn, SUAVE_SHIFT_MAPPINGS))
+        assertEquals(KeyLegend.Text("a"), legend(KeyIntent.Text("a")))
+        assertEquals(KeyLegend.Text("A"), legend(KeyIntent.Text("a"), modifierState = shiftOn))
+        assertEquals(
+            KeyLegend.Text("Sch"),
+            legend(KeyIntent.Text("sch"), modifierState = shiftOn, shiftMappings = SUAVE_SHIFT_MAPPINGS),
+        )
+        assertEquals(
+            KeyLegend.Text("SS"),
+            legend(KeyIntent.Text("ß"), modifierState = shiftOn, shiftMappings = SUAVE_SHIFT_MAPPINGS),
+        )
     }
 
     @Test
-    fun `hideLetters hides letter text but not symbols or command icons`() {
-        val hidden = true
-        assertNull(keyLegend(KeyIntent.Text("s"), hidden, ModifierState(), emptyMap()))
-        assertEquals(KeyLegend.Text("1"), keyLegend(KeyIntent.Text("1"), hidden, ModifierState(), emptyMap()))
-        assertEquals(KeyLegend.Text("+"), keyLegend(KeyIntent.Text("+"), hidden, ModifierState(), emptyMap()))
+    fun `classifyText splits letters, numbers, and symbols`() {
+        assertEquals(LegendCategory.LETTER, classifyText("s"))
+        assertEquals(LegendCategory.LETTER, classifyText("ß"))
+        assertEquals(LegendCategory.LETTER, classifyText("1a"))
+        assertEquals(LegendCategory.NUMBER, classifyText("1"))
+        assertEquals(LegendCategory.NUMBER, classifyText("42"))
+        assertEquals(LegendCategory.SYMBOL, classifyText("+"))
+        assertEquals(LegendCategory.SYMBOL, classifyText("."))
+    }
+
+    @Test
+    fun `hiding letters leaves other categories visible`() {
+        val hidden = LegendVisibility(hideLetters = true)
+        assertNull(legend(KeyIntent.Text("s"), hidden))
+        assertEquals(KeyLegend.Text("1"), legend(KeyIntent.Text("1"), hidden))
+        assertEquals(KeyLegend.Text("+"), legend(KeyIntent.Text("+"), hidden))
+        assertEquals(KeyLegend.Icon(Icons.Outlined.ContentCopy), legend(KeyIntent.Command(CommandId.COPY), hidden))
+    }
+
+    @Test
+    fun `hiding symbols leaves letters and numbers visible`() {
+        val hidden = LegendVisibility(hideSymbols = true)
+        assertNull(legend(KeyIntent.Text("+"), hidden))
+        assertEquals(KeyLegend.Text("s"), legend(KeyIntent.Text("s"), hidden))
+        assertEquals(KeyLegend.Text("1"), legend(KeyIntent.Text("1"), hidden))
+    }
+
+    @Test
+    fun `hiding numbers leaves letters and symbols visible`() {
+        val hidden = LegendVisibility(hideNumbers = true)
+        assertNull(legend(KeyIntent.Text("1"), hidden))
+        assertEquals(KeyLegend.Text("s"), legend(KeyIntent.Text("s"), hidden))
+        assertEquals(KeyLegend.Text("+"), legend(KeyIntent.Text("+"), hidden))
+    }
+
+    @Test
+    fun `hiding modifiers blanks Shift Ctrl Alt Esc but not letters`() {
+        val hidden = LegendVisibility(hideModifiers = true)
+        assertNull(legend(KeyIntent.ModifierPress(ModifierId.SHIFT), hidden))
+        assertNull(legend(KeyIntent.ModifierPress(ModifierId.CTRL), hidden))
+        assertNull(legend(KeyIntent.Command(CommandId.ESCAPE), hidden))
+        assertEquals(KeyLegend.Text("s"), legend(KeyIntent.Text("s"), hidden))
+    }
+
+    @Test
+    fun `hiding layer switches blanks emoji numeric abc icons`() {
+        val hidden = LegendVisibility(hideLayerSwitches = true)
+        assertNull(legend(KeyIntent.Command(CommandId.TOGGLE_EMOJI_MODE), hidden))
+        assertNull(legend(KeyIntent.Command(CommandId.TOGGLE_NUMERIC_MODE), hidden))
+        assertNull(legend(KeyIntent.Command(CommandId.TOGGLE_ABC_MODE), hidden))
+        assertEquals(KeyLegend.Icon(Icons.Outlined.ContentCopy), legend(KeyIntent.Command(CommandId.COPY), hidden))
+    }
+
+    @Test
+    fun `hiding specials blanks copy settings and hide-letters but not arrows`() {
+        val hidden = LegendVisibility(hideSpecials = true)
+        assertNull(legend(KeyIntent.Command(CommandId.COPY), hidden))
+        assertNull(legend(KeyIntent.Command(CommandId.GOTO_SETTINGS), hidden))
+        assertNull(legend(KeyIntent.Command(CommandId.TOGGLE_HIDE_LETTERS), hidden))
         assertEquals(
-            KeyLegend.Icon(Icons.Outlined.ContentCopy),
-            keyLegend(KeyIntent.Command(CommandId.COPY), hidden, ModifierState(), emptyMap()),
+            KeyLegend.Icon(Icons.AutoMirrored.Outlined.KeyboardArrowLeft),
+            legend(KeyIntent.Command(CommandId.ARROW_LEFT), hidden),
         )
+    }
+
+    @Test
+    fun `hiding navigation blanks arrows but not editing`() {
+        val hidden = LegendVisibility(hideNavigation = true)
+        assertNull(legend(KeyIntent.Command(CommandId.ARROW_LEFT), hidden))
+        assertNull(legend(KeyIntent.Command(CommandId.ARROW_UP), hidden))
+        assertEquals(
+            KeyLegend.Icon(Icons.AutoMirrored.Outlined.KeyboardReturn),
+            legend(KeyIntent.Command(CommandId.ENTER), hidden),
+        )
+    }
+
+    @Test
+    fun `hiding editing blanks enter tab backspace but not space which has no legend`() {
+        val hidden = LegendVisibility(hideEditing = true)
+        assertNull(legend(KeyIntent.Command(CommandId.ENTER), hidden))
+        assertNull(legend(KeyIntent.Command(CommandId.TAB), hidden))
+        assertNull(legend(KeyIntent.Command(CommandId.BACKSPACE), hidden))
+        assertNull(legend(KeyIntent.Command(CommandId.SPACE), shown))
+        assertNull(legend(KeyIntent.Command(CommandId.SPACE), hidden))
     }
 
     @Test
     fun `function commands use the Thumb-Key icons`() {
-        val idle = ModifierState()
-        assertEquals(KeyLegend.Icon(Icons.Outlined.Mood), keyLegend(KeyIntent.Command(CommandId.TOGGLE_EMOJI_MODE), false, idle, emptyMap()))
-        assertEquals(
-            KeyLegend.Icon(Icons.Outlined.Numbers),
-            keyLegend(KeyIntent.Command(CommandId.TOGGLE_NUMERIC_MODE), false, idle, emptyMap()),
-        )
-        assertEquals(KeyLegend.Icon(Icons.Outlined.Abc), keyLegend(KeyIntent.Command(CommandId.TOGGLE_ABC_MODE), false, idle, emptyMap()))
-        assertNull(keyLegend(KeyIntent.Text(" "), false, idle, emptyMap()))
+        assertEquals(KeyLegend.Icon(Icons.Outlined.Mood), legend(KeyIntent.Command(CommandId.TOGGLE_EMOJI_MODE)))
+        assertEquals(KeyLegend.Icon(Icons.Outlined.Numbers), legend(KeyIntent.Command(CommandId.TOGGLE_NUMERIC_MODE)))
+        assertEquals(KeyLegend.Icon(Icons.Outlined.Abc), legend(KeyIntent.Command(CommandId.TOGGLE_ABC_MODE)))
+        assertNull(legend(KeyIntent.Text(" ")))
     }
 
     @Test
     fun `shift key icon follows inactive, sticky, and caps-lock state`() {
         assertEquals(
             KeyLegend.Icon(Icons.Outlined.ArrowDropUp),
-            keyLegend(KeyIntent.ModifierPress(ModifierId.SHIFT), false, ModifierState(), emptyMap()),
+            legend(KeyIntent.ModifierPress(ModifierId.SHIFT)),
         )
         assertEquals(
             KeyLegend.Icon(Icons.Outlined.KeyboardArrowUp),
-            keyLegend(
+            legend(
                 KeyIntent.ModifierPress(ModifierId.SHIFT),
-                false,
-                ModifierState().activate(ModifierId.SHIFT, ActivationMode.ONE_SHOT),
-                emptyMap(),
+                modifierState = ModifierState().activate(ModifierId.SHIFT, ActivationMode.ONE_SHOT),
             ),
         )
         assertEquals(
             KeyLegend.Icon(Icons.Outlined.KeyboardCapslock),
-            keyLegend(
+            legend(
                 KeyIntent.ModifierPress(ModifierId.SHIFT),
-                false,
-                ModifierState().activate(ModifierId.SHIFT, ActivationMode.LOCKED),
-                emptyMap(),
+                modifierState = ModifierState().activate(ModifierId.SHIFT, ActivationMode.LOCKED),
             ),
         )
     }
+
+    private fun legend(
+        intent: KeyIntent?,
+        visibility: LegendVisibility = shown,
+        modifierState: ModifierState = idle,
+        shiftMappings: Map<String, String> = emptyMap(),
+    ): KeyLegend? = keyLegend(intent, visibility, modifierState, shiftMappings)
 }

@@ -37,7 +37,14 @@ import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_HIDE_EDITING
+import com.suave.s12.db.DEFAULT_HIDE_LAYER_SWITCHES
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
+import com.suave.s12.db.DEFAULT_HIDE_MODIFIERS
+import com.suave.s12.db.DEFAULT_HIDE_NAVIGATION
+import com.suave.s12.db.DEFAULT_HIDE_NUMBERS
+import com.suave.s12.db.DEFAULT_HIDE_SPECIALS
+import com.suave.s12.db.DEFAULT_HIDE_SYMBOLS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
@@ -103,7 +110,17 @@ fun EngineKeyboardScreen(
 
     val vibrateOnTap = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
     val vibrateOnSlide = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
-    val hideLetters = (settings?.hideLetters ?: DEFAULT_HIDE_LETTERS).toBool()
+    val legendVisibility =
+        LegendVisibility(
+            hideLetters = (settings?.hideLetters ?: DEFAULT_HIDE_LETTERS).toBool(),
+            hideSymbols = (settings?.hideSymbols ?: DEFAULT_HIDE_SYMBOLS).toBool(),
+            hideNumbers = (settings?.hideNumbers ?: DEFAULT_HIDE_NUMBERS).toBool(),
+            hideModifiers = (settings?.hideModifiers ?: DEFAULT_HIDE_MODIFIERS).toBool(),
+            hideLayerSwitches = (settings?.hideLayerSwitches ?: DEFAULT_HIDE_LAYER_SWITCHES).toBool(),
+            hideSpecials = (settings?.hideSpecials ?: DEFAULT_HIDE_SPECIALS).toBool(),
+            hideNavigation = (settings?.hideNavigation ?: DEFAULT_HIDE_NAVIGATION).toBool(),
+            hideEditing = (settings?.hideEditing ?: DEFAULT_HIDE_EDITING).toBool(),
+        )
     val minSwipeDistancePx = (settings?.minSwipeLength ?: DEFAULT_MIN_SWIPE_LENGTH).toFloat()
     val ignoreBottomPadding = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
     val showDebugBar = (settings?.showDebugBar ?: DEFAULT_SHOW_DEBUG_BAR).toBool()
@@ -228,7 +245,7 @@ fun EngineKeyboardScreen(
                 },
                 onFeedback = { event -> FeedbackDispatcher.dispatch(event, feedbackSettings, hapticPlayer) },
                 minSwipeDistancePx = minSwipeDistancePx,
-                hideLetters = hideLetters,
+                legendVisibility = legendVisibility,
                 modifierBehaviors = behaviors,
                 keyPadding = keyPadding,
                 keyBorderWidthDp = keyBorderWidthDp,
@@ -293,7 +310,7 @@ private fun EngineKeyboardPanel(
     onExecute: (SemanticAction) -> Unit,
     onFeedback: (FeedbackEvent) -> Unit,
     minSwipeDistancePx: Float,
-    hideLetters: Boolean,
+    legendVisibility: LegendVisibility,
     modifierBehaviors: Map<ModifierId, ModifierBehavior>,
     keyPadding: Int,
     keyBorderWidthDp: Float,
@@ -324,7 +341,7 @@ private fun EngineKeyboardPanel(
             onExecute = onExecute,
             onFeedback = onFeedback,
             minSwipeDistancePx = minSwipeDistancePx,
-            hideLetters = hideLetters,
+            legendVisibility = legendVisibility,
             modifierBehaviors = modifierBehaviors,
             keyPadding = keyPadding,
             keyBorderWidthDp = keyBorderWidthDp,
@@ -389,7 +406,7 @@ private fun LayoutGrid(
     onExecute: (SemanticAction) -> Unit,
     onFeedback: (FeedbackEvent) -> Unit,
     minSwipeDistancePx: Float,
-    hideLetters: Boolean,
+    legendVisibility: LegendVisibility,
     modifierBehaviors: Map<ModifierId, ModifierBehavior>,
     keyPadding: Int,
     keyBorderWidthDp: Float,
@@ -407,7 +424,7 @@ private fun LayoutGrid(
                     onFeedback = onFeedback,
                     shiftMappings = namedLayout.shiftMappings,
                     minSwipeDistancePx = minSwipeDistancePx,
-                    hideLetters = hideLetters,
+                    legendVisibility = legendVisibility,
                     modifierBehaviors = modifierBehaviors,
                     keyPadding = keyPadding,
                     keyBorderWidthDp = keyBorderWidthDp,
