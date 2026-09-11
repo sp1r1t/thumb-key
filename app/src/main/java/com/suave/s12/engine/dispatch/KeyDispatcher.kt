@@ -236,6 +236,16 @@ class KeyDispatcher(
         if (slideExtended && mapping.slideBehavior == SlideBehavior.SELECT_AND_DELETE) {
             onExecute(SemanticAction.TypeCommand(CommandId.BACKSPACE))
         }
+        // A ONE_SHOT modifier (e.g. a quick Shift tap before sliding to select) was never
+        // consumed by the slide itself - dispatchSlide's ExtendSelection/MoveCursor actions
+        // bypass dispatchZone entirely, which is the only place that normally consumes one-shots.
+        // Consuming here, once the whole slide press ends, is what a single physical press using
+        // a one-shot modifier is supposed to do either way - and doing it here rather than per
+        // step is what keeps a one-shot Shift held for the *entire* slide instead of reverting to
+        // plain cursor movement after just the first step.
+        if (slideStarted && gesture is Gesture.Released) {
+            state = ModifierEngine.consumeOneShots(state)
+        }
         engagedModifier = null
         freshlyActivatedByPressed = false
         slideExtended = false

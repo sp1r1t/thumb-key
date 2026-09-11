@@ -321,6 +321,26 @@ class KeyDispatcherTest {
     }
 
     @Test
+    fun `a one-shot Shift used for a slide stays active through the whole slide, then is consumed on release`() {
+        val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Text(" ")), slideBehavior = SlideBehavior.MOVE_CURSOR)
+        val dispatcher = KeyDispatcher(key)
+        val executed = mutableListOf<SemanticAction>()
+        val shiftOneShot = ModifierState().activate(ModifierId.SHIFT, ActivationMode.ONE_SHOT)
+
+        var state = dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), shiftOneShot, executed::add, {}, {})
+        state = dispatcher.handle(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1), state, executed::add, {}, {})
+
+        // Still selecting on the second step - a one-shot Shift wasn't consumed mid-slide, which
+        // would otherwise have reverted the rest of the slide to plain cursor movement.
+        assertEquals(2, executed.filterIsInstance<SemanticAction.ExtendSelection>().size)
+        assertTrue("Shift must still be active mid-slide", state.isActive(ModifierId.SHIFT))
+
+        state = dispatcher.handle(Gesture.Released, state, executed::add, {}, {})
+
+        assertFalse("a one-shot Shift must be consumed once the whole slide press ends", state.isActive(ModifierId.SHIFT))
+    }
+
+    @Test
     fun `backspace-style select-and-delete slide sends one Backspace command on release, not per slide step`() {
         val key =
             KeyMapping(
