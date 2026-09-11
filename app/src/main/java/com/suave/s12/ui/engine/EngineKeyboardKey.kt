@@ -1,5 +1,6 @@
 package com.suave.s12.ui.engine
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -31,6 +32,7 @@ import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.KeyMapping
 import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.utils.KeyAction
+import com.suave.s12.utils.TAG
 import kotlinx.coroutines.withTimeoutOrNull
 
 private const val TICK_INTERVAL_MS = 30L
@@ -103,15 +105,34 @@ fun EngineKeyboardKey(
                             )
                         val recognizer = GestureRecognizer(config)
 
+                        val keyLabel = mapping.intents[Zone.Center]?.toString() ?: "?"
+
+                        // Seeded fresh per press from the latest cross-key state, then tracked
+                        // locally for the rest of THIS press - not re-read from
+                        // currentModifierState on every call. A single press can emit several
+                        // gestures in one synchronous batch (onRelease returns [Tap, Released]
+                        // together), and Compose's snapshot-state write from the first call's
+                        // onModifierStateChange doesn't reach currentModifierState until the
+                        // next recomposition, which hasn't happened yet by the time the second
+                        // gesture in the same batch runs. Re-reading the stale value there let
+                        // Released (which passes a non-modifier key's input state straight
+                        // through unchanged) silently resurrect whatever Tap had just cleared a
+                        // microsecond earlier - this was the actual "Ctrl gets stuck" bug.
+                        var localState = currentModifierState
+
                         fun handle(gesture: Gesture) {
+                            val before = localState
                             val newState =
                                 dispatcher.handle(
                                     gesture,
-                                    currentModifierState,
+                                    before,
                                     currentOnExecute,
                                     currentOnLegacyAction,
                                     currentOnFeedback,
                                 )
+                            // Temporary diagnostic for the "ctrl got stuck" report.
+                            Log.d(TAG, "[$keyLabel] $gesture | before=${before.active} after=${newState.active}")
+                            localState = newState
                             currentOnModifierStateChange(newState)
                         }
 

@@ -102,8 +102,9 @@ fun EngineKeyboardScreen(
             // Exists to make "which build is actually on the phone" a glance rather than an
             // adb round-trip - see the BUILD_TIME field's own doc in build.gradle.kts. Debug
             // builds only; never shows in a release build.
+            val targetApp = ime.currentInputEditorInfo?.packageName ?: "?"
             Text(
-                text = "build ${BuildConfig.BUILD_TIME}",
+                text = "build ${BuildConfig.BUILD_TIME} | $targetApp (${capabilities.level})",
                 modifier =
                     Modifier
                         .fillMaxWidth()
