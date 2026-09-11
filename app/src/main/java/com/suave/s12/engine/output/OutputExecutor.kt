@@ -1,10 +1,12 @@
 package com.suave.s12.engine.output
 
 import android.view.KeyEvent
+import android.view.inputmethod.ExtractedTextRequest
 import android.view.inputmethod.InputConnection
 import com.suave.s12.engine.action.CursorDirection
 import com.suave.s12.engine.action.SemanticAction
 import com.suave.s12.engine.capability.EditorCapabilities
+import com.suave.s12.engine.capability.EditorCapabilityLevel
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.ModifierId
 
@@ -31,11 +33,11 @@ object OutputExecutor {
             }
 
             is SemanticAction.MoveCursor -> {
-                sendArrow(action.direction, shift = false, inputConnection)
+                moveCursor(action.direction, extend = false, capabilities, inputConnection)
             }
 
             is SemanticAction.ExtendSelection -> {
-                sendArrow(action.direction, shift = true, inputConnection)
+                moveCursor(action.direction, extend = true, capabilities, inputConnection)
             }
 
             SemanticAction.Noop -> {}
@@ -94,6 +96,61 @@ object OutputExecutor {
         sendEscIfNeeded(action.modifiers, ic)
         val shiftFlag = if (ModifierId.SHIFT in action.modifiers) KeyEvent.META_SHIFT_ON else 0
         sendKeyEvent(ic, keyCode, metaStateFor(action.modifiers) or shiftFlag)
+    }
+
+    /**
+     * Moves the cursor (or extends the selection) left/right, preferring `setSelection` over a
+     * raw arrow [KeyEvent] whenever the editor has a real selection concept to move within.
+     * This matters beyond style: sending an arrow KeyEvent the field can't consume (cursor
+     * already at the start/end of the text) is unhandled input, and Android's default View
+     * focus-navigation treats an unhandled DPAD key as "move focus to the next view" - which
+     * pulls focus off the text field entirely and dismisses the keyboard. `setSelection` is
+     * clamped to the text's actual bounds here, so it can never produce that unhandled edge
+     * case in the first place. Only a RAW editor (e.g. Termux, no InputConnection selection
+     * semantics at all) falls back to the raw KeyEvent this always used to send - the exact
+     * primitive the pre-rewrite app's cursor-slide was deliberately rewritten to use for
+     * Termux compatibility, just no longer applied unconditionally to every editor.
+     */
+    private fun moveCursor(
+        direction: CursorDirection,
+        extend: Boolean,
+        capabilities: EditorCapabilities,
+        ic: InputConnection,
+    ) {
+        val delta =
+            when (direction) {
+                CursorDirection.LEFT -> -1
+
+                CursorDirection.RIGHT -> 1
+
+                // Slide only ever produces LEFT/RIGHT in this layout; UP/DOWN have no simple
+                // selection-relative equivalent without knowing line-wrap layout, so they always
+                // fall through to the KeyEvent path below.
+                CursorDirection.UP, CursorDirection.DOWN -> null
+            }
+        val handled =
+            delta != null &&
+                capabilities.level != EditorCapabilityLevel.RAW &&
+                moveSelectionBy(ic, delta, extend)
+        if (!handled) sendArrow(direction, extend, ic)
+    }
+
+    /** Returns false (caller falls back to a KeyEvent) if the editor didn't expose extracted text. */
+    private fun moveSelectionBy(
+        ic: InputConnection,
+        delta: Int,
+        extend: Boolean,
+    ): Boolean {
+        val extracted = ic.getExtractedText(ExtractedTextRequest(), 0) ?: return false
+        val text = extracted.text ?: return false
+        val length = text.length
+        val anchor = extracted.selectionStart.coerceIn(0, length)
+        val cursor = extracted.selectionEnd.coerceIn(0, length)
+        val newCursor = (cursor + delta).coerceIn(0, length)
+        val newAnchor = if (extend) anchor else newCursor
+        val base = extracted.startOffset
+        ic.setSelection(base + newAnchor, base + newCursor)
+        return true
     }
 
     private fun sendArrow(

@@ -90,7 +90,17 @@ fun EngineKeyboardKey(
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
                         down.consume()
-                        val config = mapping.gestureConfig.copy(minSwipeDistancePx = currentMinSwipeDistancePx)
+                        // Both driven by the same setting: there's no separate slide-sensitivity
+                        // preference on this branch (that's the old app's multi-mode
+                        // acceleration system, out of Phase 1 scope), and the layout-authored
+                        // slideStepPx default (24px) proved far too sensitive in practice -
+                        // reusing the swipe-length setting the user already controls gives a
+                        // sensible, tunable default instead of a second hardcoded constant.
+                        val config =
+                            mapping.gestureConfig.copy(
+                                minSwipeDistancePx = currentMinSwipeDistancePx,
+                                slideStepPx = currentMinSwipeDistancePx,
+                            )
                         val recognizer = GestureRecognizer(config)
 
                         fun handle(gesture: Gesture) {
