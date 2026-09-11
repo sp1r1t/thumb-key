@@ -455,34 +455,35 @@ fun LookAndFeelScreen(
                         },
                     )
 
-                    if (nonSquareKeysState) {
-                        SliderPreference(
-                            value = keyHeightState,
-                            sliderValue = keyHeightSliderState,
-                            onValueChange = {
-                                keyHeightState = it
-                                updateLookAndFeel()
-                            },
-                            onSliderValueChange = {
-                                keyHeightSliderState = it
-                            },
-                            valueRange = 10f..200f,
-                            title = {
-                                val keyHeightStr =
-                                    stringResource(
-                                        R.string.key_height,
-                                        keyHeightSliderState.toInt().toString(),
-                                    )
-                                Text(keyHeightStr)
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Crop75,
-                                    contentDescription = null,
+                    // Unlike the old engine, key width here is always auto-fit, so there's no
+                    // square-vs-non-square distinction to gate this behind - height always
+                    // applies directly.
+                    SliderPreference(
+                        value = keyHeightState,
+                        sliderValue = keyHeightSliderState,
+                        onValueChange = {
+                            keyHeightState = it
+                            updateLookAndFeel()
+                        },
+                        onSliderValueChange = {
+                            keyHeightSliderState = it
+                        },
+                        valueRange = 10f..200f,
+                        title = {
+                            val keyHeightStr =
+                                stringResource(
+                                    R.string.key_height,
+                                    keyHeightSliderState.toInt().toString(),
                                 )
-                            },
-                        )
-                    }
+                            Text(keyHeightStr)
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Crop75,
+                                contentDescription = null,
+                            )
+                        },
+                    )
 
                     SliderPreference(
                         value = keyPaddingState,
