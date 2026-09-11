@@ -35,9 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalResources
@@ -67,6 +65,7 @@ import com.suave.s12.layout.MAX_LAYER_HEIGHT_ROWS
 import com.suave.s12.layout.NamedLayout
 import com.suave.s12.layout.formatLayerHeightOverrides
 import com.suave.s12.layout.parseLayerHeightOverrides
+import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.TestOutTextField
 import com.suave.s12.ui.components.settings.about.SettingsDivider
@@ -79,7 +78,6 @@ import com.suave.s12.utils.toInt
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ListPreferenceType
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
-import me.zhanghai.compose.preference.SliderPreference
 import me.zhanghai.compose.preference.SwitchPreference
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -94,8 +92,7 @@ fun LookAndFeelScreen(
     val settings by appSettingsViewModel.appSettings.observeAsState()
     var themeState = ThemeMode.entries[settings?.theme ?: DEFAULT_THEME]
     var themeColorState = ThemeColor.entries[settings?.themeColor ?: DEFAULT_THEME_COLOR]
-    var keyHeightState = (settings?.keyHeight ?: DEFAULT_KEY_HEIGHT).toFloat()
-    var keyHeightSliderState by remember { mutableFloatStateOf(keyHeightState) }
+    var keyHeightState = settings?.keyHeight ?: DEFAULT_KEY_HEIGHT
 
     var vibrateOnTapState = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
     var vibrateOnSlideState = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
@@ -103,14 +100,10 @@ fun LookAndFeelScreen(
     var ignoreBottomPaddingState = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
     var disableFullscreenEditorState = (settings?.disableFullscreenEditor ?: DEFAULT_DISABLE_FULLSCREEN_EDITOR).toBool()
     var backdropEnabledState = (settings?.backdropEnabled ?: DEFAULT_BACKDROP_ENABLED).toBool()
-    var keyPaddingState = (settings?.keyPadding ?: DEFAULT_KEY_PADDING).toFloat()
-    var keyPaddingSliderState by remember { mutableFloatStateOf(keyPaddingState) }
-    var keyBorderWidthState = (settings?.keyBorderWidth ?: DEFAULT_KEY_BORDER_WIDTH).toFloat()
-    var keyBorderWidthSliderState by remember { mutableFloatStateOf(keyBorderWidthState) }
-    var keyRadiusState = (settings?.keyRadius ?: DEFAULT_KEY_RADIUS).toFloat()
-    var keyRadiusSliderState by remember { mutableFloatStateOf(keyRadiusState) }
-    var pushupSizeState = (settings?.pushupSize ?: DEFAULT_PUSHUP_SIZE).toFloat()
-    var pushupSizeSliderState by remember { mutableFloatStateOf(pushupSizeState) }
+    var keyPaddingState = settings?.keyPadding ?: DEFAULT_KEY_PADDING
+    var keyBorderWidthState = settings?.keyBorderWidth ?: DEFAULT_KEY_BORDER_WIDTH
+    var keyRadiusState = settings?.keyRadius ?: DEFAULT_KEY_RADIUS
+    var pushupSizeState = settings?.pushupSize ?: DEFAULT_PUSHUP_SIZE
     var layerHeightsState = settings?.layerHeights ?: DEFAULT_LAYER_HEIGHTS
     val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
     val layerHeightOverrides = parseLayerHeightOverrides(layerHeightsState)
@@ -125,14 +118,14 @@ fun LookAndFeelScreen(
                 ignoreBottomPadding = ignoreBottomPaddingState.toInt(),
                 theme = themeState.ordinal,
                 themeColor = themeColorState.ordinal,
-                keyHeight = keyHeightState.toInt(),
+                keyHeight = keyHeightState,
                 layerHeights = layerHeightsState,
                 disableFullscreenEditor = disableFullscreenEditorState.toInt(),
                 backdropEnabled = backdropEnabledState.toInt(),
-                keyPadding = keyPaddingState.toInt(),
-                keyBorderWidth = keyBorderWidthState.toInt(),
-                keyRadius = keyRadiusState.toInt(),
-                pushupSize = pushupSizeState.toInt(),
+                keyPadding = keyPaddingState,
+                keyBorderWidth = keyBorderWidthState,
+                keyRadius = keyRadiusState,
+                pushupSize = pushupSizeState,
             ),
         )
     }
@@ -295,32 +288,26 @@ fun LookAndFeelScreen(
                     SettingRow(
                         infoText = stringResource(R.string.raise_from_bottom_info),
                         onReset = {
-                            pushupSizeState = DEFAULT_PUSHUP_SIZE.toFloat()
-                            pushupSizeSliderState = DEFAULT_PUSHUP_SIZE.toFloat()
+                            pushupSizeState = DEFAULT_PUSHUP_SIZE
                             updateLookAndFeel()
                         },
                     ) {
-                        SliderPreference(
+                        IntStepperPreference(
                             value = pushupSizeState,
-                            sliderValue = pushupSizeSliderState,
                             onValueChange = {
                                 pushupSizeState = it
                                 updateLookAndFeel()
                             },
-                            onSliderValueChange = {
-                                pushupSizeSliderState = it
-                            },
-                            valueRange = 0f..250f,
+                            valueRange = 0..250,
                             title = {
                                 Text(stringResource(R.string.raise_from_bottom))
                             },
                             summary = {
-                                val dp = pushupSizeSliderState.toInt()
                                 Text(
-                                    if (dp == 0) {
+                                    if (pushupSizeState == 0) {
                                         stringResource(R.string.raise_from_bottom_summary_none)
                                     } else {
-                                        stringResource(R.string.raise_from_bottom_summary, dp.toString())
+                                        stringResource(R.string.raise_from_bottom_summary, pushupSizeState.toString())
                                     },
                                 )
                             },
@@ -365,27 +352,22 @@ fun LookAndFeelScreen(
 
                     SettingRow(
                         onReset = {
-                            keyHeightState = DEFAULT_KEY_HEIGHT.toFloat()
-                            keyHeightSliderState = DEFAULT_KEY_HEIGHT.toFloat()
+                            keyHeightState = DEFAULT_KEY_HEIGHT
                             updateLookAndFeel()
                         },
                     ) {
-                        SliderPreference(
+                        IntStepperPreference(
                             value = keyHeightState,
-                            sliderValue = keyHeightSliderState,
                             onValueChange = {
                                 keyHeightState = it
                                 updateLookAndFeel()
                             },
-                            onSliderValueChange = {
-                                keyHeightSliderState = it
-                            },
-                            valueRange = 10f..200f,
+                            valueRange = 10..200,
                             title = {
                                 Text(stringResource(R.string.key_height))
                             },
                             summary = {
-                                Text(stringResource(R.string.key_height_summary, keyHeightSliderState.toInt().toString()))
+                                Text(stringResource(R.string.key_height_summary, keyHeightState.toString()))
                             },
                             icon = {
                                 Icon(
@@ -413,32 +395,26 @@ fun LookAndFeelScreen(
 
                     SettingRow(
                         onReset = {
-                            keyPaddingState = DEFAULT_KEY_PADDING.toFloat()
-                            keyPaddingSliderState = DEFAULT_KEY_PADDING.toFloat()
+                            keyPaddingState = DEFAULT_KEY_PADDING
                             updateLookAndFeel()
                         },
                     ) {
-                        SliderPreference(
+                        IntStepperPreference(
                             value = keyPaddingState,
-                            sliderValue = keyPaddingSliderState,
                             onValueChange = {
                                 keyPaddingState = it
                                 updateLookAndFeel()
                             },
-                            onSliderValueChange = {
-                                keyPaddingSliderState = it
-                            },
-                            valueRange = 0f..10f,
+                            valueRange = 0..10,
                             title = {
                                 Text(stringResource(R.string.key_spacing))
                             },
                             summary = {
-                                val dp = keyPaddingSliderState.toInt()
                                 Text(
-                                    if (dp == 0) {
+                                    if (keyPaddingState == 0) {
                                         stringResource(R.string.key_spacing_summary_none)
                                     } else {
-                                        stringResource(R.string.key_spacing_summary, dp.toString())
+                                        stringResource(R.string.key_spacing_summary, keyPaddingState.toString())
                                     },
                                 )
                             },
@@ -454,34 +430,28 @@ fun LookAndFeelScreen(
                     SettingRow(
                         infoText = stringResource(R.string.border_thickness_info),
                         onReset = {
-                            keyBorderWidthState = DEFAULT_KEY_BORDER_WIDTH.toFloat()
-                            keyBorderWidthSliderState = DEFAULT_KEY_BORDER_WIDTH.toFloat()
+                            keyBorderWidthState = DEFAULT_KEY_BORDER_WIDTH
                             updateLookAndFeel()
                         },
                     ) {
-                        SliderPreference(
+                        IntStepperPreference(
                             value = keyBorderWidthState,
-                            sliderValue = keyBorderWidthSliderState,
                             onValueChange = {
                                 keyBorderWidthState = it
                                 updateLookAndFeel()
                             },
-                            onSliderValueChange = {
-                                keyBorderWidthSliderState = it
-                            },
-                            valueRange = 0f..50f,
+                            valueRange = 0..50,
                             title = {
                                 Text(stringResource(R.string.border_thickness))
                             },
                             summary = {
-                                val tenths = keyBorderWidthSliderState.toInt()
                                 Text(
-                                    if (tenths == 0) {
+                                    if (keyBorderWidthState == 0) {
                                         stringResource(R.string.border_thickness_summary_none)
                                     } else {
                                         stringResource(
                                             R.string.border_thickness_summary,
-                                            tenthsOfDpLabel(tenths),
+                                            tenthsOfDpLabel(keyBorderWidthState),
                                         )
                                     },
                                 )
@@ -497,32 +467,26 @@ fun LookAndFeelScreen(
 
                     SettingRow(
                         onReset = {
-                            keyRadiusState = DEFAULT_KEY_RADIUS.toFloat()
-                            keyRadiusSliderState = DEFAULT_KEY_RADIUS.toFloat()
+                            keyRadiusState = DEFAULT_KEY_RADIUS
                             updateLookAndFeel()
                         },
                     ) {
-                        SliderPreference(
+                        IntStepperPreference(
                             value = keyRadiusState,
-                            sliderValue = keyRadiusSliderState,
                             onValueChange = {
                                 keyRadiusState = it
                                 updateLookAndFeel()
                             },
-                            onSliderValueChange = {
-                                keyRadiusSliderState = it
-                            },
-                            valueRange = 0f..100f,
+                            valueRange = 0..100,
                             title = {
                                 Text(stringResource(R.string.corner_roundness))
                             },
                             summary = {
-                                val percent = keyRadiusSliderState.toInt()
                                 Text(
-                                    if (percent == 0) {
+                                    if (keyRadiusState == 0) {
                                         stringResource(R.string.corner_roundness_summary_none)
                                     } else {
-                                        stringResource(R.string.corner_roundness_summary, percent.toString())
+                                        stringResource(R.string.corner_roundness_summary, keyRadiusState.toString())
                                     },
                                 )
                             },
@@ -600,32 +564,21 @@ private fun LayerHeightRow(
     onOverridesChange: (Map<LayoutLayer, Int>) -> Unit,
 ) {
     val gridRows = namedLayout.gridRowCount(layer)
-    val defaultRows = namedLayout.heightRows(layer, 0)
     val currentRows = namedLayout.heightRows(layer, overrides[layer] ?: 0)
-    var sliderValue by remember(layer, currentRows) { mutableFloatStateOf(currentRows.toFloat()) }
     val extraRows = currentRows - gridRows
-    val minRows = gridRows.toFloat()
-    val maxRows = MAX_LAYER_HEIGHT_ROWS.toFloat().coerceAtLeast(minRows)
 
     SettingRow(
         infoText = if (showInfo) stringResource(R.string.layer_height_info) else null,
         onReset = {
-            sliderValue = defaultRows.toFloat()
             onOverridesChange(overrides - layer)
         },
     ) {
-        SliderPreference(
-            value = currentRows.toFloat(),
-            sliderValue = sliderValue,
-            onValueChange = {
-                val rows = it.toInt().coerceIn(gridRows, MAX_LAYER_HEIGHT_ROWS)
-                sliderValue = rows.toFloat()
+        IntStepperPreference(
+            value = currentRows,
+            onValueChange = { rows ->
                 onOverridesChange(overrides + (layer to rows))
             },
-            onSliderValueChange = {
-                sliderValue = it
-            },
-            valueRange = minRows..maxRows,
+            valueRange = gridRows..MAX_LAYER_HEIGHT_ROWS,
             title = {
                 Text(stringResource(layer.heightTitleRes()))
             },

@@ -140,4 +140,6 @@
     <string name="show_debug_bar_on">An - eine Leiste über der Tastatur zeigt die letzte Installationszeit, die fokussierte App und deren Editor-Fähigkeiten</string>
     <string name="show_debug_bar_off">Aus - die Tastatur hat keine Debug-Leiste</string>
     <string name="show_debug_bar_info">Die Installationszeit wird zur Laufzeit aus dem APK gelesen, damit du prüfen kannst, ob eine frische Installation wirklich angekommen ist. Der Rest nennt die gerade fokussierte App und wie deren Textfeld eingestuft wurde.</string>
+    <string name="decrease_value">Verringern</string>
+    <string name="increase_value">Erhöhen</string>
 </resources>

@@ -8,15 +8,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AccessTime
 import androidx.compose.material.icons.outlined.CleaningServices
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.DataArray
 import androidx.compose.material.icons.outlined.DiscFull
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material.icons.outlined.HourglassTop
-import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -28,12 +24,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.navigation.NavController
 import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
@@ -47,14 +43,16 @@ import com.suave.s12.db.DEFAULT_CLIPBOARD_SIZE_LIMIT_ENABLED
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
 import com.suave.s12.db.MAX_CLIPBOARD_MAX_SIZE
 import com.suave.s12.db.MIN_CLIPBOARD_MAX_SIZE
+import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.toBool
 import com.suave.s12.utils.toInt
 import kotlinx.coroutines.launch
+import me.zhanghai.compose.preference.ListPreference
+import me.zhanghai.compose.preference.ListPreferenceType
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
-import me.zhanghai.compose.preference.SliderPreference
 import me.zhanghai.compose.preference.SwitchPreference
 
 enum class CleanupDuration(
@@ -75,8 +73,6 @@ enum class CleanupDuration(
     ;
 
     companion object {
-        fun fromIndex(index: Int): CleanupDuration = entries.getOrElse(index) { HOURS_2 }
-
         fun fromMinutes(minutes: Int): CleanupDuration = entries.find { it.minutes == minutes } ?: HOURS_2
     }
 }
@@ -91,6 +87,7 @@ fun ClipboardSettingsScreen(
     Log.d(TAG, "Got to clipboard settings activity")
 
     val settings by appSettingsViewModel.appSettings.observeAsState()
+    val resources = LocalResources.current
     val scope = rememberCoroutineScope()
 
     var clipboardHistoryEnabledState =
@@ -99,15 +96,9 @@ fun ClipboardSettingsScreen(
         (settings?.clipboardAutoCleanupEnabled ?: DEFAULT_CLIPBOARD_AUTO_CLEANUP_ENABLED).toBool()
     val currentCleanupMinutes = settings?.clipboardCleanupAfterMinutes ?: DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES
     var clipboardCleanupDuration = CleanupDuration.fromMinutes(currentCleanupMinutes)
-    var clipboardCleanupSliderState by remember {
-        mutableFloatStateOf(clipboardCleanupDuration.ordinal.toFloat())
-    }
     var clipboardSizeLimitEnabledState =
         (settings?.clipboardSizeLimitEnabled ?: DEFAULT_CLIPBOARD_SIZE_LIMIT_ENABLED).toBool()
-    // Float is required because SliderPreference uses float values for the slider position
-    var clipboardMaxSizeState =
-        (settings?.clipboardMaxSize ?: DEFAULT_CLIPBOARD_MAX_SIZE).toFloat()
-    var clipboardMaxSizeSliderState by remember { mutableFloatStateOf(clipboardMaxSizeState) }
+    var clipboardMaxSizeState = settings?.clipboardMaxSize ?: DEFAULT_CLIPBOARD_MAX_SIZE
     var usePrivateClipboardState =
         (settings?.usePrivateClipboard ?: DEFAULT_USE_PRIVATE_CLIPBOARD).toBool()
 
@@ -122,7 +113,7 @@ fun ClipboardSettingsScreen(
                 clipboardAutoCleanupEnabled = clipboardAutoCleanupEnabledState.toInt(),
                 clipboardCleanupAfterMinutes = clipboardCleanupDuration.minutes,
                 clipboardSizeLimitEnabled = clipboardSizeLimitEnabledState.toInt(),
-                clipboardMaxSize = clipboardMaxSizeState.toInt(),
+                clipboardMaxSize = clipboardMaxSizeState,
                 usePrivateClipboard = usePrivateClipboardState.toInt(),
             ),
         )
@@ -212,30 +203,29 @@ fun ClipboardSettingsScreen(
                     SettingRow(
                         onReset = {
                             clipboardCleanupDuration = CleanupDuration.fromMinutes(DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES)
-                            clipboardCleanupSliderState = clipboardCleanupDuration.ordinal.toFloat()
                             updateClipboardSettings()
                         },
                     ) {
-                        SliderPreference(
-                            value = clipboardCleanupDuration.ordinal.toFloat(),
-                            sliderValue = clipboardCleanupSliderState,
+                        ListPreference(
+                            type = ListPreferenceType.DROPDOWN_MENU,
+                            value = clipboardCleanupDuration,
                             onValueChange = {
-                                clipboardCleanupDuration = CleanupDuration.fromIndex(it.toInt())
+                                clipboardCleanupDuration = it
                                 updateClipboardSettings()
                             },
-                            onSliderValueChange = { clipboardCleanupSliderState = it },
-                            valueRange = 0f..(CleanupDuration.entries.size - 1).toFloat(),
-                            valueSteps = CleanupDuration.entries.size - 2,
+                            values = CleanupDuration.entries,
+                            valueToText = {
+                                AnnotatedString(resources.getString(it.displayNameResId))
+                            },
                             enabled = clipboardHistoryEnabledState && clipboardAutoCleanupEnabledState,
                             title = {
                                 Text(stringResource(R.string.clipboard_cleanup_after))
                             },
                             summary = {
-                                val duration = CleanupDuration.fromIndex(clipboardCleanupSliderState.toInt())
                                 Text(
                                     stringResource(
                                         R.string.clipboard_cleanup_after_summary,
-                                        stringResource(duration.displayNameResId),
+                                        stringResource(clipboardCleanupDuration.displayNameResId),
                                     ),
                                 )
                             },
@@ -279,26 +269,23 @@ fun ClipboardSettingsScreen(
                     }
                     SettingRow(
                         onReset = {
-                            clipboardMaxSizeState = DEFAULT_CLIPBOARD_MAX_SIZE.toFloat()
-                            clipboardMaxSizeSliderState = DEFAULT_CLIPBOARD_MAX_SIZE.toFloat()
+                            clipboardMaxSizeState = DEFAULT_CLIPBOARD_MAX_SIZE
                             updateClipboardSettings()
                         },
                     ) {
-                        SliderPreference(
+                        IntStepperPreference(
                             value = clipboardMaxSizeState,
-                            sliderValue = clipboardMaxSizeSliderState,
                             onValueChange = {
                                 clipboardMaxSizeState = it
                                 updateClipboardSettings()
                             },
-                            onSliderValueChange = { clipboardMaxSizeSliderState = it },
-                            valueRange = MIN_CLIPBOARD_MAX_SIZE.toFloat()..MAX_CLIPBOARD_MAX_SIZE.toFloat(),
+                            valueRange = MIN_CLIPBOARD_MAX_SIZE..MAX_CLIPBOARD_MAX_SIZE,
                             enabled = clipboardHistoryEnabledState && clipboardSizeLimitEnabledState,
                             title = {
                                 Text(stringResource(R.string.clipboard_max_size))
                             },
                             summary = {
-                                Text(stringResource(R.string.clipboard_max_size_summary, clipboardMaxSizeSliderState.toInt()))
+                                Text(stringResource(R.string.clipboard_max_size_summary, clipboardMaxSizeState))
                             },
                             icon = {
                                 Icon(

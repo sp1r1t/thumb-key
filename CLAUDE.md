@@ -10,7 +10,7 @@
 
 2. **A setting's description always states its current value/effect inline, dynamically** -
    never a fixed sentence that doesn't say what will actually happen. For a switch: a full
-   sentence starting "On - ..." / "Off - ...". For a slider or dropdown: the current value
+   sentence starting "On - ..." / "Off - ...". For a stepper or dropdown: the current value
    folded into a descriptive sentence ("Currently 64dp - ..."), not into the title. This is what
    actually removes clutter: no separate value display, no mentally cross-referencing a toggle's
    position against generic help text.
@@ -20,9 +20,10 @@
    (a plain on/off with an obvious effect) don't need one; settings with real nuance
    (an unusual interaction, a caveat, a "why this exists") do.
 
-4. **Every non-boolean setting (slider, dropdown) gets an explicit reset-to-default action** next
+4. **Every non-boolean setting (stepper, dropdown) gets an explicit reset-to-default action** next
    to it, since there's otherwise no way to recover the original value once it's been changed.
 
 Shared implementation: `app/src/main/java/com/suave/s12/ui/components/common/SettingRow.kt` wraps
 a preference row with the optional reset button and info icon described above - use it instead of
-hand-rolling either per screen.
+hand-rolling either per screen. Integer quantities use `IntStepperPreference` (tap for one step,
+hold to repeat), not sliders. Named discrete choices use a dropdown.

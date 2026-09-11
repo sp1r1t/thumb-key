@@ -20,9 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
@@ -34,6 +32,7 @@ import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
+import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.TestOutTextField
 import com.suave.s12.ui.components.settings.about.SettingsDivider
@@ -42,7 +41,6 @@ import com.suave.s12.utils.TAG
 import com.suave.s12.utils.toBool
 import com.suave.s12.utils.toInt
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
-import me.zhanghai.compose.preference.SliderPreference
 import me.zhanghai.compose.preference.SwitchPreference
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,8 +53,7 @@ fun BehaviorScreen(
 
     val settings by appSettingsViewModel.appSettings.observeAsState()
 
-    var minSwipeLengthState = (settings?.minSwipeLength ?: DEFAULT_MIN_SWIPE_LENGTH).toFloat()
-    var minSwipeLengthSliderState by remember { mutableFloatStateOf(minSwipeLengthState) }
+    var minSwipeLengthState = settings?.minSwipeLength ?: DEFAULT_MIN_SWIPE_LENGTH
 
     var escAsModifierState = (settings?.escAsModifier ?: DEFAULT_ESC_AS_MODIFIER).toBool()
     var ctrlAsModifierState = (settings?.ctrlAsModifier ?: DEFAULT_CTRL_AS_MODIFIER).toBool()
@@ -71,7 +68,7 @@ fun BehaviorScreen(
         appSettingsViewModel.updateBehavior(
             BehaviorUpdate(
                 id = 1,
-                minSwipeLength = minSwipeLengthState.toInt(),
+                minSwipeLength = minSwipeLengthState,
                 escAsModifier = escAsModifierState.toInt(),
                 ctrlAsModifier = ctrlAsModifierState.toInt(),
                 altAsModifier = altAsModifierState.toInt(),
@@ -100,20 +97,17 @@ fun BehaviorScreen(
                 ProvidePreferenceTheme {
                     SettingRow(
                         onReset = {
-                            minSwipeLengthState = DEFAULT_MIN_SWIPE_LENGTH.toFloat()
-                            minSwipeLengthSliderState = DEFAULT_MIN_SWIPE_LENGTH.toFloat()
+                            minSwipeLengthState = DEFAULT_MIN_SWIPE_LENGTH
                             updateBehavior()
                         },
                     ) {
-                        SliderPreference(
+                        IntStepperPreference(
                             value = minSwipeLengthState,
-                            sliderValue = minSwipeLengthSliderState,
                             onValueChange = {
                                 minSwipeLengthState = it
                                 updateBehavior()
                             },
-                            onSliderValueChange = { minSwipeLengthSliderState = it },
-                            valueRange = 0f..200f,
+                            valueRange = 0..200,
                             title = {
                                 Text(stringResource(R.string.min_swipe_length))
                             },
@@ -121,7 +115,7 @@ fun BehaviorScreen(
                                 Text(
                                     stringResource(
                                         R.string.min_swipe_length_summary,
-                                        minSwipeLengthSliderState.toInt().toString(),
+                                        minSwipeLengthState.toString(),
                                     ),
                                 )
                             },

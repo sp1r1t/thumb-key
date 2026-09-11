@@ -24,13 +24,13 @@ import androidx.compose.ui.unit.dp
 import com.suave.s12.R
 
 /**
- * Wraps a single preference row (`SwitchPreference`/`SliderPreference`/`ListPreference`) with up
+ * Wraps a single preference row (`SwitchPreference`/`IntStepperPreference`/`ListPreference`) with up
  * to two optional trailing actions, per this project's UI principles (see the repo's CLAUDE.md):
  * a reset-to-default button for non-boolean settings, and an "i" info icon for settings whose
  * full rationale doesn't fit in the row's own dynamic summary text.
  *
  * The wrapped preference renders at `Modifier.weight(1f)` inside a [Row], so its own trailing
- * control (a Switch, a slider's value, a list's dropdown) keeps rendering exactly as it does
+ * control (a Switch, a stepper, a list's dropdown) keeps rendering exactly as it does
  * unwrapped - just in a slightly narrower row - rather than overlapping a bolted-on icon.
  */
 @OptIn(ExperimentalMaterial3Api::class)
