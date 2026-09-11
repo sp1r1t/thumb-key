@@ -39,6 +39,9 @@ import com.suave.s12.layout.SUAVE_LAYOUT
 import com.suave.s12.layout.SUAVE_SHIFT_MAPPINGS
 import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.toBool
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 /**
  * Renders [SUAVE_LAYOUT] on the new engine end to end. Owns the one piece of state every key on
@@ -99,12 +102,21 @@ fun EngineKeyboardScreen(
                 .then(if (!ignoreBottomPadding) Modifier.safeDrawingPadding() else Modifier),
     ) {
         if (BuildConfig.DEBUG) {
-            // Shows which app the IME thinks it's connected to and how its editor was
-            // classified - useful for confirming capability-driven output degradation (e.g.
-            // Termux resolving to RAW) without an adb round-trip. Debug builds only.
+            // Shows the APK's actual install timestamp (read from PackageManager at runtime,
+            // not baked in at Gradle configuration time - this project's Gradle configuration
+            // cache gets reused whenever only source files change, which skips re-running the
+            // build script and any Date() call in it, so a config-time timestamp went stale
+            // exactly when it mattered most: confirming a fresh `adb install` actually took
+            // effect), plus which app the IME thinks it's connected to and how its editor was
+            // classified. Debug builds only.
+            val installTime =
+                remember {
+                    val info = ime.packageManager.getPackageInfo(ime.packageName, 0)
+                    SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault()).format(Date(info.lastUpdateTime))
+                }
             val targetApp = ime.currentInputEditorInfo?.packageName ?: "?"
             Text(
-                text = "$targetApp (${capabilities.level})",
+                text = "$installTime | $targetApp (${capabilities.level})",
                 modifier =
                     Modifier
                         .fillMaxWidth()
