@@ -29,6 +29,17 @@ title; `SettingRow` wraps a preference with the reset button; `SettingsSection` 
 rows behind a collapsible header. Integer quantities use `IntStepperPreference` (tap for one
 step, hold to repeat), not sliders. Named discrete choices use a dropdown.
 
+## Commits
+
+Name each commit after the feature it implements. The subject should say what a user or
+keyboard gained, not which chore, step, or sweep produced the diff.
+
+Bad: `Engine audit`, `Step 5`, `Cleanups`, `Fix stuff`, `Update CLAUDE.md`.
+Good: `Make the hide-labels key configurable for all legend groups`.
+
+Do not bundle unrelated features into one commit just to ship. If two changes are separable,
+they are two commits with two feature names.
+
 ## Device
 
 After every code update, assemble the debug APK and install it on the connected phone with
