@@ -33,14 +33,13 @@ class IMEService :
     private fun setupView(): ComposeKeyboardView {
         val app = application as ThumbkeyApplication
         val settingsRepo = app.appSettingsRepository
-        val clipboardRepo = app.clipboardRepository
 
         val layoutIndex = settingsRepo.appSettings.value?.keyboardLayout
         if (layoutIndex != null) {
             currentKeyboardDefinition = KeyboardLayout.entries[layoutIndex].keyboardDefinition
         }
 
-        val view = ComposeKeyboardView(this, settingsRepo, clipboardRepo)
+        val view = ComposeKeyboardView(this, settingsRepo)
         window?.window?.decorView?.let { decorView ->
             decorView.setViewTreeLifecycleOwner(this)
             decorView.setViewTreeViewModelStoreOwner(this)

@@ -2,7 +2,6 @@ package com.suave.s12
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -13,8 +12,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.lifecycleScope
 import com.suave.s12.db.AppSettingsRepository
-import com.suave.s12.db.ClipboardRepository
-import com.suave.s12.ui.components.keyboard.KeyboardScreen
+import com.suave.s12.ui.engine.EngineKeyboardScreen
 import com.suave.s12.ui.theme.ThumbkeyTheme
 import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.keyboardLayoutsSetFromDbIndexString
@@ -26,7 +24,6 @@ import kotlinx.coroutines.launch
 class ComposeKeyboardView(
     context: Context,
     private val settingsRepo: AppSettingsRepository,
-    private val clipboardRepo: ClipboardRepository,
 ) : AbstractComposeView(context) {
     @Composable
     override fun Content() {
@@ -38,9 +35,14 @@ class ComposeKeyboardView(
             settings = settings,
         ) {
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
-                KeyboardScreen(
+                EngineKeyboardScreen(
                     settings = settings,
-                    clipboardRepository = clipboardRepo,
+                    // No emoji/numeric screen exists on the new engine yet (Phase 1 scope - see
+                    // EngineKeyboardScreen's doc) - the bridged KeyAction still fires and runs
+                    // its own side effects (e.g. finishing text-processor input), there's just
+                    // nothing further to switch to here.
+                    onToggleEmojiMode = {},
+                    onToggleNumericMode = {},
                     onSwitchLanguage = {
                         ctx.lifecycleScope.launch {
                             // Cycle to the next keyboard
@@ -97,14 +99,6 @@ class ComposeKeyboardView(
                                 settingsRepo.update(s2)
                             }
                         }
-                    },
-                    onGoToClipboardSettings = {
-                        val intent =
-                            Intent(context, MainActivity::class.java).apply {
-                                putExtra("startRoute", "clipboardSettings")
-                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                            }
-                        context.startActivity(intent)
                     },
                 )
             }
