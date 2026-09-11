@@ -8,11 +8,16 @@ data class HapticPattern(
 
 /**
  * Minimal Phase 1 feedback settings - not a port of the old app's full settings surface, just
- * enough to drive [FeedbackDispatcher]. [baseAmplitude] is 1-255 (Android's `VibrationEffect`
+ * enough to drive [FeedbackDispatcher]. [tapVibrationEnabled] and [slideVibrationEnabled] are
+ * kept independent, matching the pre-rewrite app's two separate settings ("Vibrate on tap" vs.
+ * "Vibrate for slide gestures", the latter scoped specifically to the continuous spacebar/
+ * backspace slide) - [FeedbackEvent.SlideStep] is gated by [slideVibrationEnabled], every other
+ * event by [tapVibrationEnabled]. [baseAmplitude] is 1-255 (Android's `VibrationEffect`
  * amplitude range).
  */
 data class FeedbackSettings(
-    val vibrationEnabled: Boolean,
+    val tapVibrationEnabled: Boolean,
+    val slideVibrationEnabled: Boolean,
     val baseDurationMs: Long,
     val baseAmplitude: Int,
 )
@@ -30,7 +35,8 @@ object FeedbackDispatcher {
         settings: FeedbackSettings,
         player: HapticPlayer,
     ) {
-        if (!settings.vibrationEnabled) return
+        val enabled = if (event is FeedbackEvent.SlideStep) settings.slideVibrationEnabled else settings.tapVibrationEnabled
+        if (!enabled) return
         player.play(patternFor(event, settings))
     }
 
@@ -50,13 +56,15 @@ object FeedbackDispatcher {
             }
 
             // Repeat ticks and slide steps fire often while held - a full-strength buzz on each
-            // one is fatiguing, so they're quieter than a single deliberate tap/swipe.
+            // one is fatiguing, so they're quieter than a single deliberate tap/swipe. Not
+            // *too* quiet, though: HapticPlayer maps short/weak patterns to Android's weakest
+            // feedback constants, which are imperceptible on some devices - see ViewHapticPlayer.
             FeedbackEvent.RepeatTick -> {
                 HapticPattern((settings.baseDurationMs / 2).coerceAtLeast(1), (settings.baseAmplitude / 2).coerceAtLeast(1))
             }
 
             FeedbackEvent.SlideStep -> {
-                HapticPattern((settings.baseDurationMs / 3).coerceAtLeast(1), (settings.baseAmplitude / 3).coerceAtLeast(1))
+                HapticPattern((settings.baseDurationMs / 2).coerceAtLeast(1), (settings.baseAmplitude / 2).coerceAtLeast(1))
             }
 
             FeedbackEvent.TapRecognized, is FeedbackEvent.SwipeLocked -> {

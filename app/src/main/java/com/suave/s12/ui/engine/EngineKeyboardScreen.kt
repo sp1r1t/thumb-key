@@ -72,7 +72,12 @@ fun EngineKeyboardScreen(
         remember(vibrateOnTap, vibrateOnSlide) {
             // No per-user duration/amplitude setting exists on this branch (that's the separate
             // haptics-settings branch) - these are reasonable fixed defaults for Phase 1.
-            FeedbackSettings(vibrationEnabled = vibrateOnTap || vibrateOnSlide, baseDurationMs = 20L, baseAmplitude = 40)
+            FeedbackSettings(
+                tapVibrationEnabled = vibrateOnTap,
+                slideVibrationEnabled = vibrateOnSlide,
+                baseDurationMs = 20L,
+                baseAmplitude = 40,
+            )
         }
     val hapticPlayer = remember(view) { ViewHapticPlayer(view) }
     // Resolved once per IME session (onStartInput recreates this whole screen on every new
