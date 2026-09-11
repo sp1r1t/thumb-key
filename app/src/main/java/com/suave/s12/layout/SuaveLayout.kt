@@ -307,14 +307,15 @@ val SUAVE_NUMERIC_LAYOUT: Layout =
     )
 
 /**
- * Functional row shown under the system emoji picker. Same four bottom-row keys as main,
- * except Ctrl is replaced by Backspace (the letter grid is gone, so delete still has to live
- * on this row). Positions are a single row 0 so [layoutRows] yields one row.
+ * Functional row shown under the system emoji picker. Ctrl is replaced by Backspace (the
+ * letter grid is gone, so delete still has to live here) and the 123 cluster is replaced by
+ * the spacebar with arrow swipes so cursor movement and spaces work while picking emoji.
+ * Positions are a single row 0 so [layoutRows] yields one row.
  */
 val SUAVE_EMOJI_BOTTOM_ROW: Layout =
     mapOf(
         KeyPosition(0, 0) to SUAVE_BACKSPACE,
         KeyPosition(0, 1) to SUAVE_EMOJI_KEY,
-        KeyPosition(0, 2) to SUAVE_NUMERIC_KEY,
+        KeyPosition(0, 2) to SUAVE_SPACE,
         KeyPosition(0, 3) to SUAVE_ENTER,
     )

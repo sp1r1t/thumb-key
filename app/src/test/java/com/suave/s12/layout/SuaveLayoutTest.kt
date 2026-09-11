@@ -150,13 +150,19 @@ class SuaveLayoutTest {
     }
 
     @Test
-    fun `emoji layer is a picker plus the functional bottom row, with backspace instead of ctrl`() {
+    fun `emoji layer is a picker plus the functional bottom row, with space instead of 123`() {
         val bottom = SUAVE_EMOJI_BOTTOM_ROW
+        val space = bottom.getValue(KeyPosition(0, 2))
 
         assertEquals(setOf(KeyPosition(0, 0), KeyPosition(0, 1), KeyPosition(0, 2), KeyPosition(0, 3)), bottom.keys)
         assertEquals(KeyIntent.Command(CommandId.BACKSPACE), bottom.getValue(KeyPosition(0, 0)).intents[Zone.Center])
         assertEquals(KeyIntent.Command(CommandId.TOGGLE_EMOJI_MODE), bottom.getValue(KeyPosition(0, 1)).intents[Zone.Center])
-        assertEquals(KeyIntent.Command(CommandId.TOGGLE_NUMERIC_MODE), bottom.getValue(KeyPosition(0, 2)).intents[Zone.Center])
+        assertEquals(KeyIntent.Text(" "), space.intents[Zone.Center])
+        assertEquals(KeyIntent.Command(CommandId.ARROW_LEFT), space.intents[Zone.Directional(Direction.LEFT)])
+        assertEquals(KeyIntent.Command(CommandId.ARROW_RIGHT), space.intents[Zone.Directional(Direction.RIGHT)])
+        assertEquals(KeyIntent.Command(CommandId.ARROW_UP), space.intents[Zone.Directional(Direction.UP)])
+        assertEquals(KeyIntent.Command(CommandId.ARROW_DOWN), space.intents[Zone.Directional(Direction.DOWN)])
+        assertEquals(SlideBehavior.MOVE_CURSOR, space.slideBehavior)
         assertEquals(2, bottom.getValue(KeyPosition(0, 3)).columnSpan)
         assertEquals(5, bottom.values.sumOf { it.columnSpan })
     }
