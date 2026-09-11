@@ -51,6 +51,9 @@ import com.suave.s12.db.DEFAULT_COUNTERCLOCKWISE_DRAG_ACTION
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
 import com.suave.s12.db.DEFAULT_DRAG_RETURN_ENABLED
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_GHOST_KEYS_ENABLED
 import com.suave.s12.db.DEFAULT_HIDE_LETTERS
 import com.suave.s12.db.DEFAULT_HIDE_SYMBOLS
@@ -284,6 +287,9 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             showOnScreenKeyboard = DEFAULT_SHOW_ON_SCREEN_KEYBOARD,
             slideHoldEnabled = DEFAULT_SLIDE_HOLD_ENABLED,
             escAsModifier = DEFAULT_ESC_AS_MODIFIER,
+            ctrlAsModifier = DEFAULT_CTRL_AS_MODIFIER,
+            altAsModifier = DEFAULT_ALT_AS_MODIFIER,
+            shiftAsModifier = DEFAULT_SHIFT_AS_MODIFIER,
         ),
     )
 }

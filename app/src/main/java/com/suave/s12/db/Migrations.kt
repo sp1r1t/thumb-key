@@ -311,3 +311,18 @@ val MIGRATION_27_28 =
             )
         }
     }
+
+val MIGRATION_28_29 =
+    object : Migration(28, 29) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN ctrl_as_modifier INTEGER NOT NULL DEFAULT $DEFAULT_CTRL_AS_MODIFIER",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN alt_as_modifier INTEGER NOT NULL DEFAULT $DEFAULT_ALT_AS_MODIFIER",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN shift_as_modifier INTEGER NOT NULL DEFAULT $DEFAULT_SHIFT_AS_MODIFIER",
+            )
+        }
+    }

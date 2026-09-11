@@ -12,6 +12,9 @@ import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.KeyMapping
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.intent.SlideBehavior
+import com.suave.s12.engine.modifier.ActivationMode
+import com.suave.s12.engine.modifier.DEFAULT_MODIFIER_BEHAVIORS
+import com.suave.s12.engine.modifier.ModifierBehavior
 import com.suave.s12.engine.modifier.ModifierEngine
 import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.utils.KeyAction
@@ -27,7 +30,7 @@ import kotlin.math.abs
  * Callbacks are parameters of [handle] itself, not constructor fields, deliberately: a
  * long-lived object holding onto Compose-recomposition-scoped lambdas is exactly the kind of
  * stale-closure hazard this rewrite exists to avoid (see [ModifierEngine]'s own doc). Only
- * [mapping], [shiftMappings], and [escAsModifier] - genuinely static for this key's lifetime,
+ * [mapping], [shiftMappings], and [modifierBehaviors] - genuinely static for this key's lifetime,
  * or a settings value the UI layer already re-creates this dispatcher for when it changes - are
  * held.
  *
@@ -44,7 +47,7 @@ import kotlin.math.abs
 class KeyDispatcher(
     private val mapping: KeyMapping,
     private val shiftMappings: Map<String, String> = emptyMap(),
-    private val escAsModifier: Boolean = true,
+    private val modifierBehaviors: Map<ModifierId, ModifierBehavior> = DEFAULT_MODIFIER_BEHAVIORS,
 ) {
     private var engagedModifier: ModifierId? = null
     private var freshlyActivatedByPressed = false
@@ -109,22 +112,24 @@ class KeyDispatcher(
     }
 
     /**
-     * [mapping]'s intent for [zone], with one substitution: when [escAsModifier] is false, Esc's
-     * [KeyIntent.ModifierPress] is treated as a plain [KeyIntent.Command] instead - reusing the
-     * exact same generic Text/Command dispatch (repeat-on-hold, one-shot consumption, everything)
-     * a normal key already gets, rather than duplicating that behavior for a "standalone Esc"
-     * mode. This is the single point every zone lookup in this class goes through, so a
-     * substituted zone also correctly never triggers [handlePressed]/[handleSwipeLocked]'s
-     * provisional-modifier-activation guess - it no longer looks like a modifier at all.
+     * [mapping]'s intent for [zone], with one substitution: a [KeyIntent.ModifierPress] whose
+     * [ModifierBehavior.actsAsModifier] is false is treated as that modifier's standalone
+     * [KeyIntent.Command] instead - reusing the exact same generic Text/Command dispatch
+     * (repeat-on-hold, one-shot consumption, everything) a normal key already gets. This is
+     * the single point every zone lookup in this class goes through, so a substituted zone
+     * also correctly never triggers [handlePressed]/[handleSwipeLocked]'s provisional
+     * modifier activation - it no longer looks like a modifier at all.
      */
     private fun intentFor(zone: Zone): KeyIntent? {
         val intent = mapping.intents[zone] ?: return null
-        return if (!escAsModifier && intent is KeyIntent.ModifierPress && intent.modifier == ModifierId.ESC) {
-            KeyIntent.Command(CommandId.ESCAPE)
-        } else {
-            intent
+        if (intent is KeyIntent.ModifierPress && !behaviorOf(intent.modifier).actsAsModifier) {
+            return KeyIntent.Command(intent.modifier.standaloneCommand)
         }
+        return intent
     }
+
+    private fun behaviorOf(modifier: ModifierId): ModifierBehavior =
+        modifierBehaviors[modifier] ?: ModifierBehavior(ActivationMode.HELD)
 
     private fun provisionallyActivate(
         modifier: ModifierId,
@@ -132,7 +137,7 @@ class KeyDispatcher(
     ): ModifierState {
         freshlyActivatedByPressed = !state.isActive(modifier)
         engagedModifier = modifier
-        return ModifierEngine.applyModifierGesture(state, modifier, Gesture.Pressed)
+        return ModifierEngine.applyModifierGesture(state, modifier, Gesture.Pressed, behaviors = modifierBehaviors)
     }
 
     private fun handleSwipeLocked(
@@ -169,42 +174,38 @@ class KeyDispatcher(
                 // (finishPress, below) - that's a genuinely later, distinct moment for a real
                 // hold, not a duplicate of a buzz that just happened.
                 engagedModifier = intent.modifier
-                if (intent.modifier == ModifierId.ESC &&
+                val behavior = behaviorOf(intent.modifier)
+                if (behavior.tapWhileQueuedSendsCommand &&
                     gesture is Gesture.Tap &&
                     !freshlyActivatedByPressed &&
-                    modifierState.isActive(ModifierId.ESC)
+                    modifierState.isActive(intent.modifier)
                 ) {
-                    // Esc+Esc: tapping Esc again while it's already queued from an earlier,
-                    // separate press as a one-shot combo prefix sends a real Escape instead of
-                    // silently toggling that queued state off - the escape hatch for "I actually
-                    // just wanted to press Escape" without giving up combo behavior for every
-                    // other use. freshlyActivatedByPressed being false is what tells this apart
-                    // from the ordinary first tap that activates Esc in the first place.
-                    onExecute(SemanticAction.TypeCommand(CommandId.ESCAPE))
-                    return ModifierEngine.consumeOneShots(modifierState.deactivate(ModifierId.ESC))
+                    // Tapping a modifier again while it's already queued from an earlier,
+                    // separate press as a one-shot combo prefix sends the standalone command
+                    // instead of silently toggling that queued state off - the hatch for
+                    // "I actually just wanted to press the key itself". Esc enables this by
+                    // default (Esc+Esc = real Escape); any modifier can.
+                    onExecute(SemanticAction.TypeCommand(intent.modifier.standaloneCommand))
+                    return ModifierEngine.consumeOneShots(modifierState.deactivate(intent.modifier))
                 }
                 ModifierEngine.applyModifierGesture(
                     modifierState,
                     intent.modifier,
                     gesture,
+                    behaviors = modifierBehaviors,
                     freshlyActivatedByPressed = freshlyActivatedByPressed,
                 )
             }
 
             is KeyIntent.LegacyAction -> {
-                // Only fire once per press, on Tap or the first Hold - never on HoldRepeat, same
-                // reasoning as a held modifier not spamming its own toggle: repeating "open
-                // settings" or "toggle emoji mode" on every repeat tick isn't meaningful.
-                // Feedback for the press itself already happened on Gesture.Pressed, and (for a
-                // directional zone) on Gesture.SwipeLocked - nothing further fires here, this
-                // just performs the actual action.
-                if (gesture is Gesture.Tap || gesture is Gesture.Hold) {
+                if (gesture is Gesture.Tap || gesture is Gesture.Hold || (gesture is Gesture.HoldRepeat && intent.repeatsOnHold())) {
                     onLegacyAction(intent.action)
                 }
                 modifierState
             }
 
             is KeyIntent.Text, is KeyIntent.Command, KeyIntent.Noop -> {
+                if (gesture is Gesture.HoldRepeat && !intent.repeatsOnHold()) return modifierState
                 val resolved = ModifierEngine.resolve(modifierState, intent, shiftMappings)
                 onExecute(IntentCompiler.compile(resolved))
                 // Feedback for the press/swipe itself already happened on Gesture.Pressed/
@@ -261,7 +262,7 @@ class KeyDispatcher(
         var state = modifierState
         engagedModifier?.let { modId ->
             val wasActive = state.isActive(modId)
-            state = ModifierEngine.applyModifierGesture(state, modId, gesture)
+            state = ModifierEngine.applyModifierGesture(state, modId, gesture, behaviors = modifierBehaviors)
             reportModifierFeedback(modId, wasActive, state, onFeedback)
         }
         // Backspace's select-and-delete slide: the selection was only ever extended, never

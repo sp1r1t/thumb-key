@@ -12,10 +12,10 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.lifecycleScope
 import com.suave.s12.db.AppSettingsRepository
+import com.suave.s12.layout.BuiltinLayouts
 import com.suave.s12.ui.engine.EngineKeyboardScreen
 import com.suave.s12.ui.theme.ThumbkeyTheme
 import com.suave.s12.utils.KeyboardPosition
-import com.suave.s12.utils.keyboardLayoutsSetFromDbIndexString
 import com.suave.s12.utils.toBool
 import com.suave.s12.utils.toInt
 import kotlinx.coroutines.launch
@@ -45,37 +45,20 @@ class ComposeKeyboardView(
                     onToggleNumericMode = {},
                     onSwitchLanguage = {
                         ctx.lifecycleScope.launch {
-                            // Cycle to the next keyboard
                             val state = settingsState.value
                             state?.let { s ->
+                                val layouts = BuiltinLayouts.enabledFromDb(s.keyboardLayouts)
+                                val current = BuiltinLayouts.byIndex(s.keyboardLayout)
+                                val index = layouts.indexOfFirst { it.id == current.id }.let { if (it < 0) 0 else it }
+                                val next = layouts[(index + 1).mod(layouts.size)]
+                                val nextIndex = BuiltinLayouts.ALL.indexOfFirst { it.id == next.id }.coerceAtLeast(0)
+                                val s2 = s.copy(keyboardLayout = nextIndex)
+                                settingsRepo.update(s2)
 
-                                val layouts =
-                                    keyboardLayoutsSetFromDbIndexString(s.keyboardLayouts).toList()
-                                val currentLayout = s.keyboardLayout
-                                val index = layouts.map { it.ordinal }.indexOf(currentLayout)
-                                val nextIndex = (index + 1).mod(layouts.size)
-                                val nextLayout = layouts.getOrNull(nextIndex)
-                                nextLayout?.let { layout ->
-                                    val s2 = s.copy(keyboardLayout = layout.ordinal)
-                                    settingsRepo.update(s2)
-
-                                    ctx.currentKeyboardDefinition
-                                        ?.settings
-                                        ?.textProcessor
-                                        ?.handleFinishInput(ctx)
-                                    ctx.currentKeyboardDefinition = (layouts[nextIndex].keyboardDefinition)
-                                    ctx.currentKeyboardDefinition
-                                        ?.settings
-                                        ?.textProcessor
-                                        ?.updateCursorPosition(ctx)
-
-                                    // Display the new layout's name on the screen
-                                    if (s.showToastOnLayoutSwitch.toBool()) {
-                                        val layoutName = layout.keyboardDefinition.title
-                                        Toast
-                                            .makeText(context, layoutName, Toast.LENGTH_SHORT)
-                                            .show()
-                                    }
+                                if (s.showToastOnLayoutSwitch.toBool()) {
+                                    Toast
+                                        .makeText(context, next.title, Toast.LENGTH_SHORT)
+                                        .show()
                                 }
                             }
                         }

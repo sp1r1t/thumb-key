@@ -12,4 +12,7 @@ enum class CommandId {
     ARROW_UP,
     ARROW_DOWN,
     ESCAPE,
+    CTRL,
+    ALT,
+    SHIFT,
 }

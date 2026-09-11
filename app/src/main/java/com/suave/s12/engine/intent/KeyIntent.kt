@@ -37,4 +37,17 @@ sealed class KeyIntent {
     ) : KeyIntent()
 
     object Noop : KeyIntent()
+
+    /**
+     * Whether [com.suave.s12.engine.gesture.Gesture.HoldRepeat] should re-fire this intent.
+     * The dispatcher asks the intent; it does not special-case "legacy vs command vs text".
+     * Copy/settings/emoji (LegacyAction) and modifiers say no; characters and commands say yes.
+     * A future first-class Copy command would set this the same way rather than living in a
+     * parallel type.
+     */
+    fun repeatsOnHold(): Boolean =
+        when (this) {
+            is Text, is Command -> true
+            is ModifierPress, is LegacyAction, Noop -> false
+        }
 }

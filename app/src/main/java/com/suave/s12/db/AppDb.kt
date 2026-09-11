@@ -82,6 +82,9 @@ const val DEFAULT_SHOW_ON_SCREEN_KEYBOARD = 0
 // again while that's still queued) sends a real Escape instead. False makes Esc a plain
 // standalone key that always just sends a real Escape, with no combo behavior at all.
 const val DEFAULT_ESC_AS_MODIFIER = 1
+const val DEFAULT_CTRL_AS_MODIFIER = 1
+const val DEFAULT_ALT_AS_MODIFIER = 1
+const val DEFAULT_SHIFT_AS_MODIFIER = 1
 
 @Entity
 data class AppSettings(
@@ -354,6 +357,21 @@ data class AppSettings(
         defaultValue = DEFAULT_ESC_AS_MODIFIER.toString(),
     )
     val escAsModifier: Int,
+    @ColumnInfo(
+        name = "ctrl_as_modifier",
+        defaultValue = DEFAULT_CTRL_AS_MODIFIER.toString(),
+    )
+    val ctrlAsModifier: Int = DEFAULT_CTRL_AS_MODIFIER,
+    @ColumnInfo(
+        name = "alt_as_modifier",
+        defaultValue = DEFAULT_ALT_AS_MODIFIER.toString(),
+    )
+    val altAsModifier: Int = DEFAULT_ALT_AS_MODIFIER,
+    @ColumnInfo(
+        name = "shift_as_modifier",
+        defaultValue = DEFAULT_SHIFT_AS_MODIFIER.toString(),
+    )
+    val shiftAsModifier: Int = DEFAULT_SHIFT_AS_MODIFIER,
 )
 
 data class LayoutsUpdate(
@@ -496,6 +514,12 @@ data class BehaviorUpdate(
     val slideHoldEnabled: Int,
     @ColumnInfo(name = "esc_as_modifier")
     val escAsModifier: Int,
+    @ColumnInfo(name = "ctrl_as_modifier")
+    val ctrlAsModifier: Int,
+    @ColumnInfo(name = "alt_as_modifier")
+    val altAsModifier: Int,
+    @ColumnInfo(name = "shift_as_modifier")
+    val shiftAsModifier: Int,
 )
 
 data class KeyModificationsUpdate(
@@ -633,7 +657,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 28,
+    version = 29,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -683,6 +707,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_25_26,
                             MIGRATION_26_27,
                             MIGRATION_27_28,
+                            MIGRATION_28_29,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

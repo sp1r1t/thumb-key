@@ -29,6 +29,8 @@ import com.suave.s12.engine.gesture.Zone
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.KeyMapping
+import com.suave.s12.engine.intent.ModifierId
+import com.suave.s12.engine.modifier.ModifierBehavior
 import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.utils.KeyAction
 import kotlinx.coroutines.withTimeoutOrNull
@@ -62,11 +64,11 @@ fun EngineKeyboardKey(
     shiftMappings: Map<String, String>,
     minSwipeDistancePx: Float,
     hideLetters: Boolean,
-    escAsModifier: Boolean,
+    modifierBehaviors: Map<ModifierId, ModifierBehavior>,
     modifier: Modifier = Modifier,
 ) {
     val dispatcher =
-        remember(mapping, shiftMappings, escAsModifier) { KeyDispatcher(mapping, shiftMappings, escAsModifier) }
+        remember(mapping, shiftMappings, modifierBehaviors) { KeyDispatcher(mapping, shiftMappings, modifierBehaviors) }
 
     // The pointer-input loop below is long-lived (keyed on Unit, never restarts), so it must
     // read every value that can change across recomposition through rememberUpdatedState -
@@ -228,4 +230,7 @@ private fun commandLabel(id: CommandId): String =
         CommandId.ARROW_UP -> "↑"
         CommandId.ARROW_DOWN -> "↓"
         CommandId.ESCAPE -> "esc"
+        CommandId.CTRL -> "ctrl"
+        CommandId.ALT -> "alt"
+        CommandId.SHIFT -> "shift"
     }

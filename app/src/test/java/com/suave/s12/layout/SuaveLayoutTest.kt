@@ -80,4 +80,14 @@ class SuaveLayoutTest {
             assertTrue("shift mapping for \"$token\" has no matching layout token", token in allTexts)
         }
     }
+
+    @Test
+    fun `Suave is one named layout in the builtin registry, not a privileged singleton`() {
+        assertEquals("suave", BuiltinLayouts.SUAVE.id)
+        assertEquals(listOf(BuiltinLayouts.SUAVE), BuiltinLayouts.ALL)
+        assertEquals(BuiltinLayouts.SUAVE, BuiltinLayouts.byIndex(0))
+        assertEquals(BuiltinLayouts.SUAVE, BuiltinLayouts.byIndex(99))
+        assertEquals(listOf(BuiltinLayouts.SUAVE), BuiltinLayouts.enabledFromDb("0"))
+        assertEquals(listOf(BuiltinLayouts.SUAVE), BuiltinLayouts.enabledFromDb(null))
+    }
 }

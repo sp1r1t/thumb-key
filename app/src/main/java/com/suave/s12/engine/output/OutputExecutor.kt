@@ -118,6 +118,9 @@ object OutputExecutor {
                 CommandId.ARROW_UP -> KeyEvent.KEYCODE_DPAD_UP
                 CommandId.ARROW_DOWN -> KeyEvent.KEYCODE_DPAD_DOWN
                 CommandId.ESCAPE -> KeyEvent.KEYCODE_ESCAPE
+                CommandId.CTRL -> KeyEvent.KEYCODE_CTRL_LEFT
+                CommandId.ALT -> KeyEvent.KEYCODE_ALT_LEFT
+                CommandId.SHIFT -> KeyEvent.KEYCODE_SHIFT_LEFT
             }
         sendEscIfNeeded(action.modifiers, ic)
         sendKeyEvent(ic, keyCode, metaStateFor(action.modifiers))

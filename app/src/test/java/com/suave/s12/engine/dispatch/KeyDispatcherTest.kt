@@ -16,6 +16,7 @@ import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.intent.SlideBehavior
 import com.suave.s12.engine.modifier.ActivationMode
 import com.suave.s12.engine.modifier.ModifierState
+import com.suave.s12.engine.modifier.modifierBehaviors
 import com.suave.s12.utils.KeyAction
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -130,7 +131,7 @@ class KeyDispatcherTest {
 
     @Test
     fun `with escAsModifier false, tapping the Esc zone sends a standalone Escape and never touches modifier state`() {
-        val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY, escAsModifier = false)
+        val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY, modifierBehaviors = modifierBehaviors(mapOf(ModifierId.ESC to false)))
         val executed = mutableListOf<SemanticAction>()
 
         val state =
@@ -142,7 +143,7 @@ class KeyDispatcherTest {
 
     @Test
     fun `with escAsModifier false, holding the Esc zone repeats the standalone Escape like any other command key`() {
-        val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY, escAsModifier = false)
+        val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY, modifierBehaviors = modifierBehaviors(mapOf(ModifierId.ESC to false)))
         val executed = mutableListOf<SemanticAction>()
         val escZone = Zone.Directional(Direction.UP)
 
@@ -406,5 +407,56 @@ class KeyDispatcherTest {
 
         assertEquals(2, executed.count { it is SemanticAction.ExtendSelection })
         assertEquals(1, executed.count { it == SemanticAction.TypeCommand(CommandId.BACKSPACE) })
+    }
+
+    @Test
+    fun `with Ctrl actsAsModifier false, tapping the Ctrl zone sends a Ctrl command and never touches modifier state`() {
+        val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY, modifierBehaviors = modifierBehaviors(mapOf(ModifierId.CTRL to false)))
+        val executed = mutableListOf<SemanticAction>()
+
+        val state = dispatcher.handle(Gesture.Tap(Zone.Center), ModifierState(), executed::add, {}, {})
+
+        assertEquals(listOf(SemanticAction.TypeCommand(CommandId.CTRL)), executed)
+        assertFalse(state.isActive(ModifierId.CTRL))
+    }
+
+    @Test
+    fun `copy on a swipe and enter on another swipe of the same key both fire - any intent is placeable on any zone`() {
+        val key =
+            KeyMapping(
+                CONFIG,
+                mapOf(
+                    Zone.Center to KeyIntent.Text("a"),
+                    Zone.Directional(Direction.LEFT) to KeyIntent.LegacyAction(KeyAction.Copy),
+                    Zone.Directional(Direction.RIGHT) to KeyIntent.Command(CommandId.ENTER),
+                    Zone.Directional(Direction.UP) to KeyIntent.ModifierPress(ModifierId.SHIFT),
+                ),
+            )
+        val dispatcher = KeyDispatcher(key)
+        val executed = mutableListOf<SemanticAction>()
+        val legacy = mutableListOf<KeyAction>()
+
+        dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.LEFT)), ModifierState(), executed::add, legacy::add, {})
+        dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.RIGHT)), ModifierState(), executed::add, legacy::add, {})
+        val shiftState =
+            dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.UP)), ModifierState(), executed::add, legacy::add, {})
+
+        assertEquals(listOf(KeyAction.Copy), legacy)
+        assertEquals(listOf(SemanticAction.TypeCommand(CommandId.ENTER)), executed)
+        assertTrue(shiftState.isActive(ModifierId.SHIFT))
+    }
+
+    @Test
+    fun `copy on hold-repeat does not re-fire - the intent decides, not the dispatcher type switch`() {
+        val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.LegacyAction(KeyAction.Copy)))
+        val dispatcher = KeyDispatcher(key)
+        val legacy = mutableListOf<KeyAction>()
+
+        dispatcher.handle(Gesture.Hold(Zone.Center), ModifierState(), {}, legacy::add, {})
+        dispatcher.handle(Gesture.HoldRepeat(Zone.Center), ModifierState(), {}, legacy::add, {})
+
+        assertEquals(listOf(KeyAction.Copy), legacy)
+        assertFalse(KeyIntent.LegacyAction(KeyAction.Copy).repeatsOnHold())
+        assertTrue(KeyIntent.Command(CommandId.ENTER).repeatsOnHold())
     }
 }

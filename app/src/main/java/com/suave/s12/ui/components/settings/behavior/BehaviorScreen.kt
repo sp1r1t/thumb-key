@@ -29,14 +29,17 @@ import androidx.navigation.NavController
 import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
 import com.suave.s12.db.BehaviorUpdate
+import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_AUTO_CAPITALIZE
 import com.suave.s12.db.DEFAULT_CIRCULAR_DRAG_ENABLED
 import com.suave.s12.db.DEFAULT_CLOCKWISE_DRAG_ACTION
 import com.suave.s12.db.DEFAULT_COUNTERCLOCKWISE_DRAG_ACTION
+import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_DRAG_RETURN_ENABLED
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_GHOST_KEYS_ENABLED
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
+import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_SLIDE_BACKSPACE_DEADZONE_ENABLED
 import com.suave.s12.db.DEFAULT_SLIDE_CURSOR_MOVEMENT_MODE
 import com.suave.s12.db.DEFAULT_SLIDE_ENABLED
@@ -69,6 +72,9 @@ fun BehaviorScreen(
     var minSwipeLengthSliderState by remember { mutableFloatStateOf(minSwipeLengthState) }
 
     var escAsModifierState = (settings?.escAsModifier ?: DEFAULT_ESC_AS_MODIFIER).toBool()
+    var ctrlAsModifierState = (settings?.ctrlAsModifier ?: DEFAULT_CTRL_AS_MODIFIER).toBool()
+    var altAsModifierState = (settings?.altAsModifier ?: DEFAULT_ALT_AS_MODIFIER).toBool()
+    var shiftAsModifierState = (settings?.shiftAsModifier ?: DEFAULT_SHIFT_AS_MODIFIER).toBool()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -98,6 +104,9 @@ fun BehaviorScreen(
                 ghostKeysEnabled = settings?.ghostKeysEnabled ?: DEFAULT_GHOST_KEYS_ENABLED,
                 slideHoldEnabled = settings?.slideHoldEnabled ?: DEFAULT_SLIDE_HOLD_ENABLED,
                 escAsModifier = escAsModifierState.toInt(),
+                ctrlAsModifier = ctrlAsModifierState.toInt(),
+                altAsModifier = altAsModifierState.toInt(),
+                shiftAsModifier = shiftAsModifierState.toInt(),
             ),
         )
     }
@@ -156,35 +165,82 @@ fun BehaviorScreen(
                         )
                     }
                     SettingsDivider()
-                    SettingRow(infoText = stringResource(R.string.esc_as_modifier_info)) {
-                        SwitchPreference(
-                            value = escAsModifierState,
-                            onValueChange = {
-                                escAsModifierState = it
-                                updateBehavior()
-                            },
-                            title = {
-                                Text(stringResource(R.string.esc_as_modifier))
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        if (escAsModifierState) R.string.esc_as_modifier_on else R.string.esc_as_modifier_off,
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.SwapHoriz,
-                                    contentDescription = stringResource(R.string.esc_as_modifier),
-                                )
-                            },
-                        )
-                    }
+                    ModifierAsModifierSwitch(
+                        title = R.string.ctrl_as_modifier,
+                        onSummary = R.string.ctrl_as_modifier_on,
+                        offSummary = R.string.ctrl_as_modifier_off,
+                        info = R.string.ctrl_as_modifier_info,
+                        value = ctrlAsModifierState,
+                        onValueChange = {
+                            ctrlAsModifierState = it
+                            updateBehavior()
+                        },
+                    )
+                    SettingsDivider()
+                    ModifierAsModifierSwitch(
+                        title = R.string.alt_as_modifier,
+                        onSummary = R.string.alt_as_modifier_on,
+                        offSummary = R.string.alt_as_modifier_off,
+                        info = R.string.alt_as_modifier_info,
+                        value = altAsModifierState,
+                        onValueChange = {
+                            altAsModifierState = it
+                            updateBehavior()
+                        },
+                    )
+                    SettingsDivider()
+                    ModifierAsModifierSwitch(
+                        title = R.string.shift_as_modifier,
+                        onSummary = R.string.shift_as_modifier_on,
+                        offSummary = R.string.shift_as_modifier_off,
+                        info = R.string.shift_as_modifier_info,
+                        value = shiftAsModifierState,
+                        onValueChange = {
+                            shiftAsModifierState = it
+                            updateBehavior()
+                        },
+                    )
+                    SettingsDivider()
+                    ModifierAsModifierSwitch(
+                        title = R.string.esc_as_modifier,
+                        onSummary = R.string.esc_as_modifier_on,
+                        offSummary = R.string.esc_as_modifier_off,
+                        info = R.string.esc_as_modifier_info,
+                        value = escAsModifierState,
+                        onValueChange = {
+                            escAsModifierState = it
+                            updateBehavior()
+                        },
+                    )
                     SettingsDivider()
                     TestOutTextField()
                 }
             }
         },
     )
+}
+
+@Composable
+private fun ModifierAsModifierSwitch(
+    @androidx.annotation.StringRes title: Int,
+    @androidx.annotation.StringRes onSummary: Int,
+    @androidx.annotation.StringRes offSummary: Int,
+    @androidx.annotation.StringRes info: Int,
+    value: Boolean,
+    onValueChange: (Boolean) -> Unit,
+) {
+    SettingRow(infoText = stringResource(info)) {
+        SwitchPreference(
+            value = value,
+            onValueChange = onValueChange,
+            title = { Text(stringResource(title)) },
+            summary = { Text(stringResource(if (value) onSummary else offSummary)) },
+            icon = {
+                Icon(
+                    imageVector = Icons.Outlined.SwapHoriz,
+                    contentDescription = stringResource(title),
+                )
+            },
+        )
+    }
 }

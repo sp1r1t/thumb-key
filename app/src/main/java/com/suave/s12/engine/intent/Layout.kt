@@ -32,6 +32,17 @@ data class KeyMapping(
 
 /**
  * A layout is pure data: position -> gesture shape + zone -> intent. No mode branching, no
- * imperative logic - a layout file should be a flat table of these, nothing else.
+ * imperative logic - a layout file should be a flat table of these, nothing else. Nothing
+ * about which [KeyIntent] a zone holds is privileged: text, commands, modifiers, and bridged
+ * app actions are all just entries in [KeyMapping.intents].
  */
 typealias Layout = Map<KeyPosition, KeyMapping>
+
+/** Groups [Layout] keys into rows (sorted), each row's keys sorted by column. Irregular
+ *  grids (a bottom row with fewer keys, a missing cell) fall out of the data rather than a
+ *  hardcoded row/column range in the renderer. */
+fun layoutRows(layout: Layout): List<List<KeyPosition>> =
+    layout.keys
+        .groupBy { it.row }
+        .toSortedMap()
+        .map { (_, positions) -> positions.sortedBy { it.col } }
