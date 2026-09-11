@@ -79,8 +79,11 @@ abstract class ClipboardDB : RoomDatabase() {
         @Volatile
         private var instance: ClipboardDB? = null
 
-        fun getDatabase(context: Context): ClipboardDB =
-            instance ?: synchronized(this) {
+        fun getDatabase(context: Context): ClipboardDB {
+            check(isCredentialStorageUnlocked(context)) {
+                "Clipboard history lives in credential-encrypted storage and is unavailable before first unlock"
+            }
+            return instance ?: synchronized(this) {
                 val instance =
                     Room
                         .databaseBuilder(
@@ -92,5 +95,6 @@ abstract class ClipboardDB : RoomDatabase() {
                 Companion.instance = instance
                 instance
             }
+        }
     }
 }

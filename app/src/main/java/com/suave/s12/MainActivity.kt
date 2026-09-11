@@ -40,13 +40,16 @@ import org.woheller69.freeDroidWarn.FreeDroidWarn
 import splitties.systemservices.inputMethodManager
 
 class ThumbkeyApplication : Application() {
-    private val database by lazy { AppDB.getDatabase(this) }
+    // New instance each time so a Direct Boot reopen of AppDB (after first unlock
+    // migrates settings out of credential storage) is not stuck on a closed DAO.
+    val appSettingsRepository: AppSettingsRepository
+        get() = AppSettingsRepository(AppDB.getDatabase(this).appSettingsDao())
+
     private val clipboardDatabase by lazy { ClipboardDB.getDatabase(this) }
-    val appSettingsRepository by lazy { AppSettingsRepository(database.appSettingsDao()) }
     val clipboardRepository by lazy {
         ClipboardRepository(
             clipboardDatabase.clipboardItemDao(),
-            database.appSettingsDao(),
+            AppDB.getDatabase(this).appSettingsDao(),
         )
     }
 }

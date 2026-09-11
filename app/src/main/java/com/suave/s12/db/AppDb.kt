@@ -499,15 +499,28 @@ abstract class AppDB : RoomDatabase() {
         private var instance: AppDB? = null
 
         fun getDatabase(context: Context): AppDB {
-            // if the INSTANCE is not null, then return it,
-            // if it is, then create the database
-            return instance ?: synchronized(this) {
-                val i =
-                    Room
+            val appContext = context.applicationContext
+            val deviceProtected = appContext.createDeviceProtectedStorageContext()
+            return synchronized(this) {
+                if (isCredentialStorageUnlocked(appContext) &&
+                    migrateSettingsDbToDeviceProtected(
+                        appContext.getDatabasePath(APP_SETTINGS_DB_NAME),
+                        deviceProtected.getDatabasePath(APP_SETTINGS_DB_NAME),
+                    )
+                ) {
+                    instance?.close()
+                    instance = null
+                }
+                instance ?: buildDatabase(deviceProtected).also { instance = it }
+            }
+        }
+
+        private fun buildDatabase(deviceProtected: Context): AppDB =
+            Room
                         .databaseBuilder(
-                            context.applicationContext,
+                            deviceProtected,
                             AppDB::class.java,
-                            "thumbkey",
+                            APP_SETTINGS_DB_NAME,
                         ).allowMainThreadQueries()
                         .addMigrations(
                             MIGRATION_1_2,
@@ -567,11 +580,6 @@ abstract class AppDB : RoomDatabase() {
                                 }
                             },
                         ).build()
-                instance = i
-                // return instance
-                i
-            }
-        }
     }
 }
 

@@ -1,9 +1,14 @@
 package com.suave.s12
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.inputmethodservice.InputMethodService
 import android.util.Log
 import android.view.inputmethod.CursorAnchorInfo
 import android.view.inputmethod.EditorInfo
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LifecycleRegistry
@@ -15,10 +20,12 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
+import com.suave.s12.db.AppDB
 import com.suave.s12.db.DEFAULT_CLIPBOARD_HISTORY_ENABLED
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
 import com.suave.s12.db.DEFAULT_SHOW_ON_SCREEN_KEYBOARD
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
+import com.suave.s12.db.isCredentialStorageUnlocked
 import com.suave.s12.utils.KeyboardDefinition
 import com.suave.s12.utils.KeyboardLayout
 import com.suave.s12.utils.TAG
@@ -55,6 +62,7 @@ class IMEService :
 
     var currentKeyboardDefinition: KeyboardDefinition? = null
     private var clipboardManager: ThumbKeyClipboardManager? = null
+    private var unlockReceiver: BroadcastReceiver? = null
 
     /**
      * This is called every time the keyboard is brought up.
@@ -81,18 +89,58 @@ class IMEService :
         savedStateRegistryController.performRestore(null)
         handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
 
-        // Initialize clipboard manager
+        if (isCredentialStorageUnlocked(this)) {
+            startClipboard()
+        } else {
+            val receiver =
+                object : BroadcastReceiver() {
+                    override fun onReceive(
+                        context: Context?,
+                        intent: Intent?,
+                    ) {
+                        onCredentialStorageUnlocked()
+                    }
+                }
+            ContextCompat.registerReceiver(
+                this,
+                receiver,
+                IntentFilter(Intent.ACTION_USER_UNLOCKED),
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+            unlockReceiver = receiver
+        }
+    }
+
+    override fun onDestroy() {
+        unregisterUnlockReceiver()
+        clipboardManager?.stopListening()
+        clipboardManager = null
+        super.onDestroy()
+        handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    }
+
+    private fun startClipboard() {
+        if (clipboardManager != null) return
         val app = application as ThumbkeyApplication
         clipboardManager = ThumbKeyClipboardManager(this, app.clipboardRepository)
         clipboardManager?.startListening()
         clipboardManager?.clearExpired()
     }
 
-    override fun onDestroy() {
-        clipboardManager?.stopListening()
-        clipboardManager = null
-        super.onDestroy()
-        handleLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    private fun onCredentialStorageUnlocked() {
+        // Move settings out of credential storage if this is the first unlock after
+        // the Direct Boot change, then rebuild the keyboard so it picks up the user's layout.
+        AppDB.getDatabase(this)
+        startClipboard()
+        setInputView(setupView())
+        unregisterUnlockReceiver()
+    }
+
+    private fun unregisterUnlockReceiver() {
+        unlockReceiver?.let {
+            unregisterReceiver(it)
+            unlockReceiver = null
+        }
     }
 
     // Cursor update Methods
