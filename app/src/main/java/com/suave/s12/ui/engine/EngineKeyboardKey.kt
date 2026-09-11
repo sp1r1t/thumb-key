@@ -5,6 +5,8 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,7 +15,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.suave.s12.engine.action.SemanticAction
@@ -26,7 +31,6 @@ import com.suave.s12.engine.gesture.RecognizerInput
 import com.suave.s12.engine.gesture.TouchEvent
 import com.suave.s12.engine.gesture.TouchPhase
 import com.suave.s12.engine.gesture.Zone
-import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.KeyMapping
 import com.suave.s12.engine.intent.ModifierId
@@ -170,18 +174,60 @@ fun EngineKeyboardKey(
                 },
     ) {
         for ((direction, alignment) in DIRECTIONAL_ALIGNMENTS) {
-            val label = displayLabel(mapping.intents[Zone.Directional(direction)], hideLetters)
-            if (label != null) {
-                Text(label, modifier = Modifier.align(alignment), fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            val legend =
+                keyLegend(
+                    mapping.intents[Zone.Directional(direction)],
+                    hideLetters,
+                    modifierState,
+                    shiftMappings,
+                )
+            if (legend != null) {
+                KeyLegendMark(
+                    legend = legend,
+                    fontSize = 10.sp,
+                    iconSize = 12.dp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.align(alignment),
+                )
             }
         }
-        val centerLabel = displayLabel(mapping.intents[Zone.Center], hideLetters)
-        if (centerLabel != null) {
-            Text(
-                centerLabel,
-                modifier = Modifier.align(Alignment.Center),
+        val centerLegend =
+            keyLegend(
+                mapping.intents[Zone.Center],
+                hideLetters,
+                modifierState,
+                shiftMappings,
+            )
+        if (centerLegend != null) {
+            KeyLegendMark(
+                legend = centerLegend,
                 fontSize = 18.sp,
+                iconSize = 22.dp,
                 color = if (isModifierKeyActive) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
+    }
+}
+
+@Composable
+private fun KeyLegendMark(
+    legend: KeyLegend,
+    fontSize: TextUnit,
+    iconSize: Dp,
+    color: Color,
+    modifier: Modifier,
+) {
+    when (legend) {
+        is KeyLegend.Text -> {
+            Text(legend.text, modifier = modifier, fontSize = fontSize, color = color)
+        }
+        is KeyLegend.Icon -> {
+            Icon(
+                imageVector = legend.icon,
+                contentDescription = legend.icon.name,
+                tint = color,
+                modifier = modifier.size(iconSize),
             )
         }
     }
@@ -198,49 +244,3 @@ private val DIRECTIONAL_ALIGNMENTS =
         Direction.DOWN to Alignment.BottomCenter,
         Direction.DOWN_RIGHT to Alignment.BottomEnd,
     )
-
-private fun displayLabel(
-    intent: KeyIntent?,
-    hideLetters: Boolean,
-): String? =
-    when (intent) {
-        null, KeyIntent.Noop -> null
-
-        is KeyIntent.Text -> if (hideLetters) null else intent.text
-
-        is KeyIntent.Command -> commandLabel(intent.id)
-
-        is KeyIntent.ModifierPress -> intent.modifier.name.lowercase()
-    }
-
-private fun commandLabel(id: CommandId): String =
-    when (id) {
-        CommandId.ENTER -> "⏎"
-        CommandId.TAB -> "⇥"
-        CommandId.BACKSPACE -> "⌫"
-        CommandId.DELETE_FORWARD -> "⌦"
-        CommandId.SPACE -> "␣"
-        CommandId.ARROW_LEFT -> "←"
-        CommandId.ARROW_RIGHT -> "→"
-        CommandId.ARROW_UP -> "↑"
-        CommandId.ARROW_DOWN -> "↓"
-        CommandId.ESCAPE -> "esc"
-        CommandId.CTRL -> "ctrl"
-        CommandId.ALT -> "alt"
-        CommandId.SHIFT -> "shift"
-        CommandId.COPY -> "copy"
-        CommandId.CUT -> "cut"
-        CommandId.PASTE -> "paste"
-        CommandId.SELECT_ALL -> "all"
-        CommandId.UNDO -> "undo"
-        CommandId.REDO -> "redo"
-        CommandId.GOTO_SETTINGS -> "set"
-        CommandId.TOGGLE_HIDE_LETTERS -> "hide"
-        CommandId.SWITCH_IME -> "ime"
-        CommandId.SWITCH_IME_VOICE -> "voice"
-        CommandId.SWITCH_LANGUAGE -> "lang"
-        CommandId.MOVE_KEYBOARD -> "move"
-        CommandId.TOGGLE_EMOJI_MODE -> "emoji"
-        CommandId.TOGGLE_NUMERIC_MODE -> "123"
-        CommandId.TOGGLE_ABC_MODE -> "abc"
-    }

@@ -21,6 +21,16 @@ import com.suave.s12.engine.intent.ModifierId
  * however many characters that press repeats while held, not just its first repeat tick.
  */
 object ModifierEngine {
+    /**
+     * What [KeyIntent.Text] becomes while Shift is active: the layout's shift table first,
+     * then single-character uppercase. The keyboard preview uses this same function so the
+     * label matches what will actually be committed.
+     */
+    fun applyShift(
+        text: String,
+        shiftMappings: Map<String, String> = emptyMap(),
+    ): String = shiftMappings[text] ?: if (text.length == 1) text.uppercase() else text
+
     fun resolve(
         state: ModifierState,
         intent: KeyIntent,
@@ -37,7 +47,7 @@ object ModifierEngine {
                 val modifiersApply = intent.text.length == 1
                 val text =
                     if (state.isActive(ModifierId.SHIFT)) {
-                        shiftMappings[intent.text] ?: if (intent.text.length == 1) intent.text.uppercase() else intent.text
+                        applyShift(intent.text, shiftMappings)
                     } else {
                         intent.text
                     }

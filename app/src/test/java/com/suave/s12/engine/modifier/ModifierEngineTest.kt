@@ -123,6 +123,9 @@ class ModifierEngineTest {
         val resolved = ModifierEngine.resolve(state, KeyIntent.Text("1"), shiftMappings = mapOf("1" to "!"))
 
         assertEquals(ResolvedIntent.TypedText("!", emptySet()), resolved)
+        assertEquals("!", ModifierEngine.applyShift("1", mapOf("1" to "!")))
+        assertEquals("SS", ModifierEngine.applyShift("ß", mapOf("ß" to "SS")))
+        assertEquals("A", ModifierEngine.applyShift("a"))
     }
 
     @Test
