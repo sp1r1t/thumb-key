@@ -13,6 +13,7 @@ import androidx.compose.material.icons.outlined.ArrowDropUp
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
@@ -20,13 +21,12 @@ import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.KeyboardCapslock
 import androidx.compose.material.icons.outlined.KeyboardControlKey
 import androidx.compose.material.icons.outlined.KeyboardOptionKey
-import androidx.compose.material.icons.outlined.Language
-import androidx.compose.material.icons.outlined.LinearScale
 import androidx.compose.material.icons.outlined.Mic
-import androidx.compose.material.icons.outlined.Mood
 import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.SwapHoriz
+import androidx.compose.material.icons.outlined.ViewColumn
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.KeyIntent
@@ -198,9 +198,9 @@ private fun commandLegend(id: CommandId): KeyLegend? =
         CommandId.TOGGLE_HIDE_LETTERS -> KeyLegend.Icon(Icons.Outlined.HideImage)
         CommandId.SWITCH_IME -> KeyLegend.Icon(Icons.Outlined.Keyboard)
         CommandId.SWITCH_IME_VOICE -> KeyLegend.Icon(Icons.Outlined.Mic)
-        CommandId.SWITCH_LANGUAGE -> KeyLegend.Icon(Icons.Outlined.Language)
-        CommandId.MOVE_KEYBOARD -> KeyLegend.Icon(Icons.Outlined.LinearScale)
-        CommandId.TOGGLE_EMOJI_MODE -> KeyLegend.Icon(Icons.Outlined.Mood)
+        CommandId.SWITCH_LANGUAGE -> KeyLegend.Icon(Icons.Outlined.SwapHoriz)
+        CommandId.MOVE_KEYBOARD -> KeyLegend.Icon(Icons.Outlined.ViewColumn)
+        CommandId.TOGGLE_EMOJI_MODE -> KeyLegend.Icon(Icons.Outlined.EmojiEmotions)
         CommandId.TOGGLE_NUMERIC_MODE -> KeyLegend.Icon(Icons.Outlined.Numbers)
         CommandId.TOGGLE_ABC_MODE -> KeyLegend.Icon(Icons.Outlined.Abc)
     }
