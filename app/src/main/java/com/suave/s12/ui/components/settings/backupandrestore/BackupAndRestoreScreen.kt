@@ -51,6 +51,7 @@ import com.suave.s12.db.DEFAULT_KEY_HEIGHT
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_POSITION
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
 import com.suave.s12.db.DEFAULT_SHOW_ON_SCREEN_KEYBOARD
 import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH
 import com.suave.s12.db.DEFAULT_THEME
@@ -235,6 +236,7 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             clipboardMaxSize = DEFAULT_CLIPBOARD_MAX_SIZE,
             usePrivateClipboard = DEFAULT_USE_PRIVATE_CLIPBOARD,
             showOnScreenKeyboard = DEFAULT_SHOW_ON_SCREEN_KEYBOARD,
+            showDebugBar = DEFAULT_SHOW_DEBUG_BAR,
         ),
     )
 }

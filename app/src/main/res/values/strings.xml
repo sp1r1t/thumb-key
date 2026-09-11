@@ -27,7 +27,7 @@
     <string name="open_source">Open source</string>
     <string name="built_on_thumbkey">Built on Thumb-Key</string>
     <string name="source_code_subtitle">S12 is libre open-source software (a fork of Thumb-Key), licensed under the GNU Affero General Public License v3.0</string>
-    <string name="look_and_feel">Look and feel</string>
+    <string name="look_and_feel">Appearance</string>
     <string name="behavior">Behavior</string>
     <string name="layouts">Layouts</string>
     <string name="theme">Theme</string>
@@ -171,9 +171,13 @@
     <string name="use_private_clipboard_on">On - copies go to Suave\'s internal clipboard instead of the system clipboard</string>
     <string name="use_private_clipboard_off">Off - copies go to the normal system clipboard, shared with every app</string>
     <string name="use_private_clipboard_info">The system clipboard is shared across every app on the device, and some apps or accessibility services can read it. Suave\'s private clipboard is only ever accessible from this keyboard, at the cost of not being able to paste what you copied here into another keyboard or clipboard manager.</string>
-    <!-- Other -->
-    <string name="other">Other</string>
+    <!-- Advanced -->
+    <string name="other">Advanced</string>
     <string name="show_on_screen_keyboard">Show on-screen keyboard</string>
     <string name="show_on_screen_keyboard_on">On - stays visible even while a physical keyboard is connected</string>
     <string name="show_on_screen_keyboard_off">Off - hides itself while a physical keyboard is connected</string>
+    <string name="show_debug_bar">Show debug bar</string>
+    <string name="show_debug_bar_on">On - a bar above the keyboard shows the last install time, the focused app, and that app\'s editor capabilities</string>
+    <string name="show_debug_bar_off">Off - the keyboard has no debug bar</string>
+    <string name="show_debug_bar_info">The install time is read from the APK at runtime so you can confirm a fresh install actually took effect. The rest names the app currently focused and how its text field was classified.</string>
 </resources>

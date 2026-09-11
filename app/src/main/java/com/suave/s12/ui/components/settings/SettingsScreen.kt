@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.HelpCenter
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.Info
@@ -25,20 +24,15 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
 import com.suave.s12.ui.components.common.TestOutTextField
 import com.suave.s12.ui.components.settings.about.SettingsDivider
-import com.suave.s12.ui.components.settings.about.USER_GUIDE_URL
 import com.suave.s12.utils.TAG
-import com.suave.s12.utils.openLink
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
 
@@ -53,9 +47,6 @@ fun SettingsScreen(
     Log.d(TAG, "Got to settings activity")
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val ctx = LocalContext.current
-
-    val settings by appSettingsViewModel.appSettings.observeAsState()
 
     val scrollState = rememberScrollState()
 
@@ -141,18 +132,6 @@ fun SettingsScreen(
                             )
                         },
                         onClick = { navController.navigate("otherSettings") },
-                    )
-                    Preference(
-                        title = { Text(stringResource(R.string.user_guide)) },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Outlined.HelpCenter,
-                                contentDescription = null,
-                            )
-                        },
-                        onClick = {
-                            openLink(USER_GUIDE_URL, ctx)
-                        },
                     )
                     Preference(
                         title = { Text(stringResource(R.string.about)) },

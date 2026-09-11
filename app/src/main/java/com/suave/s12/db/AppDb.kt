@@ -77,6 +77,7 @@ const val MIN_CLIPBOARD_MAX_SIZE = 2
 const val MAX_CLIPBOARD_MAX_SIZE = 100
 const val DEFAULT_USE_PRIVATE_CLIPBOARD = 0
 const val DEFAULT_SHOW_ON_SCREEN_KEYBOARD = 0
+const val DEFAULT_SHOW_DEBUG_BAR = 1
 
 // Default true (matches the modifier behavior this engine had before this setting existed): a
 // quick Esc tap queues as a Meta-via-Escape combo prefix for the next key, and Esc+Esc (tapping
@@ -220,6 +221,11 @@ data class AppSettings(
         defaultValue = DEFAULT_SHOW_ON_SCREEN_KEYBOARD.toString(),
     )
     val showOnScreenKeyboard: Int,
+    @ColumnInfo(
+        name = "show_debug_bar",
+        defaultValue = DEFAULT_SHOW_DEBUG_BAR.toString(),
+    )
+    val showDebugBar: Int = DEFAULT_SHOW_DEBUG_BAR,
 )
 
 data class LayoutsUpdate(
@@ -292,6 +298,8 @@ data class OtherSettingsUpdate(
     val id: Int,
     @ColumnInfo(name = "show_on_screen_keyboard")
     val showOnScreenKeyboard: Int,
+    @ColumnInfo(name = "show_debug_bar")
+    val showDebugBar: Int,
 )
 
 @Dao
@@ -389,7 +397,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 32,
+    version = 33,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -443,6 +451,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_29_30,
                             MIGRATION_30_31,
                             MIGRATION_31_32,
+                            MIGRATION_32_33,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

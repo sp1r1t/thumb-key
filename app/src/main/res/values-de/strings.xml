@@ -28,7 +28,7 @@
     <string name="open_source">Open Source</string>
     <string name="source_code">Quellcode</string>
     <string name="source_code_subtitle">Thumb-Key ist eine libre open-source Software, lizenziert unter der GNU Affero General Public License v3.0</string>
-    <string name="look_and_feel">Aussehen</string>
+    <string name="look_and_feel">Erscheinungsbild</string>
     <string name="layouts">Layouts</string>
     <string name="theme">Design</string>
     <string name="theme_color">Designfarbe</string>
@@ -119,4 +119,9 @@
     <string name="clipboard_history">Zwischenablagenverlauf</string>
     <string name="clipboard_cleanup_after">Aufräumen nach %1$s</string>
     <string name="clipboard_history_enabled">Zwischenablagenverlauf aktivieren</string>
+    <string name="other">Erweitert</string>
+    <string name="show_debug_bar">Debug-Leiste anzeigen</string>
+    <string name="show_debug_bar_on">An - eine Leiste über der Tastatur zeigt die letzte Installationszeit, die fokussierte App und deren Editor-Fähigkeiten</string>
+    <string name="show_debug_bar_off">Aus - die Tastatur hat keine Debug-Leiste</string>
+    <string name="show_debug_bar_info">Die Installationszeit wird zur Laufzeit aus dem APK gelesen, damit du prüfen kannst, ob eine frische Installation wirklich angekommen ist. Der Rest nennt die gerade fokussierte App und wie deren Textfeld eingestuft wurde.</string>
 </resources>

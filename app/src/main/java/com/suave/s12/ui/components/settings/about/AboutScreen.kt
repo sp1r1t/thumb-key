@@ -38,7 +38,6 @@ import me.zhanghai.compose.preference.ProvidePreferenceTheme
 // issue tracker to for this project. This is the real, original upstream project it's
 // forked from - kept as an honest credit even though S12 has diverged architecturally.
 const val UPSTREAM_THUMBKEY_URL = "https://github.com/dessalines/thumb-key"
-const val USER_GUIDE_URL = "$UPSTREAM_THUMBKEY_URL#user-guide"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

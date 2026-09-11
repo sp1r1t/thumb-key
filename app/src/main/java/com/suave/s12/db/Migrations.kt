@@ -466,3 +466,12 @@ val MIGRATION_31_32 =
             db.execSQL("ALTER TABLE AppSettings_new RENAME TO AppSettings")
         }
     }
+
+val MIGRATION_32_33 =
+    object : Migration(32, 33) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN show_debug_bar INTEGER NOT NULL DEFAULT $DEFAULT_SHOW_DEBUG_BAR",
+            )
+        }
+    }

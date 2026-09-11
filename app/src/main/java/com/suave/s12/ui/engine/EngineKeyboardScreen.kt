@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.suave.s12.BuildConfig
 import com.suave.s12.IMEService
 import com.suave.s12.db.AppSettings
 import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
@@ -41,6 +40,7 @@ import com.suave.s12.db.DEFAULT_KEY_HEIGHT
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_POSITION
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
 import com.suave.s12.engine.action.SemanticAction
@@ -99,6 +99,7 @@ fun EngineKeyboardScreen(
     val hideLetters = (settings?.hideLetters ?: DEFAULT_HIDE_LETTERS).toBool()
     val minSwipeDistancePx = (settings?.minSwipeLength ?: DEFAULT_MIN_SWIPE_LENGTH).toFloat()
     val ignoreBottomPadding = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
+    val showDebugBar = (settings?.showDebugBar ?: DEFAULT_SHOW_DEBUG_BAR).toBool()
     val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
     val keyboardPosition =
         KeyboardPosition.entries.getOrElse(settings?.position ?: DEFAULT_POSITION) { KeyboardPosition.Center }
@@ -174,14 +175,14 @@ fun EngineKeyboardScreen(
                 .fillMaxWidth()
                 .then(if (!ignoreBottomPadding) Modifier.safeDrawingPadding() else Modifier),
     ) {
-        if (BuildConfig.DEBUG) {
+        if (showDebugBar) {
             // Shows the APK's actual install timestamp (read from PackageManager at runtime,
             // not baked in at Gradle configuration time - this project's Gradle configuration
             // cache gets reused whenever only source files change, which skips re-running the
             // build script and any Date() call in it, so a config-time timestamp went stale
             // exactly when it mattered most: confirming a fresh `adb install` actually took
             // effect), plus which app the IME thinks it's connected to and how its editor was
-            // classified. Debug builds only.
+            // classified.
             val installTime =
                 remember {
                     val info = ime.packageManager.getPackageInfo(ime.packageName, 0)

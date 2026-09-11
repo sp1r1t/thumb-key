@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BugReport
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -25,6 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
+import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
 import com.suave.s12.db.DEFAULT_SHOW_ON_SCREEN_KEYBOARD
 import com.suave.s12.db.OtherSettingsUpdate
 import com.suave.s12.ui.components.common.SettingRow
@@ -47,6 +49,8 @@ fun OtherSettingsScreen(
 
     var showOnScreenKeyboardState =
         (settings?.showOnScreenKeyboard ?: DEFAULT_SHOW_ON_SCREEN_KEYBOARD).toBool()
+    var showDebugBarState =
+        (settings?.showDebugBar ?: DEFAULT_SHOW_DEBUG_BAR).toBool()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
@@ -56,6 +60,7 @@ fun OtherSettingsScreen(
             OtherSettingsUpdate(
                 id = 1,
                 showOnScreenKeyboard = showOnScreenKeyboardState.toInt(),
+                showDebugBar = showDebugBarState.toInt(),
             ),
         )
     }
@@ -102,6 +107,37 @@ fun OtherSettingsScreen(
                             icon = {
                                 Icon(
                                     imageVector = Icons.Outlined.Keyboard,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+                    SettingRow(
+                        infoText = stringResource(R.string.show_debug_bar_info),
+                    ) {
+                        SwitchPreference(
+                            value = showDebugBarState,
+                            onValueChange = {
+                                showDebugBarState = it
+                                updateOtherSettings()
+                            },
+                            title = {
+                                Text(stringResource(R.string.show_debug_bar))
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (showDebugBarState) {
+                                            R.string.show_debug_bar_on
+                                        } else {
+                                            R.string.show_debug_bar_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.BugReport,
                                     contentDescription = null,
                                 )
                             },
