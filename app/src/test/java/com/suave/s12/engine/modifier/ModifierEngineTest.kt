@@ -161,6 +161,20 @@ class ModifierEngineTest {
     }
 
     @Test
+    fun `ctrl and shift held together keep shift as a real modifier flag, not just a case transform`() {
+        var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.CTRL, HOLD_CENTER)
+        state = ModifierEngine.applyModifierGesture(state, ModifierId.SHIFT, HOLD_CENTER)
+
+        // Termux (like most terminal emulators) binds paste to Ctrl+Shift+V, not Ctrl+V (which is
+        // the terminal's own "quoted insert") - so once a real modifier forces a raw KeyEvent,
+        // Shift must ride along as a genuine flag too, not get silently absorbed into the
+        // uppercase text the way it would for plain typing.
+        val resolved = ModifierEngine.resolve(state, KeyIntent.Text("v"))
+
+        assertEquals(ResolvedIntent.TypedText("V", setOf(ModifierId.CTRL, ModifierId.SHIFT)), resolved)
+    }
+
+    @Test
     fun `esc swipe zone example still resolves through the same ModifierPress routing`() {
         // Esc reached by swiping to a directional zone on the same physical key Ctrl sits on -
         // the gesture that fires applyModifierGesture is just whatever zone it locked to; the

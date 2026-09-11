@@ -94,8 +94,7 @@ object OutputExecutor {
                 CommandId.ARROW_DOWN -> KeyEvent.KEYCODE_DPAD_DOWN
             }
         sendEscIfNeeded(action.modifiers, ic)
-        val shiftFlag = if (ModifierId.SHIFT in action.modifiers) KeyEvent.META_SHIFT_ON else 0
-        sendKeyEvent(ic, keyCode, metaStateFor(action.modifiers) or shiftFlag)
+        sendKeyEvent(ic, keyCode, metaStateFor(action.modifiers))
     }
 
     /**
@@ -185,6 +184,7 @@ object OutputExecutor {
         var meta = 0
         if (ModifierId.CTRL in modifiers) meta = meta or KeyEvent.META_CTRL_ON
         if (ModifierId.ALT in modifiers) meta = meta or KeyEvent.META_ALT_ON
+        if (ModifierId.SHIFT in modifiers) meta = meta or KeyEvent.META_SHIFT_ON
         return meta
     }
 

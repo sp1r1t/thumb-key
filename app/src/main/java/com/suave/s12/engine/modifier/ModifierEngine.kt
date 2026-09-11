@@ -41,7 +41,16 @@ object ModifierEngine {
                     } else {
                         intent.text
                     }
-                val modifiers = if (modifiersApply) state.active.keys - ModifierId.SHIFT else emptySet()
+                // Shift alone is already fully expressed above as a text-case transform, so it's
+                // dropped from the modifier set here - that keeps a plain capital letter on the
+                // commitText fast path (OutputExecutor.typeText) instead of forcing every shifted
+                // character through a raw KeyEvent. But once a *real* modifier (Ctrl/Alt/Esc) is
+                // also active, a raw KeyEvent is already unavoidable, and Shift needs to ride
+                // along as a genuine meta flag too - e.g. Termux's paste binding is Ctrl+Shift+V,
+                // not Ctrl+V (which is the terminal's own "quoted insert"), so dropping Shift here
+                // silently downgraded every Ctrl+Shift+<key> combo into a plain Ctrl+<key> one.
+                val others = state.active.keys - ModifierId.SHIFT
+                val modifiers = if (modifiersApply && others.isNotEmpty()) state.active.keys else emptySet()
                 ResolvedIntent.TypedText(text, modifiers)
             }
 
