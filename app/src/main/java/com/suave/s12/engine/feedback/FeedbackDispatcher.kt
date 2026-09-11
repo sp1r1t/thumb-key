@@ -56,9 +56,7 @@ object FeedbackDispatcher {
             }
 
             // Repeat ticks and slide steps fire often while held - a full-strength buzz on each
-            // one is fatiguing, so they're quieter than a single deliberate tap/swipe. Not
-            // *too* quiet, though: HapticPlayer maps short/weak patterns to Android's weakest
-            // feedback constants, which are imperceptible on some devices - see ViewHapticPlayer.
+            // one is fatiguing, so they're quieter than a single deliberate tap/swipe.
             FeedbackEvent.RepeatTick -> {
                 HapticPattern((settings.baseDurationMs / 2).coerceAtLeast(1), (settings.baseAmplitude / 2).coerceAtLeast(1))
             }
