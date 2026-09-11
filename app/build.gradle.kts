@@ -1,6 +1,4 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.text.SimpleDateFormat
-import java.util.Date
 
 plugins {
     id("com.android.application")
@@ -27,12 +25,6 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
-
-        // Surfaced in a debug-only bar above the keyboard (EngineKeyboardScreen) - evaluated
-        // fresh on every Gradle configuration pass, so it actually changes build to build,
-        // unlike versionCode/versionName which this branch isn't bumping per iteration. Exists
-        // to make "which build is actually on the phone" a glance instead of an adb round-trip.
-        buildConfigField("String", "BUILD_TIME", "\"${SimpleDateFormat("MM-dd HH:mm:ss").format(Date())}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
