@@ -6,10 +6,11 @@ import com.suave.s12.engine.gesture.Direction
 import com.suave.s12.engine.gesture.GestureRecognizer
 import com.suave.s12.engine.gesture.RecognizerInput
 import com.suave.s12.engine.gesture.SlideAxis
-import com.suave.s12.engine.gesture.SwipeDirections
 import com.suave.s12.engine.gesture.TouchEvent
 import com.suave.s12.engine.gesture.TouchPhase
 import com.suave.s12.engine.gesture.Zone
+import com.suave.s12.engine.gesture.hasDirection
+import com.suave.s12.engine.gesture.occupiedSwipeMask
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.KeyPosition
@@ -70,9 +71,11 @@ class SuaveLayoutTest {
     }
 
     @Test
-    fun `n-cluster is four-way so a slightly high left swipe still types g`() {
+    fun `n-cluster has no diagonal intents so a slightly high left swipe still types g`() {
         val n = SUAVE_LAYOUT.getValue(KeyPosition(1, 3))
-        assertEquals(SwipeDirections.FOUR_WAY, n.gestureConfig.directions)
+        assertEquals(occupiedSwipeMask(n.intents), n.gestureConfig.occupiedDirections)
+        assertTrue(n.gestureConfig.occupiedDirections.hasDirection(Direction.LEFT))
+        assertFalse(n.gestureConfig.occupiedDirections.hasDirection(Direction.UP_LEFT))
         assertEquals(KeyIntent.Text("n"), n.intents[Zone.Center])
         assertEquals(KeyIntent.Text("g"), n.intents[Zone.Directional(Direction.LEFT)])
         assertEquals(null, n.intents[Zone.Directional(Direction.UP_LEFT)])
@@ -95,11 +98,13 @@ class SuaveLayoutTest {
     }
 
     @Test
-    fun `keys that actually have diagonal tokens stay eight-way`() {
+    fun `keys with diagonal tokens occupy those swipe directions`() {
         val r = SUAVE_LAYOUT.getValue(KeyPosition(0, 1))
         val e = SUAVE_LAYOUT.getValue(KeyPosition(1, 1))
-        assertEquals(SwipeDirections.EIGHT_WAY, r.gestureConfig.directions)
-        assertEquals(SwipeDirections.EIGHT_WAY, e.gestureConfig.directions)
+        assertEquals(occupiedSwipeMask(r.intents), r.gestureConfig.occupiedDirections)
+        assertEquals(occupiedSwipeMask(e.intents), e.gestureConfig.occupiedDirections)
+        assertTrue(r.gestureConfig.occupiedDirections.hasDirection(Direction.DOWN_LEFT))
+        assertTrue(e.gestureConfig.occupiedDirections.hasDirection(Direction.DOWN_RIGHT))
         assertEquals(KeyIntent.Text("?"), r.intents[Zone.Directional(Direction.DOWN_LEFT)])
         assertEquals(KeyIntent.Text("ch"), e.intents[Zone.Directional(Direction.DOWN_RIGHT)])
     }

@@ -1,5 +1,6 @@
 package com.suave.s12.engine.gesture
 
+
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -27,7 +28,7 @@ class GestureRecognizerTest {
     private val plainKeyConfig =
         GestureConfig(
             minSwipeDistancePx = 20f,
-            directions = SwipeDirections.FOUR_WAY,
+            occupiedDirections = CARDINAL_SWIPE_MASK,
             longPressTimeoutMs = 400L,
             repeatIntervalMs = 60L,
         )
@@ -129,7 +130,7 @@ class GestureRecognizerTest {
         val config =
             GestureConfig(
                 minSwipeDistancePx = 20f,
-                directions = SwipeDirections.FOUR_WAY,
+                occupiedDirections = CARDINAL_SWIPE_MASK,
                 slideAxis = SlideAxis.HORIZONTAL,
                 slideStepPx = 24f,
             )
@@ -173,7 +174,7 @@ class GestureRecognizerTest {
         val config =
             GestureConfig(
                 minSwipeDistancePx = 20f,
-                directions = SwipeDirections.FOUR_WAY,
+                occupiedDirections = CARDINAL_SWIPE_MASK,
                 slideAxis = SlideAxis.HORIZONTAL,
             )
         val recognizer = GestureRecognizer(config)
@@ -189,7 +190,7 @@ class GestureRecognizerTest {
         val config =
             GestureConfig(
                 minSwipeDistancePx = 20f,
-                directions = SwipeDirections.FOUR_WAY,
+                occupiedDirections = CARDINAL_SWIPE_MASK,
                 slideAxis = SlideAxis.BOTH,
                 slideStepPx = 24f,
             )
@@ -212,7 +213,7 @@ class GestureRecognizerTest {
         val config =
             GestureConfig(
                 minSwipeDistancePx = 20f,
-                directions = SwipeDirections.FOUR_WAY,
+                occupiedDirections = CARDINAL_SWIPE_MASK,
                 slideAxis = SlideAxis.BOTH,
                 slideStepPx = 24f,
             )
@@ -231,7 +232,7 @@ class GestureRecognizerTest {
         val config =
             GestureConfig(
                 minSwipeDistancePx = 20f,
-                directions = SwipeDirections.FOUR_WAY,
+                occupiedDirections = CARDINAL_SWIPE_MASK,
                 slideAxis = SlideAxis.BOTH,
                 slideStepPx = 24f,
             )
@@ -244,8 +245,8 @@ class GestureRecognizerTest {
     }
 
     @Test
-    fun `eight-way classifies a slightly high left swipe as UP_LEFT`() {
-        val config = GestureConfig(minSwipeDistancePx = 20f, directions = SwipeDirections.EIGHT_WAY)
+    fun `fully occupied key classifies a slightly high left swipe as UP_LEFT`() {
+        val config = GestureConfig(minSwipeDistancePx = 20f, occupiedDirections = ALL_SWIPE_MASK)
         val recognizer = GestureRecognizer(config)
         recognizer.process(down())
         val locked = recognizer.process(move(x = -40f, y = -20f, t = START_MS + 50))
@@ -254,11 +255,44 @@ class GestureRecognizerTest {
     }
 
     @Test
-    fun `four-way classifies the same slightly high left swipe as LEFT`() {
-        val config = GestureConfig(minSwipeDistancePx = 20f, directions = SwipeDirections.FOUR_WAY)
+    fun `cardinal-only key classifies the same slightly high left swipe as LEFT`() {
+        val config = GestureConfig(minSwipeDistancePx = 20f, occupiedDirections = CARDINAL_SWIPE_MASK)
         val recognizer = GestureRecognizer(config)
         recognizer.process(down())
         val locked = recognizer.process(move(x = -40f, y = -20f, t = START_MS + 50))
+
+        assertEquals(listOf(Gesture.SwipeLocked(Direction.LEFT)), locked)
+    }
+
+    @Test
+    fun `unclaimed angle never locks and releases as Center`() {
+        // Only L+R: pure down is unclaimed (D missing, and D's neighbours also missing).
+        val config =
+            GestureConfig(
+                minSwipeDistancePx = 20f,
+                occupiedDirections = swipeMask(Direction.LEFT, Direction.RIGHT),
+            )
+        val recognizer = GestureRecognizer(config)
+        recognizer.process(down())
+        val duringMove = recognizer.process(move(x = 0f, y = 50f, t = START_MS + 50))
+        val result = recognizer.process(up(START_MS + 100))
+
+        assertEquals(emptyList<Gesture>(), duringMove)
+        assertEquals(listOf(Gesture.Tap(Zone.Center), Gesture.Released), result)
+    }
+
+    @Test
+    fun `missing DL donates its L-side half so down-left locks LEFT`() {
+        val config =
+            GestureConfig(
+                minSwipeDistancePx = 20f,
+                occupiedDirections = swipeMask(Direction.LEFT, Direction.RIGHT),
+            )
+        val recognizer = GestureRecognizer(config)
+        recognizer.process(down())
+        // Angle ~225deg-ish toward down-left but on the L side of the DL bisector (~210deg):
+        // dx=-40, dy=20 -> atan2(-20,-40) roughly 206deg from +x... use dx=-35, dy=20
+        val locked = recognizer.process(move(x = -35f, y = 20f, t = START_MS + 50))
 
         assertEquals(listOf(Gesture.SwipeLocked(Direction.LEFT)), locked)
     }

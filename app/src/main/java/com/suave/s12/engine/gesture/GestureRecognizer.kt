@@ -1,7 +1,6 @@
 package com.suave.s12.engine.gesture
 
 import kotlin.math.abs
-import kotlin.math.atan2
 import kotlin.math.hypot
 
 /**
@@ -91,13 +90,17 @@ class GestureRecognizer(
             return emitSlideSteps(event)
         }
 
-        if (config.directions != SwipeDirections.NONE) {
-            val direction = resolveDirection(totalDx, totalDy, config.directions)
-            zone = Zone.Directional(direction)
-            zoneLocked = true
-            lastX = event.x
-            lastY = event.y
-            return listOf(Gesture.SwipeLocked(direction))
+        if (config.occupiedDirections != 0) {
+            val direction = resolveSwipeDirection(totalDx, totalDy, config.occupiedDirections)
+            if (direction != null) {
+                zone = Zone.Directional(direction)
+                zoneLocked = true
+                lastX = event.x
+                lastY = event.y
+                return listOf(Gesture.SwipeLocked(direction))
+            }
+            // Past threshold but angle is unclaimed: do not lock, do not buzz. Further movement
+            // may still lock if the finger enters an occupied wedge; release stays Center.
         }
         lastX = event.x
         lastY = event.y
@@ -165,42 +168,3 @@ class GestureRecognizer(
         }
 }
 
-/**
- * Compass angle: 0deg = RIGHT, 90deg = UP, +-180deg = LEFT, -90deg = DOWN (screen Y grows
- * downward, so "up" is negative dy).
- */
-private fun resolveDirection(
-    dx: Float,
-    dy: Float,
-    directions: SwipeDirections,
-): Direction {
-    val angleDeg = Math.toDegrees(atan2(-dy, dx).toDouble())
-    val normalized = (angleDeg + 360.0) % 360.0
-    return when (directions) {
-        SwipeDirections.NONE -> {
-            error("resolveDirection called with SwipeDirections.NONE")
-        }
-
-        SwipeDirections.FOUR_WAY -> {
-            when {
-                normalized < 45 || normalized >= 315 -> Direction.RIGHT
-                normalized < 135 -> Direction.UP
-                normalized < 225 -> Direction.LEFT
-                else -> Direction.DOWN
-            }
-        }
-
-        SwipeDirections.EIGHT_WAY -> {
-            when {
-                normalized < 22.5 || normalized >= 337.5 -> Direction.RIGHT
-                normalized < 67.5 -> Direction.UP_RIGHT
-                normalized < 112.5 -> Direction.UP
-                normalized < 157.5 -> Direction.UP_LEFT
-                normalized < 202.5 -> Direction.LEFT
-                normalized < 247.5 -> Direction.DOWN_LEFT
-                normalized < 292.5 -> Direction.DOWN
-                else -> Direction.DOWN_RIGHT
-            }
-        }
-    }
-}

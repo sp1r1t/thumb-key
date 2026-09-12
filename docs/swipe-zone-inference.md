@@ -6,11 +6,11 @@ assigned to it, instead of an explicit `swipeType` / `SwipeDirections` config.
 ## Problem
 
 ThumbKey-style layouts carry a separate swipe model per key
-(`EIGHT_WAY`, `FOUR_WAY_CROSS`, `FOUR_WAY_DIAGONAL`, `TWO_WAY_*`). The new
-gesture engine still carries a reduced form (`NONE` / `FOUR_WAY` / `EIGHT_WAY`)
-on `GestureConfig`.
+(`EIGHT_WAY`, `FOUR_WAY_CROSS`, `FOUR_WAY_DIAGONAL`, `TWO_WAY_*`). The live
+gesture engine used to carry a reduced form (`NONE` / `FOUR_WAY` /
+`EIGHT_WAY`) on `GestureConfig`.
 
-That field is a second source of truth. Which zones have intents already
+That field was a second source of truth. Which zones have intents already
 implies the geometry. Named swipe modes (`four-way cross`, `four-way
 diagonal`, and so on) are just particular occupancy patterns - keeping them
 as config only adds noise and drift.
@@ -96,14 +96,16 @@ L and R are occupied; the three down-side directions are empty.
 
 - `KeyMapping.intents` (which `Zone`s are present) is enough to compute the
   partition.
-- `SwipeNWay` on legacy `KeyItemC` and `SwipeDirections` on `GestureConfig`
-  become redundant for layout definition and can be removed or ignored once
-  the recognizer implements this inference.
-- The recognizer needs: occupied directional set -> wedge boundaries (45°
-  base, one-hop 22.5° shares from missing neighbours, cap 90°), then
-  angle-to-zone lookup, with unclaimed angle mapping to center at commit time
-  (and no lock event while dragging through it).
+- Live layouts call `GestureConfig.withOccupiedDirections(intents)`; there is
+  no `SwipeDirections` enum anymore. Legacy `SwipeNWay` remains only under
+  `legacy/`.
+- The recognizer uses `resolveSwipeDirection`: occupied set -> 45deg base bins,
+  one-hop 22.5deg share to a present neighbour (else unclaimed), cap 90deg per
+  occupied direction. Unclaimed angle maps to center at commit time and emits
+  no `SwipeLocked` while dragging through it.
 
 ## Status
 
-Agreed design direction. Not yet implemented in the gesture recognizer.
+Implemented: `GestureConfig.occupiedDirections` is a bit mask inferred from
+intents; `resolveSwipeDirection` applies the one-hop 50:50 rule; unclaimed
+angles never emit `SwipeLocked`.

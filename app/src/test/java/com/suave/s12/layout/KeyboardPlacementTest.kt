@@ -1,8 +1,8 @@
 package com.suave.s12.layout
 
 import com.suave.s12.engine.gesture.GestureConfig
-import com.suave.s12.engine.gesture.SwipeDirections
 import com.suave.s12.engine.gesture.Zone
+import com.suave.s12.engine.gesture.CARDINAL_SWIPE_MASK
 import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.KeyMapping
 import com.suave.s12.engine.intent.KeyPosition
@@ -68,7 +68,7 @@ class KeyboardPlacementTest {
 
     @Test
     fun `columnCount counts span so Enter still fills five Suave columns`() {
-        val config = GestureConfig(minSwipeDistancePx = 64f, directions = SwipeDirections.FOUR_WAY)
+        val config = GestureConfig(minSwipeDistancePx = 64f, occupiedDirections = CARDINAL_SWIPE_MASK)
         val layout: Layout =
             mapOf(
                 KeyPosition(0, 0) to KeyMapping(config, mapOf(Zone.Center to KeyIntent.Text("a"))),

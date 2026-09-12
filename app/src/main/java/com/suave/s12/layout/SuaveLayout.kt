@@ -3,8 +3,8 @@ package com.suave.s12.layout
 import com.suave.s12.engine.gesture.Direction
 import com.suave.s12.engine.gesture.GestureConfig
 import com.suave.s12.engine.gesture.SlideAxis
-import com.suave.s12.engine.gesture.SwipeDirections
 import com.suave.s12.engine.gesture.Zone
+import com.suave.s12.engine.gesture.withOccupiedDirections
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.KeyMapping
@@ -31,9 +31,11 @@ val SUAVE_SHIFT_MAPPINGS: Map<String, String> =
 
 // minSwipeDistancePx is a placeholder here - Step 5's wiring overrides it per the user's swipe-
 // threshold setting (`config.copy(minSwipeDistancePx = ...)`) when it turns this Layout into live
-// GestureRecognizers; everything else here is intrinsic to each key, not user-tunable.
-private val EIGHT_WAY_KEY = GestureConfig(minSwipeDistancePx = 64f, directions = SwipeDirections.EIGHT_WAY)
-private val FOUR_WAY_KEY = GestureConfig(minSwipeDistancePx = 64f, directions = SwipeDirections.FOUR_WAY)
+// GestureRecognizers; occupied swipe directions are inferred from intents (see
+// docs/swipe-zone-inference.md).
+private val DEFAULT_GESTURE = GestureConfig(minSwipeDistancePx = 64f)
+private val SLIDE_HORIZONTAL = DEFAULT_GESTURE.copy(slideAxis = SlideAxis.HORIZONTAL)
+private val SLIDE_BOTH = DEFAULT_GESTURE.copy(slideAxis = SlideAxis.BOTH)
 
 /**
  * Maps a key-definition token to what it means. Unlike the pre-rewrite `generateSuaveLayout`,
@@ -133,12 +135,9 @@ private fun key(
             bottomLeft?.let { put(Zone.Directional(Direction.DOWN_LEFT), token(it)) }
             bottomRight?.let { put(Zone.Directional(Direction.DOWN_RIGHT), token(it)) }
         }
-    // Cardinal-only keys must not use eight-way: a slightly high/low left swipe on n
-    // would lock the empty UP_LEFT/DOWN_LEFT diagonal, buzz twice, and type nothing.
-    // Diagonal tokens opt into eight-way; space/backspace/ctrl still pass an explicit config.
-    val hasDiagonal =
-        topLeft != null || topRight != null || bottomLeft != null || bottomRight != null
-    val resolvedGesture = gesture ?: if (hasDiagonal) EIGHT_WAY_KEY else FOUR_WAY_KEY
+    // Occupied swipe directions are inferred from intents - no separate FOUR_WAY / EIGHT_WAY
+    // flag. Slide axis (space/backspace) is the only gesture shape layouts still pass explicitly.
+    val resolvedGesture = (gesture ?: DEFAULT_GESTURE).withOccupiedDirections(intents)
     return KeyMapping(resolvedGesture, intents, slideBehavior, columnSpan)
 }
 
@@ -147,7 +146,7 @@ private val SUAVE_BACKSPACE =
         "backspace",
         top = "'",
         bottom = "\"",
-        gesture = FOUR_WAY_KEY.copy(slideAxis = SlideAxis.HORIZONTAL),
+        gesture = SLIDE_HORIZONTAL,
         slideBehavior = SlideBehavior.SELECT_AND_DELETE,
     )
 private val SUAVE_SPACE =
@@ -157,10 +156,10 @@ private val SUAVE_SPACE =
         bottom = "down",
         left = "left",
         right = "right",
-        gesture = FOUR_WAY_KEY.copy(slideAxis = SlideAxis.BOTH),
+        gesture = SLIDE_BOTH,
         slideBehavior = SlideBehavior.MOVE_CURSOR,
     )
-private val SUAVE_CTRL = key("ctrl", right = "alt", top = "esc", gesture = FOUR_WAY_KEY)
+private val SUAVE_CTRL = key("ctrl", right = "alt", top = "esc")
 
 /** Settings / IME / language / move stay reachable on overlay layers that drop the letter grid. */
 private fun overlayUtilityKey(center: String) =
@@ -198,7 +197,7 @@ private val SUAVE_ABC_KEY =
         bottomRight = "redo",
         bottom = "paste",
     )
-private val SUAVE_ENTER = key("return", top = "tab", gesture = FOUR_WAY_KEY, columnSpan = 2)
+private val SUAVE_ENTER = key("return", top = "tab", columnSpan = 2)
 
 /**
  * Suave, ported to pure data: position + gesture -> intent, nothing else. Compare to the
@@ -253,15 +252,15 @@ val SUAVE_LAYOUT: Layout =
  */
 val SUAVE_NUMERIC_LAYOUT: Layout =
     mapOf(
-        KeyPosition(0, 0) to key("1", top = "\u00B9", bottom = "\u2081", gesture = FOUR_WAY_KEY),
-        KeyPosition(0, 1) to key("2", top = "\u00B2", bottom = "\u2082", gesture = FOUR_WAY_KEY),
+        KeyPosition(0, 0) to key("1", top = "\u00B9", bottom = "\u2081"),
+        KeyPosition(0, 1) to key("2", top = "\u00B2", bottom = "\u2082"),
         KeyPosition(0, 2) to SUAVE_BACKSPACE,
-        KeyPosition(0, 3) to key("3", top = "\u00B3", bottom = "\u2083", gesture = FOUR_WAY_KEY),
-        KeyPosition(0, 4) to key("4", top = "\u2074", bottom = "\u2084", gesture = FOUR_WAY_KEY),
-        KeyPosition(1, 0) to key("5", top = "\u2075", bottom = "\u2085", gesture = FOUR_WAY_KEY),
+        KeyPosition(0, 3) to key("3", top = "\u00B3", bottom = "\u2083"),
+        KeyPosition(0, 4) to key("4", top = "\u2074", bottom = "\u2084"),
+        KeyPosition(1, 0) to key("5", top = "\u2075", bottom = "\u2085"),
         KeyPosition(1, 1) to key("6", top = "\u2076", topRight = "\u20AC", bottom = "\u2086"),
         KeyPosition(1, 2) to SUAVE_SPACE,
-        KeyPosition(1, 3) to key("7", top = "\u2077", bottom = "\u2087", gesture = FOUR_WAY_KEY),
+        KeyPosition(1, 3) to key("7", top = "\u2077", bottom = "\u2087"),
         KeyPosition(1, 4) to key("8", top = "\u2078", topLeft = "$", bottom = "\u2088"),
         KeyPosition(2, 0) to
             key(
@@ -280,7 +279,6 @@ val SUAVE_NUMERIC_LAYOUT: Layout =
                 bottom = "#",
                 bottomLeft = "@",
                 bottomRight = "$",
-                gesture = FOUR_WAY_KEY,
             ),
         KeyPosition(2, 2) to
             key(
@@ -310,7 +308,6 @@ val SUAVE_NUMERIC_LAYOUT: Layout =
                 left = "]",
                 bottom = "\u2080",
                 bottomLeft = "}",
-                gesture = FOUR_WAY_KEY,
             ),
         KeyPosition(3, 0) to SUAVE_CTRL,
         KeyPosition(3, 1) to SUAVE_EMOJI_KEY,

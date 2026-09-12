@@ -1,13 +1,13 @@
 package com.suave.s12.engine.intent
 
 import com.suave.s12.engine.gesture.GestureConfig
-import com.suave.s12.engine.gesture.SwipeDirections
 import com.suave.s12.engine.gesture.Zone
+import com.suave.s12.engine.gesture.CARDINAL_SWIPE_MASK
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class LayoutRowsTest {
-    private val config = GestureConfig(minSwipeDistancePx = 64f, directions = SwipeDirections.FOUR_WAY)
+    private val config = GestureConfig(minSwipeDistancePx = 64f, occupiedDirections = CARDINAL_SWIPE_MASK)
 
     private fun key(label: String) =
         KeyMapping(config, mapOf(Zone.Center to KeyIntent.Text(label)))

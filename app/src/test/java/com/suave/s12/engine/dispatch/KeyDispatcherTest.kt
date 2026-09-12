@@ -7,8 +7,9 @@ import com.suave.s12.engine.gesture.Direction
 import com.suave.s12.engine.gesture.Gesture
 import com.suave.s12.engine.gesture.GestureConfig
 import com.suave.s12.engine.gesture.SlideAxis
-import com.suave.s12.engine.gesture.SwipeDirections
 import com.suave.s12.engine.gesture.Zone
+import com.suave.s12.engine.gesture.CARDINAL_SWIPE_MASK
+import com.suave.s12.engine.gesture.ALL_SWIPE_MASK
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.KeyMapping
@@ -22,7 +23,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-private val CONFIG = GestureConfig(minSwipeDistancePx = 64f, directions = SwipeDirections.FOUR_WAY)
+private val CONFIG = GestureConfig(minSwipeDistancePx = 64f, occupiedDirections = CARDINAL_SWIPE_MASK)
 
 /** Mirrors SUAVE_LAYOUT's (3,0): Ctrl on center, Alt on the right swipe, Esc on the up swipe. */
 private val CTRL_ALT_ESC_KEY =
@@ -194,7 +195,7 @@ class KeyDispatcherTest {
     fun `a swipe onto an empty diagonal still types the center letter rather than going silent`() {
         val key =
             KeyMapping(
-                GestureConfig(minSwipeDistancePx = 64f, directions = SwipeDirections.EIGHT_WAY),
+                GestureConfig(minSwipeDistancePx = 64f, occupiedDirections = ALL_SWIPE_MASK),
                 mapOf(
                     Zone.Center to KeyIntent.Text("n"),
                     Zone.Directional(Direction.LEFT) to KeyIntent.Text("g"),
