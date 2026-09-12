@@ -9,6 +9,7 @@ import androidx.compose.material.icons.outlined.BorderBottom
 import androidx.compose.material.icons.outlined.BorderOuter
 import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.material.icons.outlined.Crop75
 import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.FormatColorFill
@@ -83,6 +84,8 @@ import com.suave.s12.db.DEFAULT_KEY_RADIUS
 import com.suave.s12.db.DEFAULT_KEYBOARD_POSITIONS
 import com.suave.s12.db.DEFAULT_PREVENT_CRAMPED_DUAL
 import com.suave.s12.db.DEFAULT_PREVENT_NEEDLESS_SPLIT
+import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_COPY
+import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_CUT
 import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH
 import com.suave.s12.db.MAX_INLINE_SUGGESTION_HEIGHT
 import com.suave.s12.db.MIN_INLINE_SUGGESTION_HEIGHT
@@ -197,6 +200,10 @@ fun AppearanceScreen(
         (settings?.preventNeedlessSplit ?: DEFAULT_PREVENT_NEEDLESS_SPLIT).toBool()
     var showToastOnSwitchState =
         (settings?.showToastOnLayoutSwitch ?: DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH).toBool()
+    var showToastOnCopyState =
+        (settings?.showToastOnCopy ?: DEFAULT_SHOW_TOAST_ON_COPY).toBool()
+    var showToastOnCutState =
+        (settings?.showToastOnCut ?: DEFAULT_SHOW_TOAST_ON_CUT).toBool()
     var inlineSuggestionsState =
         (settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()
     var inlineSuggestionHeightState =
@@ -247,6 +254,8 @@ fun AppearanceScreen(
                 preventCrampedDual = preventCrampedDualState.toInt(),
                 preventNeedlessSplit = preventNeedlessSplitState.toInt(),
                 showToastOnLayoutSwitch = showToastOnSwitchState.toInt(),
+                showToastOnCopy = showToastOnCopyState.toInt(),
+                showToastOnCut = showToastOnCutState.toInt(),
                 inlineSuggestions = inlineSuggestionsState.toInt(),
                 inlineSuggestionHeight = inlineSuggestionHeightState,
             ),
@@ -567,12 +576,100 @@ fun AppearanceScreen(
                             preventNeedlessSplitState = it
                             updateAppearance()
                         },
-                        showToastOnSwitch = showToastOnSwitchState,
-                        onShowToastOnSwitchChange = {
-                            showToastOnSwitchState = it
-                            updateAppearance()
-                        },
                     )
+                    }
+
+                    SettingsSection(title = stringResource(R.string.settings_section_notices)) {
+                        SwitchPreference(
+                            value = showToastOnSwitchState,
+                            onValueChange = {
+                                showToastOnSwitchState = it
+                                updateAppearance()
+                            },
+                            title = {
+                                SettingTitle(
+                                    text = stringResource(R.string.show_toast_on_switch),
+                                    infoText = stringResource(R.string.show_toast_on_switch_info),
+                                )
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (showToastOnSwitchState) {
+                                            R.string.show_toast_on_switch_on
+                                        } else {
+                                            R.string.show_toast_on_switch_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Notifications,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                        SwitchPreference(
+                            value = showToastOnCopyState,
+                            onValueChange = {
+                                showToastOnCopyState = it
+                                updateAppearance()
+                            },
+                            title = {
+                                SettingTitle(
+                                    text = stringResource(R.string.show_toast_on_copy),
+                                    infoText = stringResource(R.string.show_toast_on_copy_info),
+                                )
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (showToastOnCopyState) {
+                                            R.string.show_toast_on_copy_on
+                                        } else {
+                                            R.string.show_toast_on_copy_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.ContentCopy,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                        SwitchPreference(
+                            value = showToastOnCutState,
+                            onValueChange = {
+                                showToastOnCutState = it
+                                updateAppearance()
+                            },
+                            title = {
+                                SettingTitle(
+                                    text = stringResource(R.string.show_toast_on_cut),
+                                    infoText = stringResource(R.string.show_toast_on_cut_info),
+                                )
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (showToastOnCutState) {
+                                            R.string.show_toast_on_cut_on
+                                        } else {
+                                            R.string.show_toast_on_cut_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.ContentCut,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
                     }
 
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
@@ -1197,8 +1294,6 @@ private fun EnabledKeyboardPositionsPreference(
     onPreventCrampedDualChange: (Boolean) -> Unit,
     preventNeedlessSplit: Boolean,
     onPreventNeedlessSplitChange: (Boolean) -> Unit,
-    showToastOnSwitch: Boolean,
-    onShowToastOnSwitchChange: (Boolean) -> Unit,
 ) {
     val selected = parseKeyboardPositions(value)
     val dualEnabled = KeyboardPosition.Dual in selected
@@ -1270,30 +1365,6 @@ private fun EnabledKeyboardPositionsPreference(
                     },
                 )
             }
-            SwitchPreference(
-                value = showToastOnSwitch,
-                onValueChange = onShowToastOnSwitchChange,
-                title = {
-                    Text(stringResource(R.string.show_toast_on_switch))
-                },
-                summary = {
-                    Text(
-                        stringResource(
-                            if (showToastOnSwitch) {
-                                R.string.show_toast_on_switch_on
-                            } else {
-                                R.string.show_toast_on_switch_off
-                            },
-                        ),
-                    )
-                },
-                icon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Notifications,
-                        contentDescription = null,
-                    )
-                },
-            )
         },
     ) {
         TOGGLEABLE_KEYBOARD_POSITIONS.forEach { position ->

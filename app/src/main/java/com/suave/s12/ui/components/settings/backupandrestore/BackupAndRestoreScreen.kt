@@ -68,6 +68,8 @@ import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
 import com.suave.s12.db.DEFAULT_SHOW_ON_SCREEN_KEYBOARD
+import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_COPY
+import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_CUT
 import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH
 import com.suave.s12.db.DEFAULT_THEME
 import com.suave.s12.db.DEFAULT_THEME_COLOR
@@ -253,6 +255,8 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             keyboardLayout = DEFAULT_KEYBOARD_LAYOUT,
             keyboardLayouts = setOf(DEFAULT_KEYBOARD_LAYOUT).joinToString(),
             showToastOnLayoutSwitch = DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH,
+            showToastOnCopy = DEFAULT_SHOW_TOAST_ON_COPY,
+            showToastOnCut = DEFAULT_SHOW_TOAST_ON_CUT,
             position = DEFAULT_POSITION,
             lastVersionCodeViewed = appSettingsViewModel.appSettings.value?.lastVersionCodeViewed ?: 0,
             clipboardHistoryEnabled = DEFAULT_CLIPBOARD_HISTORY_ENABLED,

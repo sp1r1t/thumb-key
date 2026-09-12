@@ -98,11 +98,11 @@ object ActionExecutor {
             if (ime.clipboardUsePrivate()) {
                 val text = ic.getSelectedText(0) ?: return
                 ime.clipboardAddPrivateClip(text.toString())?.let {
-                    ime.showNotice(ime.getString(R.string.copy))
+                    showActionNotice(ime, ime.showToastOnCopy(), R.string.copy)
                 }
             } else {
                 ic.performContextMenuAction(android.R.id.copy)
-                ime.showNotice(ime.getString(R.string.copy))
+                showActionNotice(ime, ime.showToastOnCopy(), R.string.copy)
             }
         }
         withSelectionOrAll(ime, ::performCopy)
@@ -122,9 +122,11 @@ object ActionExecutor {
                 val text = ic.getSelectedText(0) ?: return
                 ime.clipboardAddPrivateClip(text.toString())?.let {
                     ic.commitText("", 1)
+                    showActionNotice(ime, ime.showToastOnCut(), R.string.cut)
                 }
             } else {
                 ic.performContextMenuAction(android.R.id.cut)
+                showActionNotice(ime, ime.showToastOnCut(), R.string.cut)
             }
         }
         withSelectionOrAll(ime, ::performCut)
@@ -217,4 +219,20 @@ object ActionExecutor {
     private fun cycleKeyboardRight(host: AppCommandHost) {
         host.onChangePosition { it }
     }
+
+    private fun showActionNotice(
+        ime: IMEService,
+        enabled: Boolean,
+        textRes: Int,
+    ) {
+        if (shouldShowActionNotice(enabled, succeeded = true)) {
+            ime.showNotice(ime.getString(textRes))
+        }
+    }
 }
+
+/** Overlay notice only when the setting is on and the copy/cut actually happened. */
+fun shouldShowActionNotice(
+    enabled: Boolean,
+    succeeded: Boolean,
+): Boolean = enabled && succeeded

@@ -87,6 +87,8 @@ const val DEFAULT_SLIDE_HOLD_ENABLED = 0
 const val DEFAULT_KEY_MODIFICATIONS = ""
 const val DEFAULT_IGNORE_BOTTOM_PADDING = 0
 const val DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH = 1
+const val DEFAULT_SHOW_TOAST_ON_COPY = 1
+const val DEFAULT_SHOW_TOAST_ON_CUT = 1
 const val DEFAULT_DISABLE_FULLSCREEN_EDITOR = 0
 const val DEFAULT_CLIPBOARD_HISTORY_ENABLED = 0
 const val DEFAULT_CLIPBOARD_AUTO_CLEANUP_ENABLED = 1
@@ -250,6 +252,16 @@ data class AppSettings(
         defaultValue = DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH.toString(),
     )
     val showToastOnLayoutSwitch: Int,
+    @ColumnInfo(
+        name = "show_toast_on_copy",
+        defaultValue = DEFAULT_SHOW_TOAST_ON_COPY.toString(),
+    )
+    val showToastOnCopy: Int = DEFAULT_SHOW_TOAST_ON_COPY,
+    @ColumnInfo(
+        name = "show_toast_on_cut",
+        defaultValue = DEFAULT_SHOW_TOAST_ON_CUT.toString(),
+    )
+    val showToastOnCut: Int = DEFAULT_SHOW_TOAST_ON_CUT,
     @ColumnInfo(
         name = "position",
         defaultValue = DEFAULT_POSITION.toString(),
@@ -509,6 +521,10 @@ data class AppearanceUpdate(
     val preventNeedlessSplit: Int,
     @ColumnInfo(name = "show_toast_on_layout_switch")
     val showToastOnLayoutSwitch: Int,
+    @ColumnInfo(name = "show_toast_on_copy")
+    val showToastOnCopy: Int,
+    @ColumnInfo(name = "show_toast_on_cut")
+    val showToastOnCut: Int,
     @ColumnInfo(name = "inline_suggestions")
     val inlineSuggestions: Int,
     @ColumnInfo(name = "inline_suggestion_height")
@@ -654,7 +670,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 45,
+    version = 46,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -744,6 +760,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_42_43,
                             MIGRATION_43_44,
                             MIGRATION_44_45,
+                            MIGRATION_45_46,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

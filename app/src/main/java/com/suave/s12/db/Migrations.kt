@@ -654,3 +654,15 @@ val MIGRATION_44_45 =
             )
         }
     }
+
+val MIGRATION_45_46 =
+    object : Migration(45, 46) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN show_toast_on_copy INTEGER NOT NULL DEFAULT $DEFAULT_SHOW_TOAST_ON_COPY",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN show_toast_on_cut INTEGER NOT NULL DEFAULT $DEFAULT_SHOW_TOAST_ON_CUT",
+            )
+        }
+    }

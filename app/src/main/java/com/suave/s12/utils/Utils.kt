@@ -44,6 +44,7 @@ import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
 import com.suave.s12.db.DEFAULT_KEYBOARD_LAYOUT
 import com.suave.s12.db.LayoutsUpdate
+import com.suave.s12.ui.engine.shouldShowActionNotice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -1320,9 +1321,15 @@ fun performKeyAction(
                     val text = ime.currentInputConnection.getSelectedText(0).toString()
                     ime.clipboardAddPrivateClip(text)?.let {
                         ime.currentInputConnection.commitText("", 1)
+                        if (shouldShowActionNotice(ime.showToastOnCut(), succeeded = true)) {
+                            ime.showNotice(ime.getString(R.string.cut))
+                        }
                     }
                 } else {
                     ime.currentInputConnection.performContextMenuAction(android.R.id.cut)
+                    if (shouldShowActionNotice(ime.showToastOnCut(), succeeded = true)) {
+                        ime.showNotice(ime.getString(R.string.cut))
+                    }
                 }
             }
 
@@ -1346,15 +1353,16 @@ fun performKeyAction(
                     val text = ime.currentInputConnection.getSelectedText(0)
                     if (text != null) {
                         ime.clipboardAddPrivateClip(text.toString())?.let {
-                            // Text successfully added to clipboard history
-                            val message = ime.getString(R.string.copy)
-                            ime.showNotice(message)
+                            if (shouldShowActionNotice(ime.showToastOnCopy(), succeeded = true)) {
+                                ime.showNotice(ime.getString(R.string.copy))
+                            }
                         }
                     }
                 } else {
                     ime.currentInputConnection.performContextMenuAction(android.R.id.copy)
-                    val message = ime.getString(R.string.copy)
-                    ime.showNotice(message)
+                    if (shouldShowActionNotice(ime.showToastOnCopy(), succeeded = true)) {
+                        ime.showNotice(ime.getString(R.string.copy))
+                    }
                 }
             }
             keyboardSettings.textProcessor?.handleFinishInput(ime)
