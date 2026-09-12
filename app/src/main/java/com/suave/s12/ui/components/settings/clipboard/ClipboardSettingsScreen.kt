@@ -43,9 +43,11 @@ import com.suave.s12.db.DEFAULT_CLIPBOARD_MAX_SIZE
 import com.suave.s12.db.DEFAULT_CLIPBOARD_SIZE_LIMIT_ENABLED
 import com.suave.s12.db.DEFAULT_CAPTURE_SYSTEM_CLIPBOARD
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
+import com.suave.s12.db.DEFAULT_VIBRATE_HOLD_REPEAT_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
 import com.suave.s12.db.MAX_CLIPBOARD_MAX_SIZE
 import com.suave.s12.db.MIN_CLIPBOARD_MAX_SIZE
+import com.suave.s12.engine.feedback.hapticTypeFromDb
 import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.SettingTitle
@@ -109,6 +111,8 @@ fun ClipboardSettingsScreen(
     var captureSystemClipboardState =
         (settings?.captureSystemClipboard ?: DEFAULT_CAPTURE_SYSTEM_CLIPBOARD).toBool()
     val vibrateOnHoldRepeat = (settings?.vibrateOnHoldRepeat ?: DEFAULT_VIBRATE_ON_HOLD_REPEAT).toBool()
+    val vibrateHoldRepeatType =
+        hapticTypeFromDb(settings?.vibrateHoldRepeatType ?: DEFAULT_VIBRATE_HOLD_REPEAT_TYPE)
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
@@ -355,6 +359,7 @@ fun ClipboardSettingsScreen(
                             },
                             valueRange = MIN_CLIPBOARD_MAX_SIZE..MAX_CLIPBOARD_MAX_SIZE,
                             vibrateOnRepeat = vibrateOnHoldRepeat,
+                            repeatHapticType = vibrateHoldRepeatType,
                             enabled = clipboardHistoryEnabledState && clipboardSizeLimitEnabledState,
                             title = {
                                 Text(stringResource(R.string.clipboard_max_size))

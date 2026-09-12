@@ -43,6 +43,14 @@ const val DEFAULT_THEME_COLOR = 0
 const val DEFAULT_VIBRATE_ON_TAP = 1
 const val DEFAULT_VIBRATE_ON_SLIDE = 1
 const val DEFAULT_VIBRATE_ON_HOLD_REPEAT = 1
+const val DEFAULT_VIBRATE_ON_SWIPE = 1
+const val DEFAULT_VIBRATE_ON_MODIFIER = 1
+/** Must match [com.suave.s12.engine.feedback.HapticType] ordinals. */
+const val DEFAULT_VIBRATE_TAP_TYPE = 0
+const val DEFAULT_VIBRATE_SWIPE_TYPE = 0
+const val DEFAULT_VIBRATE_SLIDE_TYPE = 5
+const val DEFAULT_VIBRATE_HOLD_REPEAT_TYPE = 1
+const val DEFAULT_VIBRATE_MODIFIER_TYPE = 4
 const val DEFAULT_SOUND_ON_TAP = 0
 const val DEFAULT_MIN_SWIPE_LENGTH = 40
 const val DEFAULT_PUSHUP_SIZE = 0
@@ -340,6 +348,41 @@ data class AppSettings(
         defaultValue = DEFAULT_DISTINCT_LETTER_CONTROL_COLORS.toString(),
     )
     val distinctLetterControlColors: Int = DEFAULT_DISTINCT_LETTER_CONTROL_COLORS,
+    @ColumnInfo(
+        name = "vibrate_on_swipe",
+        defaultValue = DEFAULT_VIBRATE_ON_SWIPE.toString(),
+    )
+    val vibrateOnSwipe: Int = DEFAULT_VIBRATE_ON_SWIPE,
+    @ColumnInfo(
+        name = "vibrate_on_modifier",
+        defaultValue = DEFAULT_VIBRATE_ON_MODIFIER.toString(),
+    )
+    val vibrateOnModifier: Int = DEFAULT_VIBRATE_ON_MODIFIER,
+    @ColumnInfo(
+        name = "vibrate_tap_type",
+        defaultValue = DEFAULT_VIBRATE_TAP_TYPE.toString(),
+    )
+    val vibrateTapType: Int = DEFAULT_VIBRATE_TAP_TYPE,
+    @ColumnInfo(
+        name = "vibrate_swipe_type",
+        defaultValue = DEFAULT_VIBRATE_SWIPE_TYPE.toString(),
+    )
+    val vibrateSwipeType: Int = DEFAULT_VIBRATE_SWIPE_TYPE,
+    @ColumnInfo(
+        name = "vibrate_slide_type",
+        defaultValue = DEFAULT_VIBRATE_SLIDE_TYPE.toString(),
+    )
+    val vibrateSlideType: Int = DEFAULT_VIBRATE_SLIDE_TYPE,
+    @ColumnInfo(
+        name = "vibrate_hold_repeat_type",
+        defaultValue = DEFAULT_VIBRATE_HOLD_REPEAT_TYPE.toString(),
+    )
+    val vibrateHoldRepeatType: Int = DEFAULT_VIBRATE_HOLD_REPEAT_TYPE,
+    @ColumnInfo(
+        name = "vibrate_modifier_type",
+        defaultValue = DEFAULT_VIBRATE_MODIFIER_TYPE.toString(),
+    )
+    val vibrateModifierType: Int = DEFAULT_VIBRATE_MODIFIER_TYPE,
 )
 
 data class LayoutsUpdate(
@@ -412,6 +455,20 @@ data class AppearanceUpdate(
     val animationLetterDrop: Int,
     @ColumnInfo(name = "distinct_letter_control_colors")
     val distinctLetterControlColors: Int,
+    @ColumnInfo(name = "vibrate_on_swipe")
+    val vibrateOnSwipe: Int,
+    @ColumnInfo(name = "vibrate_on_modifier")
+    val vibrateOnModifier: Int,
+    @ColumnInfo(name = "vibrate_tap_type")
+    val vibrateTapType: Int,
+    @ColumnInfo(name = "vibrate_swipe_type")
+    val vibrateSwipeType: Int,
+    @ColumnInfo(name = "vibrate_slide_type")
+    val vibrateSlideType: Int,
+    @ColumnInfo(name = "vibrate_hold_repeat_type")
+    val vibrateHoldRepeatType: Int,
+    @ColumnInfo(name = "vibrate_modifier_type")
+    val vibrateModifierType: Int,
 )
 
 data class BehaviorUpdate(
@@ -551,7 +608,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 41,
+    version = 42,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -637,6 +694,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_38_39,
                             MIGRATION_39_40,
                             MIGRATION_40_41,
+                            MIGRATION_41_42,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

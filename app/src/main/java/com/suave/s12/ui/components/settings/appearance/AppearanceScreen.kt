@@ -26,6 +26,7 @@ import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.KeyboardCapslock
 import androidx.compose.material.icons.outlined.KeyboardControlKey
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.LinearScale
@@ -35,6 +36,7 @@ import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.RoundedCorner
 import androidx.compose.material.icons.outlined.South
+import androidx.compose.material.icons.outlined.Swipe
 import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.VerticalAlignTop
 import androidx.compose.material.icons.outlined.Vibration
@@ -91,10 +93,19 @@ import com.suave.s12.db.DEFAULT_KEY_RADIUS
 import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_THEME
 import com.suave.s12.db.DEFAULT_THEME_COLOR
+import com.suave.s12.db.DEFAULT_VIBRATE_HOLD_REPEAT_TYPE
+import com.suave.s12.db.DEFAULT_VIBRATE_MODIFIER_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
+import com.suave.s12.db.DEFAULT_VIBRATE_ON_MODIFIER
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
+import com.suave.s12.db.DEFAULT_VIBRATE_ON_SWIPE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
+import com.suave.s12.db.DEFAULT_VIBRATE_SLIDE_TYPE
+import com.suave.s12.db.DEFAULT_VIBRATE_SWIPE_TYPE
+import com.suave.s12.db.DEFAULT_VIBRATE_TAP_TYPE
 import com.suave.s12.db.AppearanceUpdate
+import com.suave.s12.engine.feedback.HapticType
+import com.suave.s12.engine.feedback.hapticTypeFromDb
 import com.suave.s12.layout.BuiltinLayouts
 import com.suave.s12.layout.DEFAULT_LAYER_HEIGHTS
 import com.suave.s12.layout.LayoutLayer
@@ -141,9 +152,18 @@ fun AppearanceScreen(
         (settings?.distinctLetterControlColors ?: DEFAULT_DISTINCT_LETTER_CONTROL_COLORS).toBool()
 
     var vibrateOnTapState = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
+    var vibrateOnSwipeState = (settings?.vibrateOnSwipe ?: DEFAULT_VIBRATE_ON_SWIPE).toBool()
     var vibrateOnSlideState = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
     var vibrateOnHoldRepeatState =
         (settings?.vibrateOnHoldRepeat ?: DEFAULT_VIBRATE_ON_HOLD_REPEAT).toBool()
+    var vibrateOnModifierState = (settings?.vibrateOnModifier ?: DEFAULT_VIBRATE_ON_MODIFIER).toBool()
+    var vibrateTapTypeState = hapticTypeFromDb(settings?.vibrateTapType ?: DEFAULT_VIBRATE_TAP_TYPE)
+    var vibrateSwipeTypeState = hapticTypeFromDb(settings?.vibrateSwipeType ?: DEFAULT_VIBRATE_SWIPE_TYPE)
+    var vibrateSlideTypeState = hapticTypeFromDb(settings?.vibrateSlideType ?: DEFAULT_VIBRATE_SLIDE_TYPE)
+    var vibrateHoldRepeatTypeState =
+        hapticTypeFromDb(settings?.vibrateHoldRepeatType ?: DEFAULT_VIBRATE_HOLD_REPEAT_TYPE)
+    var vibrateModifierTypeState =
+        hapticTypeFromDb(settings?.vibrateModifierType ?: DEFAULT_VIBRATE_MODIFIER_TYPE)
     var animationPressHighlightState =
         (settings?.animationPressHighlight ?: DEFAULT_ANIMATION_PRESS_HIGHLIGHT).toBool()
     var animationReleaseFlashState =
@@ -178,6 +198,13 @@ fun AppearanceScreen(
                 vibrateOnTap = vibrateOnTapState.toInt(),
                 vibrateOnSlide = vibrateOnSlideState.toInt(),
                 vibrateOnHoldRepeat = vibrateOnHoldRepeatState.toInt(),
+                vibrateOnSwipe = vibrateOnSwipeState.toInt(),
+                vibrateOnModifier = vibrateOnModifierState.toInt(),
+                vibrateTapType = vibrateTapTypeState.ordinal,
+                vibrateSwipeType = vibrateSwipeTypeState.ordinal,
+                vibrateSlideType = vibrateSlideTypeState.ordinal,
+                vibrateHoldRepeatType = vibrateHoldRepeatTypeState.ordinal,
+                vibrateModifierType = vibrateModifierTypeState.ordinal,
                 hideLetters = hideLettersState.toInt(),
                 hideSymbols = hideSymbolsState.toInt(),
                 hideNumbers = hideNumbersState.toInt(),
@@ -456,6 +483,7 @@ fun AppearanceScreen(
                             },
                             valueRange = 0..250,
                             vibrateOnRepeat = vibrateOnHoldRepeatState,
+                            repeatHapticType = vibrateHoldRepeatTypeState,
                             title = {
                                 SettingTitle(
                                     text = stringResource(R.string.raise_from_bottom),
@@ -560,6 +588,7 @@ fun AppearanceScreen(
                             },
                             valueRange = 10..200,
                             vibrateOnRepeat = vibrateOnHoldRepeatState,
+                            repeatHapticType = vibrateHoldRepeatTypeState,
                             title = {
                                 Text(stringResource(R.string.key_height))
                             },
@@ -589,6 +618,7 @@ fun AppearanceScreen(
                             },
                             valueRange = 0..10,
                             vibrateOnRepeat = vibrateOnHoldRepeatState,
+                            repeatHapticType = vibrateHoldRepeatTypeState,
                             title = {
                                 SettingTitle(
                                     text = stringResource(R.string.key_spacing_horizontal),
@@ -630,6 +660,7 @@ fun AppearanceScreen(
                             },
                             valueRange = 0..10,
                             vibrateOnRepeat = vibrateOnHoldRepeatState,
+                            repeatHapticType = vibrateHoldRepeatTypeState,
                             title = {
                                 SettingTitle(
                                     text = stringResource(R.string.key_spacing_vertical),
@@ -671,6 +702,7 @@ fun AppearanceScreen(
                             },
                             valueRange = 0..50,
                             vibrateOnRepeat = vibrateOnHoldRepeatState,
+                            repeatHapticType = vibrateHoldRepeatTypeState,
                             title = {
                                 SettingTitle(
                                     text = stringResource(R.string.border_thickness),
@@ -712,6 +744,7 @@ fun AppearanceScreen(
                             },
                             valueRange = 0..100,
                             vibrateOnRepeat = vibrateOnHoldRepeatState,
+                            repeatHapticType = vibrateHoldRepeatTypeState,
                             title = {
                                 Text(stringResource(R.string.corner_roundness))
                             },
@@ -744,6 +777,7 @@ fun AppearanceScreen(
                                     overrides = layerHeightOverrides,
                                     showInfo = index == 0,
                                     vibrateOnRepeat = vibrateOnHoldRepeatState,
+                                    repeatHapticType = vibrateHoldRepeatTypeState,
                                     onOverridesChange = { next ->
                                         layerHeightsState = formatLayerHeightOverrides(next)
                                         updateAppearance()
@@ -755,83 +789,105 @@ fun AppearanceScreen(
 
                     SettingsSection(
                         title = stringResource(R.string.settings_section_feedback)                    ) {
-                    SwitchPreference(
-                        value = vibrateOnTapState,
-                        onValueChange = {
+                    HapticChannelPreference(
+                        enabled = vibrateOnTapState,
+                        type = vibrateTapTypeState,
+                        onEnabledChange = {
                             vibrateOnTapState = it
                             updateAppearance()
                         },
-                        title = {
-                            SettingTitle(
-                                text = stringResource(R.string.vibrate_on_tap),
-                                infoText = stringResource(R.string.vibrate_on_tap_info),
-                            )
+                        onTypeChange = {
+                            vibrateTapTypeState = it
+                            updateAppearance()
                         },
-                        summary = {
-                            Text(stringResource(if (vibrateOnTapState) R.string.vibrate_on_tap_on else R.string.vibrate_on_tap_off))
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Vibration,
-                                contentDescription = null,
-                            )
-                        },
+                        defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_TAP_TYPE),
+                        title = R.string.vibrate_on_tap,
+                        onSummary = R.string.vibrate_on_tap_on,
+                        offSummary = R.string.vibrate_on_tap_off,
+                        info = R.string.vibrate_on_tap_info,
+                        typeTitle = R.string.vibrate_tap_type,
+                        typeSummary = R.string.vibrate_tap_type_summary,
+                        icon = Icons.Outlined.Vibration,
                     )
-                    SwitchPreference(
-                        value = vibrateOnSlideState,
-                        onValueChange = {
+                    HapticChannelPreference(
+                        enabled = vibrateOnSwipeState,
+                        type = vibrateSwipeTypeState,
+                        onEnabledChange = {
+                            vibrateOnSwipeState = it
+                            updateAppearance()
+                        },
+                        onTypeChange = {
+                            vibrateSwipeTypeState = it
+                            updateAppearance()
+                        },
+                        defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_SWIPE_TYPE),
+                        title = R.string.vibrate_on_swipe,
+                        onSummary = R.string.vibrate_on_swipe_on,
+                        offSummary = R.string.vibrate_on_swipe_off,
+                        info = R.string.vibrate_on_swipe_info,
+                        typeTitle = R.string.vibrate_swipe_type,
+                        typeSummary = R.string.vibrate_swipe_type_summary,
+                        icon = Icons.Outlined.Swipe,
+                    )
+                    HapticChannelPreference(
+                        enabled = vibrateOnSlideState,
+                        type = vibrateSlideTypeState,
+                        onEnabledChange = {
                             vibrateOnSlideState = it
                             updateAppearance()
                         },
-                        title = {
-                            SettingTitle(
-                                text = stringResource(R.string.vibrate_on_slide),
-                                infoText = stringResource(R.string.vibrate_on_slide_info),
-                            )
+                        onTypeChange = {
+                            vibrateSlideTypeState = it
+                            updateAppearance()
                         },
-                        summary = {
-                            Text(
-                                stringResource(
-                                    if (vibrateOnSlideState) R.string.vibrate_on_slide_on else R.string.vibrate_on_slide_off,
-                                ),
-                            )
-                        },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.LinearScale,
-                                contentDescription = null,
-                            )
-                        },
+                        defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_SLIDE_TYPE),
+                        title = R.string.vibrate_on_slide,
+                        onSummary = R.string.vibrate_on_slide_on,
+                        offSummary = R.string.vibrate_on_slide_off,
+                        info = R.string.vibrate_on_slide_info,
+                        typeTitle = R.string.vibrate_slide_type,
+                        typeSummary = R.string.vibrate_slide_type_summary,
+                        icon = Icons.Outlined.LinearScale,
                     )
-                    SwitchPreference(
-                        value = vibrateOnHoldRepeatState,
-                        onValueChange = {
+                    HapticChannelPreference(
+                        enabled = vibrateOnHoldRepeatState,
+                        type = vibrateHoldRepeatTypeState,
+                        onEnabledChange = {
                             vibrateOnHoldRepeatState = it
                             updateAppearance()
                         },
-                        title = {
-                            SettingTitle(
-                                text = stringResource(R.string.vibrate_on_hold_repeat),
-                                infoText = stringResource(R.string.vibrate_on_hold_repeat_info),
-                            )
+                        onTypeChange = {
+                            vibrateHoldRepeatTypeState = it
+                            updateAppearance()
                         },
-                        summary = {
-                            Text(
-                                stringResource(
-                                    if (vibrateOnHoldRepeatState) {
-                                        R.string.vibrate_on_hold_repeat_on
-                                    } else {
-                                        R.string.vibrate_on_hold_repeat_off
-                                    },
-                                ),
-                            )
+                        defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_HOLD_REPEAT_TYPE),
+                        title = R.string.vibrate_on_hold_repeat,
+                        onSummary = R.string.vibrate_on_hold_repeat_on,
+                        offSummary = R.string.vibrate_on_hold_repeat_off,
+                        info = R.string.vibrate_on_hold_repeat_info,
+                        typeTitle = R.string.vibrate_hold_repeat_type,
+                        typeSummary = R.string.vibrate_hold_repeat_type_summary,
+                        icon = Icons.Outlined.Repeat,
+                    )
+                    HapticChannelPreference(
+                        enabled = vibrateOnModifierState,
+                        type = vibrateModifierTypeState,
+                        onEnabledChange = {
+                            vibrateOnModifierState = it
+                            updateAppearance()
                         },
-                        icon = {
-                            Icon(
-                                imageVector = Icons.Outlined.Repeat,
-                                contentDescription = null,
-                            )
+                        onTypeChange = {
+                            vibrateModifierTypeState = it
+                            updateAppearance()
                         },
+                        defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_MODIFIER_TYPE),
+                        title = R.string.vibrate_on_modifier,
+                        onSummary = R.string.vibrate_on_modifier_on,
+                        offSummary = R.string.vibrate_on_modifier_off,
+                        info = R.string.vibrate_on_modifier_info,
+                        typeTitle = R.string.vibrate_modifier_type,
+                        typeSummary = R.string.vibrate_modifier_type_summary,
+                        icon = Icons.Outlined.KeyboardCapslock,
                     )
                     }
 
@@ -1086,6 +1142,7 @@ private fun LayerHeightRow(
     overrides: Map<LayoutLayer, Int>,
     showInfo: Boolean,
     vibrateOnRepeat: Boolean,
+    repeatHapticType: HapticType,
     onOverridesChange: (Map<LayoutLayer, Int>) -> Unit,
 ) {
     val gridRows = namedLayout.gridRowCount(layer)
@@ -1104,6 +1161,7 @@ private fun LayerHeightRow(
             },
             valueRange = gridRows..MAX_LAYER_HEIGHT_ROWS,
             vibrateOnRepeat = vibrateOnRepeat,
+            repeatHapticType = repeatHapticType,
             title = {
                 SettingTitle(
                     text = stringResource(layer.heightTitleRes()),

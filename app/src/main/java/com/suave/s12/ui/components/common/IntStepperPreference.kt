@@ -1,6 +1,5 @@
 package com.suave.s12.ui.components.common
 
-import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Row
@@ -22,6 +21,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import com.suave.s12.R
+import com.suave.s12.engine.feedback.HapticType
+import com.suave.s12.ui.engine.playHaptic
 import kotlinx.coroutines.delay
 import me.zhanghai.compose.preference.Preference
 
@@ -48,6 +49,7 @@ fun IntStepperPreference(
     summary: @Composable (() -> Unit)? = null,
     step: Int = 1,
     vibrateOnRepeat: Boolean = true,
+    repeatHapticType: HapticType = HapticType.KEYBOARD_TAP,
 ) {
     Preference(
         title = title,
@@ -61,6 +63,7 @@ fun IntStepperPreference(
                     onClick = { nextStepperValue(value, -step, valueRange)?.let(onValueChange) },
                     enabled = enabled && value > valueRange.first,
                     vibrateOnRepeat = vibrateOnRepeat,
+                    repeatHapticType = repeatHapticType,
                     imageVector = Icons.Outlined.Remove,
                     contentDescription = stringResource(R.string.decrease_value),
                 )
@@ -68,6 +71,7 @@ fun IntStepperPreference(
                     onClick = { nextStepperValue(value, step, valueRange)?.let(onValueChange) },
                     enabled = enabled && value < valueRange.last,
                     vibrateOnRepeat = vibrateOnRepeat,
+                    repeatHapticType = repeatHapticType,
                     imageVector = Icons.Outlined.Add,
                     contentDescription = stringResource(R.string.increase_value),
                 )
@@ -91,6 +95,7 @@ private fun RepeatingIconButton(
     onClick: () -> Unit,
     enabled: Boolean,
     vibrateOnRepeat: Boolean,
+    repeatHapticType: HapticType,
     imageVector: ImageVector,
     contentDescription: String,
 ) {
@@ -98,6 +103,7 @@ private fun RepeatingIconButton(
     val pressed by interactionSource.collectIsPressedAsState()
     val onClickState = rememberUpdatedState(onClick)
     val vibrateOnRepeatState = rememberUpdatedState(vibrateOnRepeat)
+    val repeatHapticTypeState = rememberUpdatedState(repeatHapticType)
     var repeating by remember { mutableStateOf(false) }
     val view = LocalView.current
 
@@ -110,10 +116,7 @@ private fun RepeatingIconButton(
         delay(STEPPER_REPEAT_DELAY_MS)
         repeating = true
         if (vibrateOnRepeatState.value) {
-            view.performHapticFeedback(
-                HapticFeedbackConstants.KEYBOARD_TAP,
-                HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING,
-            )
+            view.playHaptic(repeatHapticTypeState.value)
         }
         while (true) {
             onClickState.value()

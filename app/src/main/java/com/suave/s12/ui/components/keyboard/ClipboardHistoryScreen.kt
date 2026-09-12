@@ -1,6 +1,5 @@
 package com.suave.s12.ui.components.keyboard
 
-import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -54,6 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.suave.s12.R
 import com.suave.s12.db.ClipboardItem
+import com.suave.s12.engine.feedback.HapticType
+import com.suave.s12.ui.engine.playHaptic
 
 val spacing = 16.dp
 
@@ -73,6 +74,7 @@ fun ClipboardHistoryScreen(
     keyPadding: Int,
     cornerRadius: Float,
     vibrateOnTap: Boolean,
+    tapHapticType: HapticType = HapticType.KEYBOARD_TAP,
     modifier: Modifier = Modifier,
 ) {
     val headerHeight = (keyHeight * 0.6f).dp
@@ -136,6 +138,7 @@ fun ClipboardHistoryScreen(
                             onTogglePin = { onItemTogglePin(item) },
                             cornerRadius = cornerRadius,
                             vibrateOnTap = vibrateOnTap,
+                            tapHapticType = tapHapticType,
                         )
                     }
                 }
@@ -151,6 +154,7 @@ fun ClipboardHistoryScreen(
                             onTogglePin = { onItemTogglePin(item) },
                             cornerRadius = cornerRadius,
                             vibrateOnTap = vibrateOnTap,
+                            tapHapticType = tapHapticType,
                         )
                     }
                 }
@@ -310,6 +314,7 @@ private fun ClipboardItemRow(
     onTogglePin: () -> Unit,
     cornerRadius: Float,
     vibrateOnTap: Boolean,
+    tapHapticType: HapticType,
 ) {
     var showContextMenu by remember { mutableStateOf(false) }
     // Track the press location for context menu positioning
@@ -330,7 +335,7 @@ private fun ClipboardItemRow(
                                 pressOffset = offset
                                 showContextMenu = true
                                 if (vibrateOnTap) {
-                                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                                    view.playHaptic(tapHapticType)
                                 }
                             },
                         )

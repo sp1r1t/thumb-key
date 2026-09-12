@@ -1,7 +1,6 @@
 package com.suave.s12.ui.engine
 
 import android.content.Intent
-import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,15 +68,25 @@ import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
 import com.suave.s12.db.DEFAULT_DISTINCT_LETTER_CONTROL_COLORS
+import com.suave.s12.db.DEFAULT_VIBRATE_HOLD_REPEAT_TYPE
+import com.suave.s12.db.DEFAULT_VIBRATE_MODIFIER_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
+import com.suave.s12.db.DEFAULT_VIBRATE_ON_MODIFIER
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
+import com.suave.s12.db.DEFAULT_VIBRATE_ON_SWIPE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
+import com.suave.s12.db.DEFAULT_VIBRATE_SLIDE_TYPE
+import com.suave.s12.db.DEFAULT_VIBRATE_SWIPE_TYPE
+import com.suave.s12.db.DEFAULT_VIBRATE_TAP_TYPE
 import com.suave.s12.engine.action.SemanticAction
 import com.suave.s12.engine.capability.EditorCapabilities
 import com.suave.s12.engine.capability.EditorCapabilityResolver
 import com.suave.s12.engine.feedback.FeedbackDispatcher
 import com.suave.s12.engine.feedback.FeedbackEvent
 import com.suave.s12.engine.feedback.FeedbackSettings
+import com.suave.s12.engine.feedback.HapticChannel
+import com.suave.s12.engine.feedback.HapticType
+import com.suave.s12.engine.feedback.hapticTypeFromDb
 import com.suave.s12.engine.intent.Layout
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.intent.layoutRows
@@ -139,9 +148,50 @@ fun EngineKeyboardScreen(
         (clipboardRepository?.allClipboardItems ?: emptyClipboardItems).observeAsState(emptyList())
 
     val canSwitchLayout = BuiltinLayouts.canSwitch(settings?.keyboardLayouts)
-    val vibrateOnTap = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
-    val vibrateOnSlide = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
-    val vibrateOnHoldRepeat = (settings?.vibrateOnHoldRepeat ?: DEFAULT_VIBRATE_ON_HOLD_REPEAT).toBool()
+    val feedbackSettings =
+        remember(
+            settings?.vibrateOnTap,
+            settings?.vibrateOnSwipe,
+            settings?.vibrateOnSlide,
+            settings?.vibrateOnHoldRepeat,
+            settings?.vibrateOnModifier,
+            settings?.vibrateTapType,
+            settings?.vibrateSwipeType,
+            settings?.vibrateSlideType,
+            settings?.vibrateHoldRepeatType,
+            settings?.vibrateModifierType,
+        ) {
+            settings?.toFeedbackSettings()
+                ?: FeedbackSettings(
+                    tap =
+                        HapticChannel(
+                            DEFAULT_VIBRATE_ON_TAP.toBool(),
+                            hapticTypeFromDb(DEFAULT_VIBRATE_TAP_TYPE),
+                        ),
+                    swipe =
+                        HapticChannel(
+                            DEFAULT_VIBRATE_ON_SWIPE.toBool(),
+                            hapticTypeFromDb(DEFAULT_VIBRATE_SWIPE_TYPE),
+                        ),
+                    slide =
+                        HapticChannel(
+                            DEFAULT_VIBRATE_ON_SLIDE.toBool(),
+                            hapticTypeFromDb(DEFAULT_VIBRATE_SLIDE_TYPE),
+                        ),
+                    repeat =
+                        HapticChannel(
+                            DEFAULT_VIBRATE_ON_HOLD_REPEAT.toBool(),
+                            hapticTypeFromDb(DEFAULT_VIBRATE_HOLD_REPEAT_TYPE),
+                        ),
+                    modifier =
+                        HapticChannel(
+                            DEFAULT_VIBRATE_ON_MODIFIER.toBool(),
+                            hapticTypeFromDb(DEFAULT_VIBRATE_MODIFIER_TYPE),
+                        ),
+                )
+        }
+    val vibrateOnTap = feedbackSettings.tap.enabled
+    val tapHapticType = feedbackSettings.tap.type
     val legendVisibility =
         LegendVisibility(
             hideLetters = (settings?.hideLetters ?: DEFAULT_HIDE_LETTERS).toBool(),
@@ -197,19 +247,6 @@ fun EngineKeyboardScreen(
     val distinctLetterControlColors =
         (settings?.distinctLetterControlColors ?: DEFAULT_DISTINCT_LETTER_CONTROL_COLORS).toBool()
 
-    val feedbackSettings =
-        remember(vibrateOnTap, vibrateOnSlide, vibrateOnHoldRepeat) {
-            // baseDurationMs/baseAmplitude are currently inert - HapticFeedbackPlayer's
-            // underlying primitive doesn't expose either (see its doc for why) - kept so this
-            // doesn't need touching if a real second lever ever turns up.
-            FeedbackSettings(
-                tapVibrationEnabled = vibrateOnTap,
-                slideVibrationEnabled = vibrateOnSlide,
-                holdRepeatVibrationEnabled = vibrateOnHoldRepeat,
-                baseDurationMs = 25L,
-                baseAmplitude = 130,
-            )
-        }
     val hapticPlayer = remember(view) { HapticFeedbackPlayer(view) }
     // Resolved once per IME session (onStartInput recreates this whole screen on every new
     // input focus), matching how the old engine treated editor capability too.
@@ -376,6 +413,7 @@ fun EngineKeyboardScreen(
                 keyBorderWidthDp = keyBorderWidthDp,
                 keyCornerRadius = keyCornerRadius,
                 vibrateOnTap = vibrateOnTap,
+                tapHapticType = tapHapticType,
                 capabilities = capabilities,
                 ime = ime,
                 animations = animations,
@@ -457,6 +495,7 @@ private fun EngineKeyboardPanel(
     keyBorderWidthDp: Float,
     keyCornerRadius: Dp,
     vibrateOnTap: Boolean,
+    tapHapticType: HapticType,
     capabilities: EditorCapabilities,
     ime: IMEService,
     animations: KeyAnimationSettings,
@@ -472,6 +511,7 @@ private fun EngineKeyboardPanel(
                 content = namedLayout.contentFor(layer),
                 height = keyHeight * contentRows,
                 vibrateOnTap = vibrateOnTap,
+                tapHapticType = tapHapticType,
                 capabilities = capabilities,
                 ime = ime,
                 clipboardSession = clipboardSession,
@@ -506,6 +546,7 @@ private fun LayerContentSlot(
     content: LayerContent,
     height: Dp,
     vibrateOnTap: Boolean,
+    tapHapticType: HapticType,
     capabilities: EditorCapabilities,
     ime: IMEService,
     clipboardSession: ClipboardLayerSession,
@@ -522,7 +563,7 @@ private fun LayerContentSlot(
             val pickerIcon = colorScheme.onSurfaceVariant.toArgb()
             val pickerAccent = colorScheme.primary.toArgb()
             val darkKeyboard = colorScheme.surface.luminance() < 0.5f
-            key(pickerText, pickerIcon, pickerAccent, darkKeyboard) {
+            key(pickerText, pickerIcon, pickerAccent, darkKeyboard, vibrateOnTap, tapHapticType) {
                 AndroidView(
                     factory = { context ->
                         createThemedEmojiPicker(
@@ -534,7 +575,7 @@ private fun LayerContentSlot(
                         ).apply {
                             setOnEmojiPickedListener { picked ->
                                 if (vibrateOnTap) {
-                                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                                    view.playHaptic(tapHapticType)
                                 }
                                 OutputExecutor.execute(
                                     SemanticAction.TypeText(picked.emoji),
@@ -563,6 +604,7 @@ private fun LayerContentSlot(
                 keyPadding = keyPadding,
                 cornerRadius = keyCornerRadius.value,
                 vibrateOnTap = vibrateOnTap,
+                tapHapticType = tapHapticType,
                 modifier = Modifier.fillMaxWidth().height(height),
             )
         }

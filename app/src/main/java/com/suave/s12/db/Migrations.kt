@@ -591,3 +591,33 @@ val MIGRATION_40_41 =
             )
         }
     }
+
+val MIGRATION_41_42 =
+    object : Migration(41, 42) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN vibrate_on_swipe INTEGER NOT NULL DEFAULT $DEFAULT_VIBRATE_ON_SWIPE",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN vibrate_on_modifier INTEGER NOT NULL DEFAULT $DEFAULT_VIBRATE_ON_MODIFIER",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN vibrate_tap_type INTEGER NOT NULL DEFAULT $DEFAULT_VIBRATE_TAP_TYPE",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN vibrate_swipe_type INTEGER NOT NULL DEFAULT $DEFAULT_VIBRATE_SWIPE_TYPE",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN vibrate_slide_type INTEGER NOT NULL DEFAULT $DEFAULT_VIBRATE_SLIDE_TYPE",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN vibrate_hold_repeat_type INTEGER NOT NULL DEFAULT $DEFAULT_VIBRATE_HOLD_REPEAT_TYPE",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN vibrate_modifier_type INTEGER NOT NULL DEFAULT $DEFAULT_VIBRATE_MODIFIER_TYPE",
+            )
+            // Swipe lock and modifiers used the tap toggle. Copy so a silent keyboard stays silent.
+            db.execSQL("UPDATE AppSettings SET vibrate_on_swipe = vibrate_on_tap")
+            db.execSQL("UPDATE AppSettings SET vibrate_on_modifier = vibrate_on_tap")
+        }
+    }
