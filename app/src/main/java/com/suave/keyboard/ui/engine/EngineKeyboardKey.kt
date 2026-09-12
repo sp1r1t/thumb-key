@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
@@ -98,6 +99,7 @@ fun EngineKeyboardKey(
     spacebarMultitap: SpacebarMultitapTracker? = null,
     spacebarMultitapEnabled: Boolean = false,
     spaceMultitapCycle: List<String>? = null,
+    switchLayerIcons: Map<String, ImageVector> = emptyMap(),
     modifier: Modifier = Modifier,
 ) {
     val dispatcher =
@@ -342,6 +344,7 @@ fun EngineKeyboardKey(
                         shiftMappings,
                         capsLockMappings,
                         displayLabel = mapping.displayLabels[zone],
+                        switchLayerIcons = switchLayerIcons,
                     )
                 if (legend != null) {
                     KeyLegendMark(
@@ -361,6 +364,7 @@ fun EngineKeyboardKey(
                     shiftMappings,
                     capsLockMappings,
                     displayLabel = mapping.displayLabels[Zone.Center],
+                    switchLayerIcons = switchLayerIcons,
                 )
             if (centerLegend != null) {
                 val isUpperCase =

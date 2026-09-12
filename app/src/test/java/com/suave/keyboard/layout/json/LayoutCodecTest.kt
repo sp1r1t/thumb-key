@@ -1,6 +1,7 @@
 package com.suave.keyboard.layout.json
 
 import com.suave.keyboard.layout.BuiltinLayouts
+import com.suave.keyboard.layout.CustomLayerIcon
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -79,6 +80,51 @@ class LayoutCodecTest {
         } catch (e: LayoutJsonException) {
             assertTrue(e.message!!.contains("schemaVersion"))
         }
+    }
+
+    @Test
+    fun `extraLayers and switchLayer round-trip`() {
+        val json =
+            """
+            {
+              "schemaVersion": 1,
+              "id": "extra",
+              "title": "Extra",
+              "rows": [
+                [
+                  {
+                    "zones": {
+                      "center": { "type": "switchLayer", "layerId": "custom_fn1" }
+                    }
+                  }
+                ]
+              ],
+              "extraLayers": [
+                {
+                  "id": "custom_fn1",
+                  "title": "Fn",
+                  "icon": "Star",
+                  "rows": [
+                    [
+                      { "zones": { "center": { "type": "text", "value": "!" } } }
+                    ]
+                  ]
+                }
+              ]
+            }
+            """.trimIndent()
+        val layout = decodeNamedLayout(json)
+        assertEquals(1, layout.customLayers.size)
+        assertEquals("Fn", layout.customLayers.single().title)
+        assertEquals(CustomLayerIcon.Star, layout.customLayers.single().icon)
+        val center = layout.layout.getValue(com.suave.keyboard.engine.intent.KeyPosition(0, 0))
+        assertEquals(
+            com.suave.keyboard.engine.intent.KeyIntent.SwitchLayer("custom_fn1"),
+            center.intents[com.suave.keyboard.engine.gesture.Zone.Center],
+        )
+        val restored = decodeNamedLayout(encodeNamedLayout(layout))
+        assertEquals(layout.customLayers, restored.customLayers)
+        assertEquals(center.intents, restored.layout.getValue(com.suave.keyboard.engine.intent.KeyPosition(0, 0)).intents)
     }
 
     @Test

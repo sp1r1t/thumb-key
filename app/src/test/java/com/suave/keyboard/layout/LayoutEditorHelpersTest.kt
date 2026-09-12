@@ -1,5 +1,7 @@
 package com.suave.keyboard.layout
 
+import com.suave.keyboard.engine.gesture.Zone
+import com.suave.keyboard.engine.intent.KeyIntent
 import com.suave.keyboard.engine.intent.KeyPosition
 import com.suave.keyboard.engine.intent.layoutRows
 import org.junit.Assert.assertEquals
@@ -83,5 +85,32 @@ class LayoutEditorHelpersTest {
             )
         assertTrue(blocked === layout || blocked == layout)
         assertEquals(layout, blocked)
+    }
+
+    @Test
+    fun swapKeys_movesContentButKeepsColumnSpan() {
+        val a = KeyPosition(0, 0)
+        val b = KeyPosition(0, 1)
+        val layout =
+            blankLayout(listOf(2)).mapValues { (pos, mapping) ->
+                when (pos) {
+                    a ->
+                        mapping.copy(
+                            columnSpan = 1,
+                            intents = mapOf(Zone.Center to KeyIntent.Text("a")),
+                        )
+                    b ->
+                        mapping.copy(
+                            columnSpan = 3,
+                            intents = mapOf(Zone.Center to KeyIntent.Text("b")),
+                        )
+                    else -> mapping
+                }
+            }
+        val swapped = layout.swapKeys(a, b)
+        assertEquals(1, swapped.getValue(a).columnSpan)
+        assertEquals(3, swapped.getValue(b).columnSpan)
+        assertEquals(KeyIntent.Text("b"), swapped.getValue(a).intents[Zone.Center])
+        assertEquals(KeyIntent.Text("a"), swapped.getValue(b).intents[Zone.Center])
     }
 }

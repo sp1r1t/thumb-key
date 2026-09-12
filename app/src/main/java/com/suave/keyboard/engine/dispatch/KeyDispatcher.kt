@@ -211,7 +211,7 @@ class KeyDispatcher(
                 next
             }
 
-            is KeyIntent.Text, is KeyIntent.Command, KeyIntent.Noop -> {
+            is KeyIntent.Text, is KeyIntent.Command, is KeyIntent.SwitchLayer, KeyIntent.Noop -> {
                 if (gesture is Gesture.HoldRepeat && !mapping.repeatsOnHold(zone, intent)) return modifierState
                 val resolved = ModifierEngine.resolve(modifierState, intent, shiftMappings, capsLockMappings)
                 onExecute(IntentCompiler.compile(resolved))

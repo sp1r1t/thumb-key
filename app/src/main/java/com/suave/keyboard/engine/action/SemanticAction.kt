@@ -53,5 +53,10 @@ sealed class SemanticAction {
         val resetAnchor: Boolean = false,
     ) : SemanticAction()
 
+    /** Switch to a named builtin or custom function layer. */
+    data class SwitchLayer(
+        val layerId: String,
+    ) : SemanticAction()
+
     object Noop : SemanticAction()
 }

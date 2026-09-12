@@ -22,5 +22,10 @@ sealed class ResolvedIntent {
         val modifiers: Set<ModifierId> = emptySet(),
     ) : ResolvedIntent()
 
+    /** Switch to a named builtin or custom function layer (see [com.suave.keyboard.engine.intent.KeyIntent.SwitchLayer]). */
+    data class SwitchLayer(
+        val layerId: String,
+    ) : ResolvedIntent()
+
     object Noop : ResolvedIntent()
 }

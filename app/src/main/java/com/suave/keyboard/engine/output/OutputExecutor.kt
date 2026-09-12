@@ -57,7 +57,9 @@ object OutputExecutor {
                 moveCursor(action.direction, action.resetAnchor, extend = true, capabilities, inputConnection)
             }
 
-            SemanticAction.Noop -> {}
+            is SemanticAction.SwitchLayer,
+            SemanticAction.Noop,
+            -> {}
         }
     }
 

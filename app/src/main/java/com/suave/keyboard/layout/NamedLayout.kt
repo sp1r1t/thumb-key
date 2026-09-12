@@ -52,9 +52,13 @@ data class NamedLayout(
     val capsLockMappings: Map<String, String> = emptyMap(),
     val layerHeights: Map<LayoutLayer, Int> = emptyMap(),
     val layerContent: Map<LayoutLayer, LayerContent> = emptyMap(),
+    /** User-defined function layers (full grids). Cap: [MAX_CUSTOM_LAYERS]. */
+    val customLayers: List<CustomLayer> = emptyList(),
     /** Optional spacebar multitap replacements after the first plain space; null uses engine default. */
     val spaceMultitapCycle: List<String>? = null,
 ) {
+    fun customLayer(id: String): CustomLayer? = customLayers.find { it.id == id }
+
     fun gridFor(layer: LayoutLayer): Layout =
         when (layer) {
             LayoutLayer.MAIN -> layout
@@ -63,7 +67,13 @@ data class NamedLayout(
             LayoutLayer.CLIPBOARD -> clipboardBottomRow ?: layout.bottomRow()
         }
 
-    fun availableLayers(): List<LayoutLayer> =
+    fun gridFor(active: ActiveLayer): Layout =
+        when (active) {
+            is ActiveLayer.Builtin -> gridFor(active.layer)
+            is ActiveLayer.Custom -> customLayer(active.id)?.layout ?: layout
+        }
+
+    fun availableBuiltinLayers(): List<LayoutLayer> =
         buildList {
             add(LayoutLayer.MAIN)
             if (numericLayout != null) add(LayoutLayer.NUMERIC)
@@ -73,16 +83,34 @@ data class NamedLayout(
             }
         }
 
+    fun availableLayers(): List<ActiveLayer> =
+        buildList {
+            for (layer in availableBuiltinLayers()) {
+                add(ActiveLayer.Builtin(layer))
+            }
+            for (custom in customLayers) {
+                add(ActiveLayer.Custom(custom.id))
+            }
+        }
+
     fun gridRowCount(layer: LayoutLayer): Int = layoutRows(gridFor(layer)).size.coerceAtLeast(1)
 
+    fun gridRowCount(active: ActiveLayer): Int = layoutRows(gridFor(active)).size.coerceAtLeast(1)
+
     fun contentFor(layer: LayoutLayer): LayerContent = layerContent[layer] ?: LayerContent.None
+
+    fun contentFor(active: ActiveLayer): LayerContent =
+        when (active) {
+            is ActiveLayer.Builtin -> contentFor(active.layer)
+            is ActiveLayer.Custom -> LayerContent.None
+        }
 
     /**
      * Total keyboard height in key-height units. [overrideRows] of 0 or less means "use this
      * layout's default". Never shorter than the key grid, so keys are not clipped.
      *
-     * The numeric layer always matches its key grid: there is no content panel above those
-     * keys, so a taller height would only add empty space.
+     * Numeric and custom function layers always match their key grid: there is no content
+     * panel above those keys.
      */
     fun heightRows(
         layer: LayoutLayer,
@@ -94,10 +122,24 @@ data class NamedLayout(
         return max(gridRows, requested ?: gridRows)
     }
 
+    fun heightRows(
+        active: ActiveLayer,
+        overrideRows: Int = 0,
+    ): Int =
+        when (active) {
+            is ActiveLayer.Builtin -> heightRows(active.layer, overrideRows)
+            is ActiveLayer.Custom -> gridRowCount(active)
+        }
+
     fun contentRows(
         layer: LayoutLayer,
         overrideRows: Int = 0,
     ): Int = heightRows(layer, overrideRows) - gridRowCount(layer)
+
+    fun contentRows(
+        active: ActiveLayer,
+        overrideRows: Int = 0,
+    ): Int = heightRows(active, overrideRows) - gridRowCount(active)
 }
 
 object BuiltinLayouts {

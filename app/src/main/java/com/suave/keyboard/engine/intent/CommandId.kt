@@ -99,4 +99,35 @@ enum class CommandId {
 
             else -> false
         }
+
+    /**
+     * Builtin layer navigation that [KeyIntent.SwitchLayer] also covers. The layout editor
+     * offers those under Switch layer only; these ids remain so existing layouts keep working.
+     */
+    fun isLayerSwitchCommand(): Boolean = switchLayerIdOrNull() != null
+
+    /** [LayoutLayer.name] when this command is a builtin layer switch; otherwise null. */
+    fun switchLayerIdOrNull(): String? =
+        when (this) {
+            TOGGLE_ABC_MODE -> "MAIN"
+            TOGGLE_NUMERIC_MODE -> "NUMERIC"
+            TOGGLE_EMOJI_MODE -> "EMOJI"
+            TOGGLE_CLIPBOARD_HISTORY -> "CLIPBOARD"
+            else -> null
+        }
+
+    /**
+     * Modifier keys that [KeyIntent.ModifierPress] covers. The layout editor offers those under
+     * Modifier only; these ids remain so existing layouts keep working.
+     */
+    fun isModifierCommand(): Boolean = modifierIdOrNull() != null
+
+    fun modifierIdOrNull(): ModifierId? =
+        when (this) {
+            CTRL -> ModifierId.CTRL
+            ALT -> ModifierId.ALT
+            SHIFT -> ModifierId.SHIFT
+            ESCAPE -> ModifierId.ESC
+            else -> null
+        }
 }

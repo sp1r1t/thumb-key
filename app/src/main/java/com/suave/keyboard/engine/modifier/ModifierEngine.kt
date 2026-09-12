@@ -92,6 +92,10 @@ object ModifierEngine {
                 ResolvedIntent.TypedCommand(intent.id, state.active.keys)
             }
 
+            is KeyIntent.SwitchLayer -> {
+                ResolvedIntent.SwitchLayer(intent.layerId)
+            }
+
             // ModifierPress routes through applyModifierGesture, not resolve(). Inert if
             // resolve() is called anyway.
             is KeyIntent.ModifierPress -> {

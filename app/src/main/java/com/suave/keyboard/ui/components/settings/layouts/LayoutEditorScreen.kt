@@ -3,6 +3,8 @@ package com.suave.keyboard.ui.components.settings.layouts
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalActivity
 import android.widget.Toast
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -10,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -43,12 +46,18 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.material.icons.outlined.EmojiEmotions
+import androidx.compose.material.icons.outlined.Functions
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Keyboard
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.KeyboardArrowUp
+import androidx.compose.material.icons.outlined.KeyboardControlKey
+import androidx.compose.material.icons.outlined.KeyboardOptionKey
 import androidx.compose.material.icons.outlined.Numbers
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -84,8 +93,12 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -98,6 +111,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -124,6 +138,9 @@ import com.suave.keyboard.engine.intent.ModifierId
 import com.suave.keyboard.engine.intent.SlideBehavior
 import com.suave.keyboard.engine.intent.layoutRows
 import com.suave.keyboard.engine.modifier.ModifierState
+import com.suave.keyboard.layout.ActiveLayer
+import com.suave.keyboard.layout.CustomLayer
+import com.suave.keyboard.layout.CustomLayerIcon
 import com.suave.keyboard.layout.KeyInsertGap
 import com.suave.keyboard.layout.LayerContent
 import com.suave.keyboard.layout.LayoutDraftHistory
@@ -131,6 +148,8 @@ import com.suave.keyboard.layout.LayoutLayer
 import com.suave.keyboard.layout.LayoutPreviewSession
 import com.suave.keyboard.layout.LayoutRegistry
 import com.suave.keyboard.layout.LayoutResizeMemory
+import com.suave.keyboard.layout.MAX_CUSTOM_LAYERS
+import com.suave.keyboard.layout.MAX_LAYER_HEIGHT_ROWS
 import com.suave.keyboard.layout.NamedLayout
 import com.suave.keyboard.layout.S12_CLIPBOARD_LAYER_HEIGHT_ROWS
 import com.suave.keyboard.layout.S12_EMOJI_LAYER_HEIGHT_ROWS
@@ -138,8 +157,12 @@ import com.suave.keyboard.layout.UserLayoutStore
 import com.suave.keyboard.layout.blankLayout
 import com.suave.keyboard.layout.blankNamedLayout
 import com.suave.keyboard.layout.gridOrEmpty
+import com.suave.keyboard.layout.idString
+import com.suave.keyboard.layout.json.decodeNamedLayout
+import com.suave.keyboard.layout.json.encodeNamedLayout
 import com.suave.keyboard.layout.moveKeyToGap
 import com.suave.keyboard.layout.moveRow
+import com.suave.keyboard.layout.newCustomLayerId
 import com.suave.keyboard.layout.putKey
 import com.suave.keyboard.layout.removeKeyAndCompact
 import com.suave.keyboard.layout.removeRow
@@ -147,7 +170,9 @@ import com.suave.keyboard.layout.replaceGrid
 import com.suave.keyboard.layout.resizeRows
 import com.suave.keyboard.layout.sameExceptTitle
 import com.suave.keyboard.layout.swapKeys
+import com.suave.keyboard.layout.withCustomLayer
 import com.suave.keyboard.layout.withUpdatedIntents
+import com.suave.keyboard.layout.withoutCustomLayer
 import com.suave.keyboard.ui.components.clipboard.ClipboardHistoryScreen
 import com.suave.keyboard.ui.components.common.IntStepperPreference
 import com.suave.keyboard.ui.components.common.SettingRow
@@ -155,32 +180,48 @@ import com.suave.keyboard.ui.components.common.SettingTitle
 import com.suave.keyboard.ui.components.common.SettingsSection
 import com.suave.keyboard.ui.components.common.awaitImeSpawned
 import com.suave.keyboard.ui.components.common.settingsScreenBodyPadding
+import com.suave.keyboard.ui.engine.KeyLegend
 import com.suave.keyboard.ui.engine.KeyLegendMark
 import com.suave.keyboard.ui.engine.LegendVisibility
+import com.suave.keyboard.ui.engine.asImageVector
+import com.suave.keyboard.ui.engine.commandDisplayTitle
+import com.suave.keyboard.ui.engine.commandEditorLegend
 import com.suave.keyboard.ui.engine.createThemedEmojiPicker
 import com.suave.keyboard.ui.engine.keyLegend
+import com.suave.keyboard.ui.engine.legendColorVariant
+import com.suave.keyboard.ui.engine.restingFillVariant
+import com.suave.keyboard.ui.engine.switchLayerIconMap
+import com.suave.keyboard.ui.engine.titleRes
 import com.suave.keyboard.utils.SimpleTopAppBar
+import com.suave.keyboard.utils.colorVariantToColor
+import me.zhanghai.compose.preference.ListPreference
+import me.zhanghai.compose.preference.ListPreferenceType
+import me.zhanghai.compose.preference.ProvidePreferenceTheme
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import me.zhanghai.compose.preference.ListPreference
-import me.zhanghai.compose.preference.ListPreferenceType
-import me.zhanghai.compose.preference.ProvidePreferenceTheme
 
 private const val LAYOUT_AUTO_SAVE_DEBOUNCE_MS = 250L
+private const val LAYOUT_JSON_APPLY_DEBOUNCE_MS = 350L
 
-private val ZONE_ORDER: List<Pair<String, Zone>> =
+private val ZONE_PAD_ROWS: List<List<Zone>> =
     listOf(
-        "upLeft" to Zone.Directional(Direction.UP_LEFT),
-        "up" to Zone.Directional(Direction.UP),
-        "upRight" to Zone.Directional(Direction.UP_RIGHT),
-        "left" to Zone.Directional(Direction.LEFT),
-        "center" to Zone.Center,
-        "right" to Zone.Directional(Direction.RIGHT),
-        "downLeft" to Zone.Directional(Direction.DOWN_LEFT),
-        "down" to Zone.Directional(Direction.DOWN),
-        "downRight" to Zone.Directional(Direction.DOWN_RIGHT),
+        listOf(
+            Zone.Directional(Direction.UP_LEFT),
+            Zone.Directional(Direction.UP),
+            Zone.Directional(Direction.UP_RIGHT),
+        ),
+        listOf(
+            Zone.Directional(Direction.LEFT),
+            Zone.Center,
+            Zone.Directional(Direction.RIGHT),
+        ),
+        listOf(
+            Zone.Directional(Direction.DOWN_LEFT),
+            Zone.Directional(Direction.DOWN),
+            Zone.Directional(Direction.DOWN_RIGHT),
+        ),
     )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -204,15 +245,22 @@ fun LayoutEditorScreen(
     var blankSetup by remember { mutableStateOf(createFrom == "blank" && editId == null) }
     var blankRowCount by remember { mutableStateOf(4) }
     var blankRowSizes by remember { mutableStateOf(listOf(5, 5, 5, 4)) }
-    var selectedLayer by remember { mutableStateOf(LayoutLayer.MAIN) }
+    var selectedLayer by remember { mutableStateOf<ActiveLayer>(ActiveLayer.Main) }
     var editingKey by remember { mutableStateOf<KeyPosition?>(null) }
+    var keyFlashPositions by remember { mutableStateOf<Set<KeyPosition>>(emptySet()) }
+    var keyFlashGeneration by remember { mutableIntStateOf(0) }
     var loadError by remember { mutableStateOf<String?>(null) }
     var dirty by remember { mutableStateOf(false) }
+    var customLayerDialog by remember { mutableStateOf<CustomLayerDialogMode?>(null) }
+    var layoutJsonText by remember { mutableStateOf("") }
+    var layoutJsonError by remember { mutableStateOf<String?>(null) }
+    var layoutJsonFromEditor by remember { mutableStateOf(false) }
+    var layoutJsonApplyJob by remember { mutableStateOf<Job?>(null) }
     val history = remember { LayoutDraftHistory() }
-    val resizeMemoryByLayer = remember { mutableMapOf<LayoutLayer, LayoutResizeMemory>() }
+    val resizeMemoryByLayer = remember { mutableMapOf<String, LayoutResizeMemory>() }
 
-    fun resizeMemory(layer: LayoutLayer): LayoutResizeMemory =
-        resizeMemoryByLayer.getOrPut(layer) { LayoutResizeMemory() }
+    fun resizeMemory(layer: ActiveLayer): LayoutResizeMemory =
+        resizeMemoryByLayer.getOrPut(layer.idString()) { LayoutResizeMemory() }
 
     fun layoutForDisk(layout: NamedLayout): NamedLayout =
         layout.copy(title = layout.title.ifBlank { "Custom" })
@@ -349,6 +397,10 @@ fun LayoutEditorScreen(
         coalesceTitle: Boolean = false,
     ) {
         val cur = draft
+        val selectedCustom = selectedLayer as? ActiveLayer.Custom
+        if (selectedCustom != null && next.customLayer(selectedCustom.id) == null) {
+            selectedLayer = ActiveLayer.Main
+        }
         if (cur == null) {
             draft = next
             markDirtyAgainstBaseline(next)
@@ -559,6 +611,40 @@ fun LayoutEditorScreen(
         }
     }
 
+    LaunchedEffect(layout) {
+        if (layoutJsonFromEditor) {
+            layoutJsonFromEditor = false
+            return@LaunchedEffect
+        }
+        layoutJsonApplyJob?.cancel()
+        layoutJsonText = encodeNamedLayout(layout)
+        layoutJsonError = null
+    }
+
+    fun onLayoutJsonChange(text: String) {
+        layoutJsonText = text
+        val parsed =
+            runCatching { decodeNamedLayout(text).copy(id = layout.id) }
+        parsed
+            .onFailure { err ->
+                layoutJsonError = err.message ?: err.toString()
+                layoutJsonApplyJob?.cancel()
+            }.onSuccess { next ->
+                layoutJsonError = null
+                if (next == draft) {
+                    layoutJsonApplyJob?.cancel()
+                    return
+                }
+                layoutJsonApplyJob?.cancel()
+                layoutJsonApplyJob =
+                    scope.launch {
+                        delay(LAYOUT_JSON_APPLY_DEBOUNCE_MS)
+                        layoutJsonFromEditor = true
+                        commitDraft(next)
+                    }
+            }
+    }
+
     Scaffold(
         topBar = {
             SimpleTopAppBar(
@@ -641,11 +727,13 @@ fun LayoutEditorScreen(
                         namedLayout = layout,
                         grid = grid,
                         onKeyClick = { editingKey = it },
+                        keyFlashPositions = keyFlashPositions,
+                        keyFlashGeneration = keyFlashGeneration,
                         onAssignLayerSwitch = { pos, layer, zone ->
                             commitGridEdit { layerGrid ->
                                 val mapping = layerGrid.getValue(pos)
                                 val intents = mapping.intents.toMutableMap()
-                                intents[zone] = KeyIntent.Command(layer.toggleCommandId())
+                                intents[zone] = layer.toSwitchIntent()
                                 val labels = mapping.displayLabels.toMutableMap()
                                 labels.remove(zone)
                                 layerGrid.putKey(
@@ -659,6 +747,8 @@ fun LayoutEditorScreen(
                         onSwapKeys = { from, to ->
                             if (from != to) {
                                 commitGridEdit { it.swapKeys(from, to) }
+                                keyFlashPositions = setOf(from, to)
+                                keyFlashGeneration += 1
                             }
                         },
                         onMoveKeyToGap = { from, gap ->
@@ -686,12 +776,37 @@ fun LayoutEditorScreen(
                                 it.resizeRows(sizes, resizeMemory(selectedLayer))
                             }
                         },
+                        onLayerHeightRowsChange = { layer, totalRows ->
+                            val gridRows = layout.gridRowCount(layer)
+                            commitDraft(
+                                layout.copy(
+                                    layerHeights =
+                                        if (totalRows <= gridRows) {
+                                            layout.layerHeights - layer
+                                        } else {
+                                            layout.layerHeights + (layer to totalRows)
+                                        },
+                                ),
+                            )
+                        },
+                        onAddCustomLayer = {
+                            if (layout.customLayers.size < MAX_CUSTOM_LAYERS) {
+                                customLayerDialog = CustomLayerDialogMode.Add
+                            }
+                        },
+                        onEditCustomLayer = { id ->
+                            layout.customLayer(id)?.let {
+                                customLayerDialog = CustomLayerDialogMode.Edit(it)
+                            }
+                        },
                         onSeedLayer =
-                            if (selectedLayer != LayoutLayer.MAIN && grid.isEmpty()) {
+                            if (selectedLayer != ActiveLayer.Main && grid.isEmpty()) {
                                 {
                                     val seed =
                                         when (selectedLayer) {
-                                            LayoutLayer.NUMERIC -> listOf(5, 5, 5, 4)
+                                            ActiveLayer.Numeric,
+                                            is ActiveLayer.Custom,
+                                            -> listOf(5, 5, 5, 4)
                                             else -> listOf(4)
                                         }
                                     val cur = draft
@@ -705,81 +820,58 @@ fun LayoutEditorScreen(
                                 null
                             },
                         onClearLayer =
-                            if (selectedLayer != LayoutLayer.MAIN && grid.isNotEmpty()) {
+                            if (selectedLayer is ActiveLayer.Custom && grid.isNotEmpty()) {
                                 {
                                     val cur = draft
-                                    if (cur != null) {
-                                        commitDraft(
-                                            when (selectedLayer) {
-                                                LayoutLayer.NUMERIC -> cur.copy(numericLayout = null)
-                                                LayoutLayer.EMOJI -> cur.copy(emojiBottomRow = null)
-                                                LayoutLayer.CLIPBOARD ->
-                                                    cur.copy(clipboardBottomRow = null)
-                                                LayoutLayer.MAIN -> cur
-                                            },
-                                        )
+                                    val layer = selectedLayer as? ActiveLayer.Custom
+                                    if (cur != null && layer != null) {
+                                        commitDraft(cur.withoutCustomLayer(layer.id))
+                                        selectedLayer = ActiveLayer.Main
                                     }
                                 }
                             } else {
                                 null
                             },
                     )
+                    customLayerDialog?.let { mode ->
+                        CustomLayerConfigDialog(
+                            mode = mode,
+                            onDismiss = { customLayerDialog = null },
+                            onSave = { title, icon ->
+                                val cur = draft ?: return@CustomLayerConfigDialog
+                                when (mode) {
+                                    CustomLayerDialogMode.Add -> {
+                                        if (cur.customLayers.size >= MAX_CUSTOM_LAYERS) {
+                                            customLayerDialog = null
+                                            return@CustomLayerConfigDialog
+                                        }
+                                        val id = newCustomLayerId()
+                                        val layer =
+                                            CustomLayer(
+                                                id = id,
+                                                title = title,
+                                                icon = icon,
+                                                layout = blankLayout(listOf(5, 5, 5, 4)),
+                                            )
+                                        commitDraft(cur.withCustomLayer(layer))
+                                        selectedLayer = ActiveLayer.Custom(id)
+                                    }
+                                    is CustomLayerDialogMode.Edit -> {
+                                        val updated =
+                                            mode.layer.copy(title = title, icon = icon)
+                                        commitDraft(cur.withCustomLayer(updated))
+                                    }
+                                }
+                                customLayerDialog = null
+                            },
+                        )
+                    }
                 }
 
                 SettingsSection(
                     title = stringResource(R.string.layout_settings),
                     initiallyExpanded = false,
                 ) {
-                    LayoutLayer.entries.forEach { layer ->
-                        // Numbers (and Main) have no content panel above the keys; height
-                        // there would only add empty space, so it is not editable.
-                        if (layer == LayoutLayer.MAIN || layer == LayoutLayer.NUMERIC) {
-                            return@forEach
-                        }
-                        val layerLabel = layerChipLabel(layer)
-                        val defaultHeight = defaultPanelHeightRows(layer)
-                        val height = layout.layerHeights[layer] ?: 0
-                        IntStepperPreference(
-                            value = height,
-                            onValueChange = { v ->
-                                commitDraft(
-                                    layout.copy(
-                                        layerHeights =
-                                            if (v <= 0) {
-                                                layout.layerHeights - layer
-                                            } else {
-                                                layout.layerHeights + (layer to v)
-                                            },
-                                    ),
-                                )
-                            },
-                            valueRange = 0..12,
-                            title = {
-                                SettingTitle(
-                                    text = stringResource(R.string.layout_layer_height, layerLabel),
-                                    infoText = stringResource(R.string.layout_layer_height_info),
-                                )
-                            },
-                            summary = {
-                                Text(
-                                    if (height <= 0) {
-                                        stringResource(R.string.layout_layer_height_default)
-                                    } else {
-                                        stringResource(R.string.layout_layer_height_summary, height)
-                                    },
-                                )
-                            },
-                            onReset = {
-                                commitDraft(
-                                    layout.copy(
-                                        layerHeights = layout.layerHeights + (layer to defaultHeight),
-                                    ),
-                                )
-                            },
-                            resetTo = defaultHeight,
-                        )
-                    }
-
                     val cycle = layout.spaceMultitapCycle.orEmpty()
                     CompositionLocalProvider(
                         LocalTextStyle provides MaterialTheme.typography.titleSmall,
@@ -854,6 +946,38 @@ fun LayoutEditorScreen(
                     }
                 }
 
+                SettingsSection(
+                    title = stringResource(R.string.layout_json),
+                    initiallyExpanded = false,
+                    infoText = stringResource(R.string.layout_json_info),
+                ) {
+                    val jsonInvalid = layoutJsonError != null
+                    Text(
+                        text =
+                            if (jsonInvalid) {
+                                stringResource(
+                                    R.string.layout_json_invalid,
+                                    layoutJsonError.orEmpty(),
+                                )
+                            } else {
+                                stringResource(R.string.layout_json_valid)
+                            },
+                        color =
+                            if (jsonInvalid) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    )
+                    LayoutJsonEditor(
+                        text = layoutJsonText,
+                        isError = jsonInvalid,
+                        onTextChange = ::onLayoutJsonChange,
+                    )
+                }
+
                 Column(
                     modifier =
                         Modifier
@@ -912,6 +1036,15 @@ fun LayoutEditorScreen(
                                 .heightIn(min = 48.dp),
                         shape = RoundedCornerShape(12.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                        colors =
+                            ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error,
+                            ),
+                        border =
+                            BorderStroke(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.error,
+                            ),
                     ) {
                         Text(stringResource(R.string.layout_cancel_edits))
                     }
@@ -931,6 +1064,7 @@ fun LayoutEditorScreen(
             KeyEditorDialog(
                 position = editingKey!!,
                 mapping = keyBeingEdited,
+                namedLayout = layout,
                 shiftMappings = layout.shiftMappings,
                 capsLockMappings = layout.capsLockMappings,
                 onDismiss = { editingKey = null },
@@ -949,6 +1083,8 @@ fun LayoutEditorScreen(
                                 ),
                         )
                     }
+                    keyFlashPositions = setOf(pos)
+                    keyFlashGeneration += 1
                     editingKey = null
                 },
             )
@@ -957,7 +1093,7 @@ fun LayoutEditorScreen(
 }
 
 private sealed class PreviewDrag {
-    data class Layer(val layer: LayoutLayer) : PreviewDrag()
+    data class Layer(val layer: ActiveLayer) : PreviewDrag()
 
     data class Key(val from: KeyPosition) : PreviewDrag()
 
@@ -1011,18 +1147,23 @@ private fun LayoutPreviewTestField() {
 
 @Composable
 private fun LayerSwitchAssigner(
-    selected: LayoutLayer,
-    onSelect: (LayoutLayer) -> Unit,
+    selected: ActiveLayer,
+    onSelect: (ActiveLayer) -> Unit,
     namedLayout: NamedLayout,
     grid: Map<KeyPosition, KeyMapping>,
     onKeyClick: (KeyPosition) -> Unit,
-    onAssignLayerSwitch: (KeyPosition, LayoutLayer, Zone) -> Unit,
+    keyFlashPositions: Set<KeyPosition> = emptySet(),
+    keyFlashGeneration: Int = 0,
+    onAssignLayerSwitch: (KeyPosition, ActiveLayer, Zone) -> Unit,
     onSwapKeys: (KeyPosition, KeyPosition) -> Unit,
     onMoveKeyToGap: (KeyPosition, KeyInsertGap) -> Unit,
     onRemoveKey: (KeyPosition) -> Unit,
     onMoveRow: (Int, Int) -> Unit,
     onRemoveRow: (Int) -> Unit,
     onResizeRows: (List<Int>) -> Unit,
+    onLayerHeightRowsChange: (LayoutLayer, Int) -> Unit,
+    onAddCustomLayer: () -> Unit,
+    onEditCustomLayer: (String) -> Unit,
     onSeedLayer: (() -> Unit)? = null,
     onClearLayer: (() -> Unit)? = null,
 ) {
@@ -1209,7 +1350,9 @@ private fun LayerSwitchAssigner(
         Column(modifier = Modifier.fillMaxWidth()) {
             LayerChips(
                 selected = selected,
+                namedLayout = namedLayout,
                 onSelect = onSelect,
+                onAddCustomLayer = onAddCustomLayer,
                 onDragStart = { layer, rootPos ->
                     drag = PreviewDrag.Layer(layer)
                     dragRootPos = rootPos
@@ -1225,21 +1368,48 @@ private fun LayerSwitchAssigner(
                     clearHover()
                 },
             )
-            val totalRows = namedLayout.heightRows(selected)
             val contentRows = namedLayout.contentRows(selected)
-            if (contentRows > 0) {
-                LayoutPreviewLayerPanel(
-                    content = namedLayout.contentFor(selected),
-                    height = PREVIEW_KEY_HEIGHT * contentRows,
-                    keyHeight = PREVIEW_KEY_HEIGHT,
-                )
+            val heightLayer =
+                (selected as? ActiveLayer.Builtin)?.layer?.takeIf {
+                    it == LayoutLayer.EMOJI || it == LayoutLayer.CLIPBOARD
+                }
+            if (heightLayer != null || contentRows > 0) {
+                val panelRows = contentRows.coerceAtLeast(if (heightLayer != null) 1 else 0)
+                if (panelRows > 0) {
+                    LayoutPreviewLayerPanel(
+                        content =
+                            if (contentRows > 0) {
+                                namedLayout.contentFor(selected)
+                            } else {
+                                LayerContent.None
+                            },
+                        height = PREVIEW_KEY_HEIGHT * panelRows,
+                        keyHeight = PREVIEW_KEY_HEIGHT,
+                        heightControls =
+                            heightLayer?.let { layer ->
+                                val totalRows = namedLayout.heightRows(selected)
+                                val minRows = namedLayout.gridRowCount(selected)
+                                val defaultRows = defaultPanelHeightRows(layer)
+                                PanelHeightControls(
+                                    totalRows = totalRows,
+                                    minRows = minRows,
+                                    maxRows = MAX_LAYER_HEIGHT_ROWS,
+                                    defaultRows = defaultRows,
+                                    onChange = { onLayerHeightRowsChange(layer, it) },
+                                )
+                            },
+                    )
+                }
             }
             LayoutPreviewGrid(
                 layout = grid,
+                switchLayerIcons = namedLayout.switchLayerIconMap(),
                 onKeyClick = onKeyClick,
                 onResizeRows = onResizeRows,
                 highlightedKey = hoverKey,
                 draggingKey = (drag as? PreviewDrag.Key)?.from,
+                keyFlashPositions = keyFlashPositions,
+                keyFlashGeneration = keyFlashGeneration,
                 highlightedRow = hoverRow,
                 draggingRow = (drag as? PreviewDrag.Row)?.from,
                 showDeleteTarget = drag is PreviewDrag.Key || drag is PreviewDrag.Row,
@@ -1290,6 +1460,15 @@ private fun LayerSwitchAssigner(
                     clearHover()
                 },
             )
+            val selectedCustom = (selected as? ActiveLayer.Custom)?.id
+            if (selectedCustom != null) {
+                TextButton(
+                    onClick = { onEditCustomLayer(selectedCustom) },
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                ) {
+                    Text(stringResource(R.string.layout_edit_custom_layer))
+                }
+            }
             if (onSeedLayer != null) {
                 TextButton(
                     onClick = onSeedLayer,
@@ -1401,13 +1580,13 @@ private fun LayerSwitchAssigner(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
                         Icon(
-                            imageVector = layerChipIcon(current.layer),
+                            imageVector = activeLayerChipIcon(current.layer, namedLayout),
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.size(18.dp),
                         )
                         Text(
-                            text = layerChipLabel(current.layer),
+                            text = activeLayerChipLabel(current.layer, namedLayout),
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             style = MaterialTheme.typography.labelLarge,
                         )
@@ -1442,6 +1621,7 @@ private fun LayerSwitchAssigner(
                                     modifierState = legendModifierState,
                                     shiftMappings = emptyMap(),
                                     displayLabel = mapping.displayLabels[Zone.Center],
+                                    switchLayerIcons = namedLayout.switchLayerIconMap(),
                                 )
                             if (legend != null) {
                                 KeyLegendMark(
@@ -1616,6 +1796,18 @@ private fun layerChipLabel(layer: LayoutLayer): String =
         LayoutLayer.CLIPBOARD -> stringResource(R.string.layout_layer_clipboard)
     }
 
+@Composable
+private fun activeLayerChipLabel(
+    layer: ActiveLayer,
+    namedLayout: NamedLayout,
+): String =
+    when (layer) {
+        is ActiveLayer.Builtin -> layerChipLabel(layer.layer)
+        is ActiveLayer.Custom ->
+            namedLayout.customLayer(layer.id)?.title
+                ?: stringResource(R.string.layout_custom_layer_fallback)
+    }
+
 /** S12-style panel defaults: room above the key row for emoji picker / clipboard list. */
 private fun defaultPanelHeightRows(layer: LayoutLayer): Int =
     when (layer) {
@@ -1633,16 +1825,50 @@ private fun layerChipIcon(layer: LayoutLayer): ImageVector =
         LayoutLayer.CLIPBOARD -> Icons.Outlined.History
     }
 
+private fun activeLayerChipIcon(
+    layer: ActiveLayer,
+    namedLayout: NamedLayout,
+): ImageVector =
+    when (layer) {
+        is ActiveLayer.Builtin -> layerChipIcon(layer.layer)
+        is ActiveLayer.Custom ->
+            namedLayout.customLayer(layer.id)?.icon?.asImageVector()
+                ?: Icons.Outlined.Functions
+    }
+
+private fun ActiveLayer.toSwitchIntent(): KeyIntent = KeyIntent.SwitchLayer(idString())
+
+private sealed class CustomLayerDialogMode {
+    data object Add : CustomLayerDialogMode()
+
+    data class Edit(
+        val layer: CustomLayer,
+    ) : CustomLayerDialogMode()
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LayerChips(
-    selected: LayoutLayer,
-    onSelect: (LayoutLayer) -> Unit,
-    onDragStart: (LayoutLayer, Offset) -> Unit,
+    selected: ActiveLayer,
+    namedLayout: NamedLayout,
+    onSelect: (ActiveLayer) -> Unit,
+    onAddCustomLayer: () -> Unit,
+    onDragStart: (ActiveLayer, Offset) -> Unit,
     onDrag: (Offset) -> Unit,
     onDragEnd: () -> Unit,
     onDragCancel: () -> Unit,
 ) {
+    val layers =
+        remember(namedLayout.customLayers) {
+            buildList {
+                for (layer in LayoutLayer.entries) {
+                    add(ActiveLayer.Builtin(layer))
+                }
+                for (custom in namedLayout.customLayers) {
+                    add(ActiveLayer.Custom(custom.id))
+                }
+            }
+        }
     // Wrap instead of squeezing the last chip into a tall sliver on narrow screens.
     FlowRow(
         modifier =
@@ -1653,57 +1879,157 @@ private fun LayerChips(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        LayoutLayer.entries.forEach { layer ->
-            var coords by remember(layer) { mutableStateOf<LayoutCoordinates?>(null) }
-            val clickGate = rememberDragClickGate(layer)
-            val onDragStartLatest = rememberUpdatedState(onDragStart)
-            val onDragLatest = rememberUpdatedState(onDrag)
-            val onDragEndLatest = rememberUpdatedState(onDragEnd)
-            val onDragCancelLatest = rememberUpdatedState(onDragCancel)
-            val label = layerChipLabel(layer)
+        layers.forEach { layer ->
+            key(layer.idString()) {
+                var coords by remember(layer.idString()) { mutableStateOf<LayoutCoordinates?>(null) }
+                val clickGate = rememberDragClickGate(layer.idString())
+                val onDragStartLatest = rememberUpdatedState(onDragStart)
+                val onDragLatest = rememberUpdatedState(onDrag)
+                val onDragEndLatest = rememberUpdatedState(onDragEnd)
+                val onDragCancelLatest = rememberUpdatedState(onDragCancel)
+                val label = activeLayerChipLabel(layer, namedLayout)
+                FilterChip(
+                    selected = selected == layer,
+                    onClick = {
+                        if (!clickGate.consumeSuppressedClick()) {
+                            onSelect(layer)
+                        }
+                    },
+                    label = { Text(label) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = activeLayerChipIcon(layer, namedLayout),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                    modifier =
+                        Modifier
+                            .onGloballyPositioned { coords = it }
+                            .pointerInput(layer.idString()) {
+                                detectDragGesturesAfterLongPress(
+                                    onDragStart = { local ->
+                                        clickGate.arm()
+                                        val root =
+                                            coords?.localToRoot(local)
+                                                ?: return@detectDragGesturesAfterLongPress
+                                        onDragStartLatest.value(layer, root)
+                                    },
+                                    onDrag = { change, _ ->
+                                        change.consume()
+                                        val root =
+                                            coords?.localToRoot(change.position)
+                                                ?: return@detectDragGesturesAfterLongPress
+                                        onDragLatest.value(root)
+                                    },
+                                    onDragEnd = { onDragEndLatest.value() },
+                                    onDragCancel = {
+                                        clickGate.clear()
+                                        onDragCancelLatest.value()
+                                    },
+                                )
+                            },
+                )
+            }
+        }
+        if (namedLayout.customLayers.size < MAX_CUSTOM_LAYERS) {
             FilterChip(
-                selected = selected == layer,
-                onClick = {
-                    if (!clickGate.consumeSuppressedClick()) {
-                        onSelect(layer)
-                    }
-                },
-                label = { Text(label) },
+                selected = false,
+                onClick = onAddCustomLayer,
+                label = { Text(stringResource(R.string.layout_add_custom_layer)) },
                 leadingIcon = {
                     Icon(
-                        imageVector = layerChipIcon(layer),
+                        imageVector = Icons.Outlined.Add,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
                     )
                 },
-                modifier =
-                    Modifier
-                        .onGloballyPositioned { coords = it }
-                        .pointerInput(layer) {
-                            detectDragGesturesAfterLongPress(
-                                onDragStart = { local ->
-                                    clickGate.arm()
-                                    val root =
-                                        coords?.localToRoot(local) ?: return@detectDragGesturesAfterLongPress
-                                    onDragStartLatest.value(layer, root)
-                                },
-                                onDrag = { change, _ ->
-                                    change.consume()
-                                    val root =
-                                        coords?.localToRoot(change.position)
-                                            ?: return@detectDragGesturesAfterLongPress
-                                    onDragLatest.value(root)
-                                },
-                                onDragEnd = { onDragEndLatest.value() },
-                                onDragCancel = {
-                                    clickGate.clear()
-                                    onDragCancelLatest.value()
-                                },
-                            )
-                        },
             )
         }
     }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CustomLayerConfigDialog(
+    mode: CustomLayerDialogMode,
+    onDismiss: () -> Unit,
+    onSave: (title: String, icon: CustomLayerIcon) -> Unit,
+) {
+    val initial =
+        when (mode) {
+            CustomLayerDialogMode.Add -> null
+            is CustomLayerDialogMode.Edit -> mode.layer
+        }
+    var title by remember(mode) {
+        mutableStateOf(initial?.title ?: "")
+    }
+    var icon by remember(mode) {
+        mutableStateOf(initial?.icon ?: CustomLayerIcon.Functions)
+    }
+    val canSave = title.isNotBlank()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                stringResource(
+                    if (mode is CustomLayerDialogMode.Add) {
+                        R.string.layout_add_custom_layer_title
+                    } else {
+                        R.string.layout_edit_custom_layer_title
+                    },
+                ),
+            )
+        },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text(stringResource(R.string.layout_custom_layer_name)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                )
+                Text(
+                    text = stringResource(R.string.layout_custom_layer_icon),
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                )
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    CustomLayerIcon.entries.forEach { option ->
+                        FilterChip(
+                            selected = icon == option,
+                            onClick = { icon = option },
+                            label = { Text(option.name) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = option.asImageVector(),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp),
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSave(title.trim(), icon) },
+                enabled = canSave,
+            ) {
+                Text(stringResource(R.string.save))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+    )
 }
 
 /**
@@ -1746,124 +2072,207 @@ private class DragClickGate(
 
 private const val DRAG_CLICK_SUPPRESS_MS = 400L
 
+private data class PanelHeightControls(
+    val totalRows: Int,
+    val minRows: Int,
+    val maxRows: Int,
+    val defaultRows: Int,
+    val onChange: (Int) -> Unit,
+)
+
 @Composable
 private fun LayoutPreviewLayerPanel(
     content: LayerContent,
     height: Dp,
     keyHeight: Dp,
+    heightControls: PanelHeightControls? = null,
 ) {
-    Box(
+    Row(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 12.dp)
                 .padding(
                     start = PREVIEW_KEYS_START_INSET,
-                    end = PREVIEW_KEYS_END_INSET,
                     bottom = 4.dp,
-                )
-                .height(height)
-                .clip(RoundedCornerShape(8.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                .border(
-                    width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
-                    shape = RoundedCornerShape(8.dp),
                 ),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        when (content) {
-            LayerContent.None -> {
-                Box(modifier = Modifier.fillMaxSize()) {
-                    Column(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .padding(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        val bands = (height / keyHeight).toInt().coerceAtLeast(1)
-                        repeat(bands) {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .weight(1f)
-                                        .border(
-                                            width = 1.dp,
-                                            color =
-                                                MaterialTheme.colorScheme.outlineVariant.copy(
-                                                    alpha = 0.45f,
-                                                ),
-                                            shape = RoundedCornerShape(4.dp),
-                                        ),
+        Box(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .padding(end = if (heightControls != null) PREVIEW_ROW_INNER_GAP else PREVIEW_KEYS_END_INSET)
+                    .height(height)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                    .border(
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant,
+                        shape = RoundedCornerShape(8.dp),
+                    ),
+        ) {
+            when (content) {
+                LayerContent.None -> {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            val bands = (height / keyHeight).toInt().coerceAtLeast(1)
+                            repeat(bands) {
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .weight(1f)
+                                            .border(
+                                                width = 1.dp,
+                                                color =
+                                                    MaterialTheme.colorScheme.outlineVariant.copy(
+                                                        alpha = 0.45f,
+                                                    ),
+                                                shape = RoundedCornerShape(4.dp),
+                                            ),
+                                )
+                            }
+                        }
+                        Text(
+                            text = stringResource(R.string.layout_preview_panel_empty),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                            modifier =
+                                Modifier
+                                    .align(Alignment.Center)
+                                    .padding(16.dp),
+                        )
+                    }
+                }
+
+                LayerContent.EmojiPicker -> {
+                    val colorScheme = MaterialTheme.colorScheme
+                    val pickerText = colorScheme.onSurface.toArgb()
+                    val pickerIcon = colorScheme.onSurfaceVariant.toArgb()
+                    val pickerAccent = colorScheme.primary.toArgb()
+                    val darkKeyboard = colorScheme.surface.luminance() < 0.5f
+                    key(pickerText, pickerIcon, pickerAccent, darkKeyboard) {
+                        AndroidView(
+                            factory = { context ->
+                                createThemedEmojiPicker(
+                                    context = context,
+                                    darkKeyboard = darkKeyboard,
+                                    text = pickerText,
+                                    icon = pickerIcon,
+                                    accent = pickerAccent,
+                                ).apply {
+                                    // Preview only - picking should not type into a field here.
+                                    setOnEmojiPickedListener { }
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+
+                LayerContent.ClipboardHistory -> {
+                    val samplePinned = stringResource(R.string.layout_preview_clipboard_sample_2)
+                    val sampleItem = stringResource(R.string.layout_preview_clipboard_sample_1)
+                    val samples =
+                        remember(samplePinned, sampleItem) {
+                            listOf(
+                                ClipboardItem(id = 1, text = samplePinned, isPinned = true),
+                                ClipboardItem(id = 2, text = sampleItem),
+                                ClipboardItem(id = 3, text = "https://example.com"),
                             )
                         }
-                    }
-                    Text(
-                        text = stringResource(R.string.layout_preview_panel_empty),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier =
-                            Modifier
-                                .align(Alignment.Center)
-                                .padding(16.dp),
-                    )
-                }
-            }
-
-            LayerContent.EmojiPicker -> {
-                val colorScheme = MaterialTheme.colorScheme
-                val pickerText = colorScheme.onSurface.toArgb()
-                val pickerIcon = colorScheme.onSurfaceVariant.toArgb()
-                val pickerAccent = colorScheme.primary.toArgb()
-                val darkKeyboard = colorScheme.surface.luminance() < 0.5f
-                key(pickerText, pickerIcon, pickerAccent, darkKeyboard) {
-                    AndroidView(
-                        factory = { context ->
-                            createThemedEmojiPicker(
-                                context = context,
-                                darkKeyboard = darkKeyboard,
-                                text = pickerText,
-                                icon = pickerIcon,
-                                accent = pickerAccent,
-                            ).apply {
-                                // Preview only - picking should not type into a field here.
-                                setOnEmojiPickedListener { }
-                            }
-                        },
+                    ClipboardHistoryScreen(
+                        clipboardItems = samples,
+                        isEnabled = true,
+                        onItemClick = {},
+                        onItemPaste = {},
+                        onItemDelete = {},
+                        onItemTogglePin = {},
+                        onBack = {},
+                        onClearAll = {},
+                        onGoToClipboardSettings = {},
+                        keyHeight = keyHeight.value,
+                        keyPadding = 4,
+                        cornerRadius = 6f,
+                        vibrateOnTap = false,
+                        imagesEnabled = false,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
             }
+        }
 
-            LayerContent.ClipboardHistory -> {
-                val samplePinned = stringResource(R.string.layout_preview_clipboard_sample_2)
-                val sampleItem = stringResource(R.string.layout_preview_clipboard_sample_1)
-                val samples =
-                    remember(samplePinned, sampleItem) {
-                        listOf(
-                            ClipboardItem(id = 1, text = samplePinned, isPinned = true),
-                            ClipboardItem(id = 2, text = sampleItem),
-                            ClipboardItem(id = 3, text = "https://example.com"),
-                        )
-                    }
-                ClipboardHistoryScreen(
-                    clipboardItems = samples,
-                    isEnabled = true,
-                    onItemClick = {},
-                    onItemPaste = {},
-                    onItemDelete = {},
-                    onItemTogglePin = {},
-                    onBack = {},
-                    onClearAll = {},
-                    onGoToClipboardSettings = {},
-                    keyHeight = keyHeight.value,
-                    keyPadding = 4,
-                    cornerRadius = 6f,
-                    vibrateOnTap = false,
-                    imagesEnabled = false,
-                    modifier = Modifier.fillMaxSize(),
+        if (heightControls != null) {
+            PanelHeightChevrons(
+                controls = heightControls,
+                modifier =
+                    Modifier
+                        .width(PREVIEW_ADD_KEY_SIZE)
+                        .height(height.coerceAtLeast(PREVIEW_KEY_HEIGHT * 2)),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PanelHeightChevrons(
+    controls: PanelHeightControls,
+    modifier: Modifier = Modifier,
+) {
+    val canTaller = controls.totalRows < controls.maxRows
+    val canShorter = controls.totalRows > controls.minRows
+    val atDefault = controls.totalRows == controls.defaultRows
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.SpaceEvenly,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        IconButton(
+            onClick = { controls.onChange(controls.totalRows + 1) },
+            enabled = canTaller,
+            modifier = Modifier.size(PREVIEW_ADD_KEY_SIZE),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.KeyboardArrowUp,
+                contentDescription = stringResource(R.string.layout_panel_taller),
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        Text(
+            text = controls.totalRows.toString(),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        IconButton(
+            onClick = { controls.onChange(controls.totalRows - 1) },
+            enabled = canShorter,
+            modifier = Modifier.size(PREVIEW_ADD_KEY_SIZE),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.KeyboardArrowDown,
+                contentDescription = stringResource(R.string.layout_panel_shorter),
+                modifier = Modifier.size(20.dp),
+            )
+        }
+        if (!atDefault) {
+            IconButton(
+                onClick = { controls.onChange(controls.defaultRows) },
+                modifier = Modifier.size(PREVIEW_ADD_KEY_SIZE),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.RestartAlt,
+                    contentDescription = stringResource(R.string.layout_panel_height_reset),
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
@@ -1873,10 +2282,13 @@ private fun LayoutPreviewLayerPanel(
 @Composable
 private fun LayoutPreviewGrid(
     layout: Map<KeyPosition, KeyMapping>,
+    switchLayerIcons: Map<String, ImageVector> = emptyMap(),
     onKeyClick: (KeyPosition) -> Unit,
     onResizeRows: (List<Int>) -> Unit,
     highlightedKey: KeyPosition? = null,
     draggingKey: KeyPosition? = null,
+    keyFlashPositions: Set<KeyPosition> = emptySet(),
+    keyFlashGeneration: Int = 0,
     highlightedRow: Int? = null,
     draggingRow: Int? = null,
     showDeleteTarget: Boolean = false,
@@ -1978,8 +2390,11 @@ private fun LayoutPreviewGrid(
                             mapping = mapping,
                             legendVisibility = legendVisibility,
                             legendModifierState = legendModifierState,
+                            switchLayerIcons = switchLayerIcons,
                             highlighted = highlightedKey == pos,
                             dragging = draggingKey == pos || rowDragging,
+                            flashGeneration =
+                                if (pos in keyFlashPositions) keyFlashGeneration else 0,
                             onClick = { onKeyClick(pos) },
                             onBoundsInRoot = { rect -> onKeyBoundsInRoot(pos, rect) },
                             onDragStart = { root -> onKeyDragStart(pos, root) },
@@ -2100,10 +2515,9 @@ private fun PreviewAddRowButton(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
-    OutlinedButton(
+    TextButton(
         onClick = onClick,
         enabled = enabled,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
     ) {
         Icon(
             imageVector = Icons.Outlined.Add,
@@ -2184,8 +2598,10 @@ private fun LayoutPreviewKey(
     mapping: KeyMapping,
     legendVisibility: LegendVisibility,
     legendModifierState: ModifierState,
+    switchLayerIcons: Map<String, ImageVector> = emptyMap(),
     highlighted: Boolean,
     dragging: Boolean,
+    flashGeneration: Int = 0,
     onClick: () -> Unit,
     onBoundsInRoot: (Rect) -> Unit,
     onDragStart: (Offset) -> Unit,
@@ -2198,13 +2614,33 @@ private fun LayoutPreviewKey(
     val swipeColor = MaterialTheme.colorScheme.onSurfaceVariant
     val centerSize = 16.dp
     val swipeSize = 9.dp
+    val restingBg = MaterialTheme.colorScheme.surfaceVariant
+    val flashBg = MaterialTheme.colorScheme.primaryContainer
+    val restingBorder = MaterialTheme.colorScheme.outlineVariant
+    val flashBorder = MaterialTheme.colorScheme.primary
+    val flash = remember { Animatable(0f) }
+    LaunchedEffect(flashGeneration) {
+        if (flashGeneration <= 0) {
+            flash.snapTo(0f)
+            return@LaunchedEffect
+        }
+        flash.snapTo(1f)
+        flash.animateTo(0f, animationSpec = tween(durationMillis = 750))
+    }
+    val flashT = flash.value
     val borderColor =
         when {
             highlighted -> MaterialTheme.colorScheme.primary
             dragging -> MaterialTheme.colorScheme.tertiary
-            else -> MaterialTheme.colorScheme.outlineVariant
+            else -> lerp(restingBorder, flashBorder, flashT)
         }
-    val borderWidth = if (highlighted || dragging) 2.dp else 1.dp
+    val borderWidth = if (highlighted || dragging || flashT > 0.05f) 2.dp else 1.dp
+    val backgroundColor =
+        when {
+            highlighted -> MaterialTheme.colorScheme.primaryContainer
+            dragging -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+            else -> lerp(restingBg, flashBg, flashT)
+        }
     var coords by remember { mutableStateOf<LayoutCoordinates?>(null) }
     val clickGate = rememberDragClickGate()
     val onDragStartLatest = rememberUpdatedState(onDragStart)
@@ -2218,6 +2654,11 @@ private fun LayoutPreviewKey(
     Box(
         modifier =
             modifier
+                .graphicsLayer {
+                    val scale = 1f + (0.06f * flashT)
+                    scaleX = scale
+                    scaleY = scale
+                }
                 .onGloballyPositioned {
                     coords = it
                     onBoundsInRoot(
@@ -2232,11 +2673,7 @@ private fun LayoutPreviewKey(
                     )
                 }
                 .background(
-                    when {
-                        highlighted -> MaterialTheme.colorScheme.primaryContainer
-                        dragging -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
-                        else -> MaterialTheme.colorScheme.surfaceVariant
-                    },
+                    backgroundColor,
                     RoundedCornerShape(6.dp),
                 )
                 .border(
@@ -2283,6 +2720,7 @@ private fun LayoutPreviewKey(
                     modifierState = legendModifierState,
                     shiftMappings = emptyMap(),
                     displayLabel = mapping.displayLabels[zone],
+                    switchLayerIcons = switchLayerIcons,
                 )
             if (legend != null) {
                 KeyLegendMark(
@@ -2301,6 +2739,7 @@ private fun LayoutPreviewKey(
                 modifierState = legendModifierState,
                 shiftMappings = emptyMap(),
                 displayLabel = mapping.displayLabels[Zone.Center],
+                switchLayerIcons = switchLayerIcons,
             )
         if (centerLegend != null) {
             KeyLegendMark(
@@ -2322,14 +2761,6 @@ private fun LayoutPreviewKey(
     }
 }
 
-private fun LayoutLayer.toggleCommandId(): CommandId =
-    when (this) {
-        LayoutLayer.MAIN -> CommandId.TOGGLE_ABC_MODE
-        LayoutLayer.NUMERIC -> CommandId.TOGGLE_NUMERIC_MODE
-        LayoutLayer.EMOJI -> CommandId.TOGGLE_EMOJI_MODE
-        LayoutLayer.CLIPBOARD -> CommandId.TOGGLE_CLIPBOARD_HISTORY
-    }
-
 private val PREVIEW_DIRECTIONAL_ALIGNMENTS =
     listOf(
         Direction.UP_LEFT to Alignment.TopStart,
@@ -2343,9 +2774,158 @@ private val PREVIEW_DIRECTIONAL_ALIGNMENTS =
     )
 
 @Composable
+private fun KeyEditorZonePad(
+    mapping: KeyMapping,
+    onZoneClick: (Zone) -> Unit,
+) {
+    val span = mapping.columnSpan.coerceIn(1, 5)
+    val shape = RoundedCornerShape(16.dp)
+    val fill = colorVariantToColor(mapping.restingFillVariant(distinctLetterControlColors = true))
+    val swipeColor = colorVariantToColor(legendColorVariant(isCenter = false))
+    val centerColor = colorVariantToColor(legendColorVariant(isCenter = true))
+    val centerIntent = mapping.intents[Zone.Center]
+    val centerCommand =
+        if (centerIntent is KeyIntent.Command) {
+            commandDisplayTitle(centerIntent.id)
+        } else {
+            null
+        }
+    BoxWithConstraints(
+        modifier = Modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+    ) {
+        // Keep a comfortable key height (span-1 size). Widen with span for a visual cue,
+        // but never exceed the dialog - do not flatten the key to preserve a 1:N ratio.
+        val keyHeight = maxOf(PREVIEW_KEY_HEIGHT * 2.5f, maxWidth * 0.62f)
+        val widthFactor = 1f + (span - 1) * 0.55f
+        val keyWidth = minOf(maxWidth, keyHeight * widthFactor)
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(
+                modifier =
+                    Modifier
+                        .width(keyWidth)
+                        .height(keyHeight)
+                        .clip(shape)
+                        .background(fill)
+                        .border(1.dp, MaterialTheme.colorScheme.outline, shape),
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(14.dp),
+                ) {
+                    for ((direction, alignment) in PREVIEW_DIRECTIONAL_ALIGNMENTS) {
+                        ZonePadLegend(
+                            mapping = mapping,
+                            zone = Zone.Directional(direction),
+                            large = false,
+                            color = swipeColor,
+                            modifier = Modifier.align(alignment),
+                        )
+                    }
+                    ZonePadLegend(
+                        mapping = mapping,
+                        zone = Zone.Center,
+                        large = true,
+                        color = centerColor,
+                        modifier = Modifier.align(Alignment.Center),
+                    )
+                }
+                Column(modifier = Modifier.fillMaxSize()) {
+                    ZONE_PAD_ROWS.forEach { row ->
+                        Row(
+                            modifier =
+                                Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth(),
+                        ) {
+                            row.forEach { zone ->
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight()
+                                            .clickable { onZoneClick(zone) },
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            if (centerCommand != null) {
+                Text(
+                    text = "($centerCommand)",
+                    fontSize = 12.sp,
+                    color = swipeColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 6.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ZonePadLegend(
+    mapping: KeyMapping,
+    zone: Zone,
+    large: Boolean,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    val intent = mapping.intents[zone]
+    val fontSize = if (large) 36.sp else 18.sp
+    val iconSize = if (large) 40.dp else 22.dp
+    when (intent) {
+        null, is KeyIntent.Noop -> {
+            if (large) {
+                Text(
+                    text = "·",
+                    modifier = modifier,
+                    fontSize = 28.sp,
+                    color = color.copy(alpha = 0.45f),
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+        is KeyIntent.Command -> {
+            KeyLegendMark(
+                legend = commandEditorLegend(intent.id),
+                fontSize = fontSize,
+                iconSize = iconSize,
+                color = color,
+                modifier = modifier,
+            )
+        }
+        else -> {
+            val legend =
+                keyLegend(
+                    intent = intent,
+                    visibility = LegendVisibility(),
+                    modifierState = ModifierState.NONE,
+                    shiftMappings = emptyMap(),
+                    displayLabel = mapping.displayLabels[zone],
+                )
+            if (legend != null) {
+                KeyLegendMark(
+                    legend = legend,
+                    fontSize = fontSize,
+                    iconSize = iconSize,
+                    color = color,
+                    modifier = modifier,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun KeyEditorDialog(
     position: KeyPosition,
     mapping: KeyMapping,
+    namedLayout: NamedLayout,
     shiftMappings: Map<String, String>,
     capsLockMappings: Map<String, String>,
     onDismiss: () -> Unit,
@@ -2374,42 +2954,12 @@ private fun KeyEditorDialog(
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
-                ZONE_ORDER.chunked(3).forEach { row ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        row.forEach { (name, zone) ->
-                            val intent = draft.intents[zone]
-                            val label =
-                                when (intent) {
-                                    null -> "-"
-                                    is KeyIntent.Text -> intent.text.ifBlank { "text" }
-                                    is KeyIntent.Command -> intent.id.name.take(6)
-                                    is KeyIntent.ModifierPress -> intent.modifier.name
-                                    is KeyIntent.Noop -> "noop"
-                                }
-                            Column(
-                                modifier =
-                                    Modifier
-                                        .weight(1f)
-                                        .padding(2.dp)
-                                        .background(
-                                            MaterialTheme.colorScheme.surfaceVariant,
-                                            RoundedCornerShape(4.dp),
-                                        )
-                                        .clickable {
-                                            zoneDraft = zone to (intent ?: KeyIntent.Noop)
-                                        }
-                                        .padding(6.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                Text(name, fontSize = 9.sp, maxLines = 1)
-                                Text(label, fontSize = 11.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            }
-                        }
-                    }
-                }
+                KeyEditorZonePad(
+                    mapping = draft,
+                    onZoneClick = { zone ->
+                        zoneDraft = zone to (draft.intents[zone] ?: KeyIntent.Noop)
+                    },
+                )
 
                 Box(modifier = Modifier.height(12.dp))
                 IntStepperPreference(
@@ -2613,6 +3163,7 @@ private fun KeyEditorDialog(
             shiftMappedTo = initialText?.let { shifts[it] }.orEmpty(),
             capsMappedTo = initialText?.let { caps[it] }.orEmpty(),
             canClear = zone != Zone.Center,
+            namedLayout = namedLayout,
             onDismiss = { zoneDraft = null },
             onApply = { newIntent, label, repeat, clear, previousText, shiftTo, capsTo ->
                 val intents = draft.intents.toMutableMap()
@@ -2675,6 +3226,7 @@ private fun Map<String, String>.withoutCaseText(text: String?): Map<String, Stri
     return this - text
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ZoneEditorDialog(
     zone: Zone,
@@ -2684,6 +3236,7 @@ private fun ZoneEditorDialog(
     shiftMappedTo: String,
     capsMappedTo: String,
     canClear: Boolean,
+    namedLayout: NamedLayout,
     onDismiss: () -> Unit,
     onApply: (
         KeyIntent?,
@@ -2695,23 +3248,47 @@ private fun ZoneEditorDialog(
         capsTo: String?,
     ) -> Unit,
 ) {
+    val context = LocalContext.current
+    val legacyCommand = initialIntent as? KeyIntent.Command
+    val legacySwitchLayerId = legacyCommand?.id?.switchLayerIdOrNull()
+    val legacyModifierId = legacyCommand?.id?.modifierIdOrNull()
     val typeInitial =
         when (initialIntent) {
             is KeyIntent.Text -> "text"
-            is KeyIntent.Command -> "command"
+            is KeyIntent.Command ->
+                when {
+                    legacySwitchLayerId != null -> "switchLayer"
+                    legacyModifierId != null -> "modifier"
+                    else -> "command"
+                }
             is KeyIntent.ModifierPress -> "modifier"
+            is KeyIntent.SwitchLayer -> "switchLayer"
             is KeyIntent.Noop -> "noop"
         }
     val previousText = (initialIntent as? KeyIntent.Text)?.text
     var type by remember { mutableStateOf(typeInitial) }
-    var textValue by remember {
-        mutableStateOf(previousText.orEmpty())
+    var textValue by remember { mutableStateOf(previousText.orEmpty()) }
+    var selectedCommand by remember {
+        mutableStateOf(
+            legacyCommand
+                ?.id
+                ?.takeUnless { it.isLayerSwitchCommand() || it.isModifierCommand() }
+                ?: CommandId.ENTER,
+        )
     }
-    var commandId by remember {
-        mutableStateOf((initialIntent as? KeyIntent.Command)?.id?.name ?: CommandId.ENTER.name)
+    var switchLayerId by remember {
+        mutableStateOf(
+            (initialIntent as? KeyIntent.SwitchLayer)?.layerId
+                ?: legacySwitchLayerId
+                ?: namedLayout.availableLayers().firstOrNull()?.idString().orEmpty(),
+        )
     }
     var selectedModifierId by remember {
-        mutableStateOf((initialIntent as? KeyIntent.ModifierPress)?.modifier?.name ?: ModifierId.SHIFT.name)
+        mutableStateOf(
+            (initialIntent as? KeyIntent.ModifierPress)?.modifier
+                ?: legacyModifierId
+                ?: ModifierId.SHIFT,
+        )
     }
     var label by remember { mutableStateOf(displayLabel.orEmpty()) }
     var shiftTo by remember { mutableStateOf(shiftMappedTo) }
@@ -2725,21 +3302,51 @@ private fun ZoneEditorDialog(
             },
         )
     }
+    val typeValues = listOf("text", "command", "modifier", "switchLayer", "noop")
+    fun typeLabel(key: String): String =
+        context.getString(
+            when (key) {
+                "text" -> R.string.layout_zone_type_text
+                "command" -> R.string.layout_zone_type_command
+                "modifier" -> R.string.layout_zone_type_modifier
+                "switchLayer" -> R.string.layout_zone_type_switch_layer
+                else -> R.string.layout_zone_type_noop
+            },
+        )
+    fun repeatLabel(key: String): String =
+        context.getString(
+            when (key) {
+                "true" -> R.string.layout_zone_repeat_on
+                "false" -> R.string.layout_zone_repeat_off
+                else -> R.string.layout_zone_repeat_default
+            },
+        )
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.layout_edit_zone)) },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                ListPreference(
-                    type = ListPreferenceType.DROPDOWN_MENU,
-                    value = type,
-                    onValueChange = { type = it },
-                    values = listOf("text", "command", "modifier", "noop"),
-                    title = { Text(stringResource(R.string.layout_zone_type)) },
-                    summary = { Text(type) },
-                    valueToText = { AnnotatedString(it) },
+                SettingTitle(text = stringResource(R.string.layout_zone_type))
+                Text(
+                    text = stringResource(R.string.layout_zone_type_summary, typeLabel(type)),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp),
                 )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    typeValues.forEach { key ->
+                        FilterChip(
+                            selected = type == key,
+                            onClick = { type = key },
+                            label = { Text(typeLabel(key)) },
+                        )
+                    }
+                }
                 when (type) {
                     "text" -> {
                         OutlinedTextField(
@@ -2778,25 +3385,63 @@ private fun ZoneEditorDialog(
                         )
                     }
                     "command" -> {
-                        ListPreference(
-                            type = ListPreferenceType.DROPDOWN_MENU,
-                            value = commandId,
-                            onValueChange = { commandId = it },
-                            values = CommandId.entries.map { it.name },
-                            title = { Text(stringResource(R.string.layout_zone_command)) },
-                            summary = { Text(commandId) },
-                            valueToText = { AnnotatedString(it) },
+                        SettingTitle(text = stringResource(R.string.layout_zone_command))
+                        Text(
+                            text =
+                                stringResource(
+                                    R.string.layout_zone_command_summary,
+                                    commandDisplayTitle(selectedCommand),
+                                ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        )
+                        ZoneCommandPicker(
+                            selected = selectedCommand,
+                            onSelect = { selectedCommand = it },
                         )
                     }
                     "modifier" -> {
-                        ListPreference(
-                            type = ListPreferenceType.DROPDOWN_MENU,
-                            value = selectedModifierId,
-                            onValueChange = { selectedModifierId = it },
-                            values = ModifierId.entries.map { it.name },
-                            title = { Text(stringResource(R.string.layout_zone_modifier)) },
-                            summary = { Text(selectedModifierId) },
-                            valueToText = { AnnotatedString(it) },
+                        SettingTitle(text = stringResource(R.string.layout_zone_modifier))
+                        Text(
+                            text =
+                                stringResource(
+                                    R.string.layout_zone_modifier_summary,
+                                    modifierDisplayTitle(selectedModifierId),
+                                ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        )
+                        ZoneModifierPicker(
+                            selected = selectedModifierId,
+                            onSelect = { selectedModifierId = it },
+                        )
+                    }
+                    "switchLayer" -> {
+                        SettingTitle(
+                            text = stringResource(R.string.layout_zone_switch_layer),
+                            infoText = stringResource(R.string.layout_zone_switch_layer_info),
+                        )
+                        val selectedLayer =
+                            namedLayout.availableLayers().find { it.idString() == switchLayerId }
+                        Text(
+                            text =
+                                stringResource(
+                                    R.string.layout_zone_switch_layer_summary,
+                                    selectedLayer?.let { activeLayerChipLabel(it, namedLayout) }
+                                        ?: switchLayerId.ifBlank { "-" },
+                                    selectedLayer?.let { switchLayerPressEffect(it) }
+                                        ?: stringResource(R.string.layout_zone_switch_effect_custom),
+                                ),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(bottom = 8.dp),
+                        )
+                        ZoneLayerPicker(
+                            namedLayout = namedLayout,
+                            selectedId = switchLayerId,
+                            onSelect = { switchLayerId = it },
                         )
                     }
                 }
@@ -2807,8 +3452,15 @@ private fun ZoneEditorDialog(
                         onValueChange = { repeatMode = it },
                         values = listOf("default", "true", "false"),
                         title = { Text(stringResource(R.string.layout_zone_repeat)) },
-                        summary = { Text(repeatMode) },
-                        valueToText = { AnnotatedString(it) },
+                        summary = {
+                            Text(
+                                stringResource(
+                                    R.string.layout_zone_repeat_summary,
+                                    repeatLabel(repeatMode),
+                                ),
+                            )
+                        },
+                        valueToText = { AnnotatedString(repeatLabel(it)) },
                     )
                 }
             }
@@ -2819,8 +3471,14 @@ private fun ZoneEditorDialog(
                     val newIntent: KeyIntent =
                         when (type) {
                             "text" -> KeyIntent.Text(textValue)
-                            "command" -> KeyIntent.Command(CommandId.valueOf(commandId))
-                            "modifier" -> KeyIntent.ModifierPress(ModifierId.valueOf(selectedModifierId))
+                            "command" -> KeyIntent.Command(selectedCommand)
+                            "modifier" -> KeyIntent.ModifierPress(selectedModifierId)
+                            "switchLayer" ->
+                                KeyIntent.SwitchLayer(
+                                    switchLayerId.trim().ifBlank {
+                                        namedLayout.availableLayers().first().idString()
+                                    },
+                                )
                             else -> KeyIntent.Noop
                         }
                     val repeat =
@@ -2861,4 +3519,161 @@ private fun ZoneEditorDialog(
             }
         },
     )
+}
+
+@Composable
+private fun modifierDisplayTitle(id: ModifierId): String =
+    stringResource(
+        when (id) {
+            ModifierId.CTRL -> R.string.layout_zone_modifier_ctrl
+            ModifierId.ALT -> R.string.layout_zone_modifier_alt
+            ModifierId.SHIFT -> R.string.layout_zone_modifier_shift
+            ModifierId.ESC -> R.string.layout_zone_modifier_esc
+        },
+    )
+
+@Composable
+private fun switchLayerPressEffect(layer: ActiveLayer): String =
+    stringResource(
+        when (layer) {
+            is ActiveLayer.Builtin ->
+                when (layer.layer) {
+                    LayoutLayer.MAIN -> R.string.layout_zone_switch_effect_main
+                    LayoutLayer.NUMERIC -> R.string.layout_zone_switch_effect_numeric
+                    LayoutLayer.EMOJI -> R.string.layout_zone_switch_effect_emoji
+                    LayoutLayer.CLIPBOARD -> R.string.layout_zone_switch_effect_clipboard
+                }
+            is ActiveLayer.Custom -> R.string.layout_zone_switch_effect_custom
+        },
+    )
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ZoneCommandPicker(
+    selected: CommandId,
+    onSelect: (CommandId) -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        CommandId.entries
+            .filterNot { it.isLayerSwitchCommand() || it.isModifierCommand() }
+            .forEach { id ->
+            ZonePickCell(
+                selected = id == selected,
+                onClick = { onSelect(id) },
+                legend = commandEditorLegend(id),
+                title = commandDisplayTitle(id),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ZoneModifierPicker(
+    selected: ModifierId,
+    onSelect: (ModifierId) -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        ModifierId.entries.forEach { id ->
+            ZonePickCell(
+                selected = id == selected,
+                onClick = { onSelect(id) },
+                legend =
+                    when (id) {
+                        ModifierId.SHIFT -> KeyLegend.Icon(Icons.Outlined.KeyboardArrowUp)
+                        ModifierId.CTRL -> KeyLegend.Icon(Icons.Outlined.KeyboardControlKey)
+                        ModifierId.ALT -> KeyLegend.Icon(Icons.Outlined.KeyboardOptionKey)
+                        ModifierId.ESC -> KeyLegend.Text("esc")
+                    },
+                title = modifierDisplayTitle(id),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ZoneLayerPicker(
+    namedLayout: NamedLayout,
+    selectedId: String,
+    onSelect: (String) -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        namedLayout.availableLayers().forEach { layer ->
+            val id = layer.idString()
+            ZonePickCell(
+                selected = id == selectedId,
+                onClick = { onSelect(id) },
+                legend = KeyLegend.Icon(activeLayerChipIcon(layer, namedLayout)),
+                title = activeLayerChipLabel(layer, namedLayout),
+            )
+        }
+    }
+}
+
+@Composable
+private fun ZonePickCell(
+    selected: Boolean,
+    onClick: () -> Unit,
+    legend: KeyLegend,
+    title: String,
+) {
+    val shape = RoundedCornerShape(12.dp)
+    val borderColor =
+        if (selected) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.outlineVariant
+        }
+    val fill =
+        if (selected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surfaceVariant
+        }
+    val contentColor =
+        if (selected) {
+            MaterialTheme.colorScheme.onPrimaryContainer
+        } else {
+            MaterialTheme.colorScheme.onSurface
+        }
+    Column(
+        modifier =
+            Modifier
+                .width(76.dp)
+                .clip(shape)
+                .background(fill)
+                .border(if (selected) 2.dp else 1.dp, borderColor, shape)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 6.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        KeyLegendMark(
+            legend = legend,
+            fontSize = 16.sp,
+            iconSize = 26.dp,
+            color = contentColor,
+        )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelSmall,
+            color = contentColor,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 6.dp),
+        )
+    }
 }

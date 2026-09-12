@@ -29,6 +29,7 @@ data class AppCommandHost(
     val onSwitchLanguage: () -> Unit,
     val onChangePosition: ((old: KeyboardPosition) -> KeyboardPosition) -> Unit,
     val onSelectLayer: (LayoutLayer) -> Unit,
+    val onSwitchLayer: (String) -> Unit,
     val onToggleEmojiLayer: () -> Unit,
     val onToggleClipboardHistory: () -> Unit,
 )
@@ -52,6 +53,10 @@ object ActionExecutor {
         ime: IMEService,
         host: AppCommandHost,
     ) {
+        if (action is SemanticAction.SwitchLayer) {
+            host.onSwitchLayer(action.layerId)
+            return
+        }
         if (action is SemanticAction.TypeCommand && !action.id.isKeyEventCommand()) {
             executeSpecialCommand(action.id, capabilities, ime, host)
             return

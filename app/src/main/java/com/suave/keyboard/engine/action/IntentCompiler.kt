@@ -8,6 +8,7 @@ object IntentCompiler {
         when (resolved) {
             is ResolvedIntent.TypedText -> SemanticAction.TypeText(resolved.text, resolved.modifiers)
             is ResolvedIntent.TypedCommand -> SemanticAction.TypeCommand(resolved.id, resolved.modifiers)
+            is ResolvedIntent.SwitchLayer -> SemanticAction.SwitchLayer(resolved.layerId)
             ResolvedIntent.Noop -> SemanticAction.Noop
         }
 }

@@ -127,6 +127,7 @@ import com.suave.keyboard.engine.output.ClipboardPaste
 import com.suave.keyboard.engine.output.LiveClipboardImage
 import com.suave.keyboard.engine.output.OutputExecutor
 import com.suave.keyboard.ime.formatAutofillDebug
+import com.suave.keyboard.layout.ActiveLayer
 import com.suave.keyboard.layout.DEFAULT_LAYER_HEIGHTS
 import com.suave.keyboard.layout.LayerContent
 import com.suave.keyboard.layout.LayerSession
@@ -141,9 +142,12 @@ import com.suave.keyboard.layout.leaveOverlay
 import com.suave.keyboard.layout.nextKeyboardPosition
 import com.suave.keyboard.layout.parseKeyboardPositions
 import com.suave.keyboard.layout.parseLayerHeightOverrides
+import com.suave.keyboard.layout.parseLayerId
 import com.suave.keyboard.layout.reachableKeyboardPositions
+import com.suave.keyboard.layout.selectBase
 import com.suave.keyboard.layout.selectBaseLayer
 import com.suave.keyboard.layout.splitColumnRanges
+import com.suave.keyboard.layout.toggleBase
 import com.suave.keyboard.layout.toggleClipboard
 import com.suave.keyboard.layout.toggleEmoji
 import com.suave.keyboard.ui.components.clipboard.ClipboardHistoryScreen
@@ -183,7 +187,7 @@ fun EngineKeyboardScreen(
     val modifierState = remember { mutableStateOf(ModifierState()) }
     val spacebarMultitap = remember { SpacebarMultitapTracker() }
     val layerSessionState = remember { mutableStateOf(LayerSession()) }
-    val layer = layerSessionState.value.layer
+    val activeLayer = layerSessionState.value.current
     val clipboardScope = rememberCoroutineScope()
     val emptyClipboardItems = remember { MutableLiveData(emptyList<ClipboardItem>()) }
     val clipboardItems by
@@ -332,8 +336,8 @@ fun EngineKeyboardScreen(
         spacebarMultitap.reset()
         modifierState.value = initialAutoCapitalizeState(ime, autoCapitalize)
     }
-    LaunchedEffect(layer) {
-        if (layer == LayoutLayer.CLIPBOARD) {
+    LaunchedEffect(activeLayer) {
+        if (activeLayer == ActiveLayer.Clipboard) {
             ime.clipboardIngestPrimary()
             clipboardRepository?.clearExpired()
         }
@@ -445,6 +449,37 @@ fun EngineKeyboardScreen(
                             }
                         }
                 },
+                onSwitchLayer = { layerId ->
+                    val current = namedLayoutState.value
+                    val session = layerSessionState.value
+                    val target = parseLayerId(layerId)
+                    layerSessionState.value =
+                        when (target) {
+                            is ActiveLayer.Builtin ->
+                                when (target.layer) {
+                                    LayoutLayer.MAIN -> session.selectBase(ActiveLayer.Main)
+                                    LayoutLayer.NUMERIC ->
+                                        if (current.numericLayout != null) {
+                                            session.selectBase(ActiveLayer.Numeric)
+                                        } else {
+                                            session
+                                        }
+                                    LayoutLayer.EMOJI ->
+                                        session.toggleEmoji(current.emojiBottomRow != null)
+                                    LayoutLayer.CLIPBOARD ->
+                                        session.toggleClipboard(
+                                            current.clipboardBottomRow != null ||
+                                                current.layerContent[LayoutLayer.CLIPBOARD] != null,
+                                        )
+                                }
+                            is ActiveLayer.Custom ->
+                                if (current.customLayer(target.id) != null) {
+                                    session.toggleBase(target)
+                                } else {
+                                    session
+                                }
+                        }
+                },
                 onToggleEmojiLayer = {
                     val current = namedLayoutState.value
                     layerSessionState.value =
@@ -546,7 +581,7 @@ fun EngineKeyboardScreen(
             EngineKeyboardPanel(
                 modifier = panelModifier,
                 namedLayout = namedLayout,
-                layer = layer,
+                activeLayer = activeLayer,
                 clipboardSession = clipboardSession,
                 keyHeight = keyHeight,
                 layerHeightOverrides = layerHeightOverrides,
@@ -643,7 +678,7 @@ private data class ClipboardLayerSession(
 private fun EngineKeyboardPanel(
     modifier: Modifier,
     namedLayout: NamedLayout,
-    layer: LayoutLayer,
+    activeLayer: ActiveLayer,
     clipboardSession: ClipboardLayerSession,
     keyHeight: Dp,
     layerHeightOverrides: Map<LayoutLayer, Int>,
@@ -668,13 +703,17 @@ private fun EngineKeyboardPanel(
     spacebarMultitapEnabled: Boolean,
     splitHalves: Boolean,
 ) {
-    val grid = namedLayout.gridFor(layer)
-    val overrideRows = layerHeightOverrides[layer] ?: 0
-    val contentRows = namedLayout.contentRows(layer, overrideRows)
+    val grid = namedLayout.gridFor(activeLayer)
+    val overrideRows =
+        when (activeLayer) {
+            is ActiveLayer.Builtin -> layerHeightOverrides[activeLayer.layer] ?: 0
+            is ActiveLayer.Custom -> 0
+        }
+    val contentRows = namedLayout.contentRows(activeLayer, overrideRows)
     Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
         if (contentRows > 0) {
             LayerContentSlot(
-                content = namedLayout.contentFor(layer),
+                content = namedLayout.contentFor(activeLayer),
                 height = keyHeight * contentRows,
                 vibrateOnTap = vibrateOnTap,
                 tapHapticType = tapHapticType,
@@ -949,6 +988,7 @@ private fun RowScope.LayoutRowKeys(
                 spacebarMultitap = spacebarMultitap,
                 spacebarMultitapEnabled = spacebarMultitapEnabled,
                 spaceMultitapCycle = namedLayout.spaceMultitapCycle,
+                switchLayerIcons = namedLayout.switchLayerIconMap(),
                 modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
             )
         }

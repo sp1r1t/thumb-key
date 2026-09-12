@@ -23,6 +23,14 @@ sealed class KeyIntent {
         val modifier: ModifierId,
     ) : KeyIntent()
 
+    /**
+     * Switch to a named layer. [layerId] is a [LayoutLayer] name (`MAIN`, `NUMERIC`, ...) or a
+     * custom function-layer id from [com.suave.keyboard.layout.CustomLayer.id].
+     */
+    data class SwitchLayer(
+        val layerId: String,
+    ) : KeyIntent()
+
     object Noop : KeyIntent()
 
     /**
@@ -34,7 +42,7 @@ sealed class KeyIntent {
         when (this) {
             is Text -> true
             is Command -> id.repeatsOnHold()
-            is ModifierPress, Noop -> false
+            is ModifierPress, is SwitchLayer, Noop -> false
         }
 }
 

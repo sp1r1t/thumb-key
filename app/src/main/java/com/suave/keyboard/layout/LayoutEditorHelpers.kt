@@ -178,7 +178,7 @@ private fun Layout.reindexRows(rows: List<List<KeyPosition>>): Layout {
     return out
 }
 
-/** Exchange the full mappings at two positions (intents, span, slide, labels, and the rest). */
+/** Exchange key content at two positions; [KeyMapping.columnSpan] stays with each slot. */
 fun Layout.swapKeys(
     a: KeyPosition,
     b: KeyPosition,
@@ -186,7 +186,9 @@ fun Layout.swapKeys(
     if (a == b) return this
     val mappingA = getValue(a)
     val mappingB = getValue(b)
-    return this + (a to mappingB) + (b to mappingA)
+    return this +
+        (a to mappingB.copy(columnSpan = mappingA.columnSpan)) +
+        (b to mappingA.copy(columnSpan = mappingB.columnSpan))
 }
 
 /**
@@ -258,6 +260,21 @@ fun NamedLayout.replaceGrid(
         LayoutLayer.CLIPBOARD -> copy(clipboardBottomRow = grid)
     }
 
+fun NamedLayout.replaceGrid(
+    active: ActiveLayer,
+    grid: Layout,
+): NamedLayout =
+    when (active) {
+        is ActiveLayer.Builtin -> replaceGrid(active.layer, grid)
+        is ActiveLayer.Custom -> {
+            val updated =
+                customLayers.map { layer ->
+                    if (layer.id == active.id) layer.copy(layout = grid) else layer
+                }
+            copy(customLayers = updated)
+        }
+    }
+
 fun NamedLayout.gridOrEmpty(layer: LayoutLayer): Layout =
     when (layer) {
         LayoutLayer.MAIN -> layout
@@ -265,6 +282,23 @@ fun NamedLayout.gridOrEmpty(layer: LayoutLayer): Layout =
         LayoutLayer.EMOJI -> emojiBottomRow ?: emptyMap()
         LayoutLayer.CLIPBOARD -> clipboardBottomRow ?: emptyMap()
     }
+
+fun NamedLayout.gridOrEmpty(active: ActiveLayer): Layout =
+    when (active) {
+        is ActiveLayer.Builtin -> gridOrEmpty(active.layer)
+        is ActiveLayer.Custom -> customLayer(active.id)?.layout ?: emptyMap()
+    }
+
+fun NamedLayout.withCustomLayer(layer: CustomLayer): NamedLayout {
+    val without = customLayers.filterNot { it.id == layer.id }
+    require(without.size < MAX_CUSTOM_LAYERS) {
+        "At most $MAX_CUSTOM_LAYERS custom layers"
+    }
+    return copy(customLayers = without + layer)
+}
+
+fun NamedLayout.withoutCustomLayer(id: String): NamedLayout =
+    copy(customLayers = customLayers.filterNot { it.id == id })
 
 /**
  * Undo/redo stack for [NamedLayout] edits in the layout editor. [canUndo]/[canRedo] are

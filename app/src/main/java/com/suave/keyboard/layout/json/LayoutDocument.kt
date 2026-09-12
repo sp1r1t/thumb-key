@@ -21,8 +21,18 @@ data class LayoutDocument(
     val layerHeights: Map<String, Int> = emptyMap(),
     val layerContent: Map<String, String> = emptyMap(),
     val spaceMultitapCycle: List<String>? = null,
+    /** User-defined function layers (full grids). Soft-optional on schema v1; cap at runtime. */
+    val extraLayers: List<ExtraLayerDocument> = emptyList(),
     /** Forward-compat sink: unknown top-level fields are ignored by kotlinx when not listed. */
     val extras: Map<String, JsonElement> = emptyMap(),
+)
+
+@Serializable
+data class ExtraLayerDocument(
+    val id: String,
+    val title: String,
+    val icon: String = "Functions",
+    val rows: List<List<KeyDocument>> = emptyList(),
 )
 
 @Serializable
@@ -70,4 +80,10 @@ sealed class ZoneActionDocument {
     @Serializable
     @SerialName("noop")
     data object Noop : ZoneActionDocument()
+
+    @Serializable
+    @SerialName("switchLayer")
+    data class SwitchLayer(
+        val layerId: String,
+    ) : ZoneActionDocument()
 }

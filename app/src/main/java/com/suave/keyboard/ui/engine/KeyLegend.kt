@@ -15,6 +15,7 @@ import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.EmojiEmotions
+import androidx.compose.material.icons.outlined.Functions
 import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Keyboard
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.SpaceBar
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.ViewColumn
 import androidx.compose.material3.Icon
@@ -35,9 +37,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
+import com.suave.keyboard.R
 import com.suave.keyboard.engine.gesture.Zone
 import com.suave.keyboard.engine.intent.CommandId
 import com.suave.keyboard.engine.intent.KeyIntent
@@ -47,6 +51,7 @@ import com.suave.keyboard.engine.intent.ModifierId
 import com.suave.keyboard.engine.modifier.ActivationMode
 import com.suave.keyboard.engine.modifier.ModifierEngine
 import com.suave.keyboard.engine.modifier.ModifierState
+import com.suave.keyboard.layout.LayoutLayer
 import com.suave.keyboard.utils.ColorVariant
 import com.suave.keyboard.utils.FontSizeVariant
 
@@ -114,6 +119,7 @@ fun keyLegend(
     shiftMappings: Map<String, String>,
     capsLockMappings: Map<String, String> = emptyMap(),
     displayLabel: String? = null,
+    switchLayerIcons: Map<String, ImageVector> = emptyMap(),
 ): KeyLegend? =
     when (intent) {
         null, KeyIntent.Noop -> null
@@ -135,6 +141,14 @@ fun keyLegend(
             if (visibility.hides(intent.id.legendCategory())) null else legend
         }
 
+        is KeyIntent.SwitchLayer -> {
+            if (visibility.hides(LegendCategory.LAYER_SWITCH)) {
+                null
+            } else {
+                KeyLegend.Icon(switchLayerLegendIcon(intent.layerId, switchLayerIcons))
+            }
+        }
+
         is KeyIntent.ModifierPress -> {
             if (visibility.hides(LegendCategory.MODIFIER)) {
                 null
@@ -143,6 +157,26 @@ fun keyLegend(
             }
         }
     }
+
+private fun switchLayerLegendIcon(
+    layerId: String,
+    switchLayerIcons: Map<String, ImageVector>,
+): ImageVector {
+    switchLayerIcons[layerId]?.let { return it }
+    return when (
+        try {
+            LayoutLayer.valueOf(layerId)
+        } catch (_: IllegalArgumentException) {
+            null
+        }
+    ) {
+        LayoutLayer.MAIN -> Icons.Outlined.Abc
+        LayoutLayer.NUMERIC -> Icons.Outlined.Numbers
+        LayoutLayer.EMOJI -> Icons.Outlined.EmojiEmotions
+        LayoutLayer.CLIPBOARD -> Icons.Outlined.History
+        null -> Icons.Outlined.Functions
+    }
+}
 
 /** Same color roles Thumb-Key used: center is PRIMARY, swipes are SECONDARY. */
 fun legendFontSizeVariant(isCenter: Boolean): FontSizeVariant =
@@ -214,7 +248,8 @@ internal fun CommandId.legendCategory(): LegendCategory =
         -> LegendCategory.SPECIAL
     }
 
-private fun commandLegend(id: CommandId): KeyLegend? =
+/** Icon or short text used on the live keycap and in the layout editor. */
+fun commandLegend(id: CommandId): KeyLegend? =
     when (id) {
         CommandId.ENTER -> KeyLegend.Icon(Icons.AutoMirrored.Outlined.KeyboardReturn)
         CommandId.TAB -> KeyLegend.Icon(Icons.AutoMirrored.Outlined.KeyboardTab)
@@ -246,6 +281,49 @@ private fun commandLegend(id: CommandId): KeyLegend? =
         CommandId.TOGGLE_NUMERIC_MODE -> KeyLegend.Icon(Icons.Outlined.Numbers)
         CommandId.TOGGLE_ABC_MODE -> KeyLegend.Icon(Icons.Outlined.Abc)
     }
+
+fun CommandId.titleRes(): Int =
+    when (this) {
+        CommandId.ENTER -> R.string.command_enter
+        CommandId.TAB -> R.string.command_tab
+        CommandId.BACKSPACE -> R.string.command_backspace
+        CommandId.DELETE_FORWARD -> R.string.command_delete_forward
+        CommandId.SPACE -> R.string.command_space
+        CommandId.ARROW_LEFT -> R.string.command_arrow_left
+        CommandId.ARROW_RIGHT -> R.string.command_arrow_right
+        CommandId.ARROW_UP -> R.string.command_arrow_up
+        CommandId.ARROW_DOWN -> R.string.command_arrow_down
+        CommandId.ESCAPE -> R.string.command_escape
+        CommandId.CTRL -> R.string.command_ctrl
+        CommandId.ALT -> R.string.command_alt
+        CommandId.SHIFT -> R.string.command_shift
+        CommandId.COPY -> R.string.command_copy
+        CommandId.CUT -> R.string.command_cut
+        CommandId.PASTE -> R.string.command_paste
+        CommandId.SELECT_ALL -> R.string.command_select_all
+        CommandId.UNDO -> R.string.command_undo
+        CommandId.REDO -> R.string.command_redo
+        CommandId.GOTO_SETTINGS -> R.string.command_settings
+        CommandId.TOGGLE_HIDE_LETTERS -> R.string.command_hide_letters
+        CommandId.SWITCH_IME -> R.string.command_switch_ime
+        CommandId.SWITCH_IME_VOICE -> R.string.command_switch_ime_voice
+        CommandId.SWITCH_LANGUAGE -> R.string.command_switch_language
+        CommandId.MOVE_KEYBOARD -> R.string.command_move_keyboard
+        CommandId.TOGGLE_EMOJI_MODE -> R.string.command_emoji
+        CommandId.TOGGLE_NUMERIC_MODE -> R.string.command_numeric
+        CommandId.TOGGLE_ABC_MODE -> R.string.command_abc
+        CommandId.TOGGLE_CLIPBOARD_HISTORY -> R.string.command_clipboard
+    }
+
+/** Legend for the layout editor: always has a mark (Space gets an icon here). */
+fun commandEditorLegend(id: CommandId): KeyLegend =
+    commandLegend(id) ?: when (id) {
+        CommandId.SPACE -> KeyLegend.Icon(Icons.Outlined.SpaceBar)
+        else -> KeyLegend.Text("?")
+    }
+
+@Composable
+fun commandDisplayTitle(id: CommandId): String = stringResource(id.titleRes())
 
 private fun modifierLegend(
     id: ModifierId,

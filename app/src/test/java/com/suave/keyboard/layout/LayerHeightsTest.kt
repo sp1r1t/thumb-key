@@ -78,8 +78,17 @@ class LayerHeightsTest {
         val s12 = BuiltinLayouts.S12
         assertEquals(
             listOf(LayoutLayer.MAIN, LayoutLayer.NUMERIC, LayoutLayer.EMOJI, LayoutLayer.CLIPBOARD),
+            s12.availableBuiltinLayers(),
+        )
+        assertTrue(LayoutLayer.MAIN in s12.availableBuiltinLayers())
+        assertEquals(
+            listOf(
+                ActiveLayer.Main,
+                ActiveLayer.Numeric,
+                ActiveLayer.Emoji,
+                ActiveLayer.Clipboard,
+            ),
             s12.availableLayers(),
         )
-        assertTrue(LayoutLayer.MAIN in s12.availableLayers())
     }
 }

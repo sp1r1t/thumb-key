@@ -14,8 +14,11 @@ import com.suave.keyboard.engine.intent.Layout
 import com.suave.keyboard.engine.intent.ModifierId
 import com.suave.keyboard.engine.intent.SlideBehavior
 import com.suave.keyboard.engine.intent.layoutRows
+import com.suave.keyboard.layout.CustomLayer
+import com.suave.keyboard.layout.CustomLayerIcon
 import com.suave.keyboard.layout.LayerContent
 import com.suave.keyboard.layout.LayoutLayer
+import com.suave.keyboard.layout.MAX_CUSTOM_LAYERS
 import com.suave.keyboard.layout.NamedLayout
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -27,6 +30,7 @@ val LayoutJsonFormat =
         ignoreUnknownKeys = true
         encodeDefaults = false
         prettyPrint = true
+        prettyPrintIndent = "  "
         classDiscriminator = "type"
     }
 
@@ -76,6 +80,7 @@ fun LayoutDocument.toNamedLayout(): NamedLayout {
         layerHeights = layerHeights.toLayerHeights(),
         layerContent = layerContent.toLayerContent(),
         spaceMultitapCycle = spaceMultitapCycle,
+        customLayers = extraLayers.toCustomLayers(),
     )
 }
 
@@ -100,6 +105,7 @@ fun NamedLayout.toLayoutDocument(): LayoutDocument =
                     content.toJsonName()?.let { layer.name to it }
                 }.toMap(),
         spaceMultitapCycle = spaceMultitapCycle,
+        extraLayers = customLayers.toExtraLayerDocuments(),
     )
 
 fun decodeNamedLayout(json: String): NamedLayout = parseLayoutDocument(json).toNamedLayout()
@@ -150,6 +156,10 @@ private fun KeyDocument.toKeyMapping(): KeyMapping {
             is ZoneActionDocument.Noop -> {
                 intents[zone] = KeyIntent.Noop
             }
+            is ZoneActionDocument.SwitchLayer -> {
+                require(action.layerId.isNotBlank()) { "switchLayer.layerId must not be blank" }
+                intents[zone] = KeyIntent.SwitchLayer(action.layerId)
+            }
         }
     }
     require(Zone.Center in intents) { "Key must define a center zone" }
@@ -191,6 +201,8 @@ private fun KeyMapping.toKeyDocument(): KeyDocument {
                     )
                 is KeyIntent.ModifierPress ->
                     ZoneActionDocument.Modifier(id = intent.modifier.name)
+                is KeyIntent.SwitchLayer ->
+                    ZoneActionDocument.SwitchLayer(layerId = intent.layerId)
                 is KeyIntent.Noop -> ZoneActionDocument.Noop
             }
     }
@@ -315,4 +327,42 @@ private fun LayerContent.toJsonName(): String? =
         LayerContent.None -> null
         LayerContent.EmojiPicker -> "emojiPicker"
         LayerContent.ClipboardHistory -> "clipboardHistory"
+    }
+
+private fun List<ExtraLayerDocument>.toCustomLayers(): List<CustomLayer> {
+    val out = ArrayList<CustomLayer>(size.coerceAtMost(MAX_CUSTOM_LAYERS))
+    val seen = HashSet<String>()
+    for (doc in this) {
+        if (out.size >= MAX_CUSTOM_LAYERS) break
+        if (doc.id.isBlank() || doc.title.isBlank()) continue
+        if (!seen.add(doc.id)) continue
+        // Builtin names are reserved for LayoutLayer switches.
+        val reserved =
+            try {
+                LayoutLayer.valueOf(doc.id)
+                true
+            } catch (_: IllegalArgumentException) {
+                false
+            }
+        if (reserved) continue
+        val icon =
+            try {
+                CustomLayerIcon.valueOf(doc.icon)
+            } catch (_: IllegalArgumentException) {
+                CustomLayerIcon.Functions
+            }
+        val grid = doc.rows.takeIf { it.isNotEmpty() }?.toLayout() ?: continue
+        out.add(CustomLayer(id = doc.id, title = doc.title, icon = icon, layout = grid))
+    }
+    return out
+}
+
+private fun List<CustomLayer>.toExtraLayerDocuments(): List<ExtraLayerDocument> =
+    take(MAX_CUSTOM_LAYERS).map { layer ->
+        ExtraLayerDocument(
+            id = layer.id,
+            title = layer.title,
+            icon = layer.icon.name,
+            rows = layer.layout.toKeyRows(),
+        )
     }

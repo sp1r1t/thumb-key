@@ -28,9 +28,19 @@ Migrators live in `layout/json/LayoutSchemaMigrator.kt`. v1 has an identity migr
   "capsLockMappings": { "sch": "SCH" },
   "layerHeights": { "EMOJI": 6, "CLIPBOARD": 6 },
   "layerContent": { "EMOJI": "emojiPicker", "CLIPBOARD": "clipboardHistory" },
-  "spaceMultitapCycle": [", ", ". ", "? ", "! ", ": ", "; "]
+  "spaceMultitapCycle": [", ", ". ", "? ", "! ", ": ", "; "],
+  "extraLayers": [
+    {
+      "id": "custom_abc123",
+      "title": "Symbols",
+      "icon": "Functions",
+      "rows": [ /* full grid like numeric */ ]
+    }
+  ]
 }
 ```
+
+`extraLayers` is soft-optional on schema v1 (omit or `[]`). Cap: 10. Each entry is a full-grid function layer (NUMERIC peer: no content panel). Ids must not collide with builtin `LayoutLayer` names (`MAIN`, `NUMERIC`, `EMOJI`, `CLIPBOARD`).
 
 ### Rows and keys
 
@@ -70,6 +80,7 @@ Zone names: `center`, `up`, `down`, `left`, `right`, `upLeft`, `upRight`, `downL
 | `text` | `value` (string), optional `label` (display-only), optional `repeatsOnHold` | `KeyIntent.Text` |
 | `command` | `id` ([CommandId](../app/src/main/java/com/suave/keyboard/engine/intent/CommandId.kt) name), optional `repeatsOnHold` | `KeyIntent.Command` |
 | `modifier` | `id` (`SHIFT` \| `CTRL` \| `ALT` \| `ESC`) | `KeyIntent.ModifierPress` |
+| `switchLayer` | `layerId` (builtin `LayoutLayer` name or custom `extraLayers[].id`) | `KeyIntent.SwitchLayer` |
 | `noop` | (none) | `KeyIntent.Noop` |
 
 `label`: when set, the key legend shows `label` while commit still uses `value` (numeric combining marks, etc.).

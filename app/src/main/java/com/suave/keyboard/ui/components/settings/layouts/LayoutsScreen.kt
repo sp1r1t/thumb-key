@@ -350,12 +350,10 @@ fun LayoutsScreen(
                 Text(stringResource(R.string.layout_create_choose_source, activeTitle))
             },
             confirmButton = {
-                TextButton(onClick = { openCreateFrom(activeId) }) {
-                    Text(stringResource(R.string.layout_start_from_selected, activeTitle))
-                }
-            },
-            dismissButton = {
                 Column(horizontalAlignment = Alignment.End) {
+                    TextButton(onClick = { openCreateFrom(activeId) }) {
+                        Text(stringResource(R.string.layout_start_from_selected, activeTitle))
+                    }
                     TextButton(
                         onClick = {
                             showCreateDialog = false
