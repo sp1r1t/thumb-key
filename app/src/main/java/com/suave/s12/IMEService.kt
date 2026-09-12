@@ -29,7 +29,6 @@ import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.suave.s12.db.AppDB
 import com.suave.s12.db.AppSettings
-import com.suave.s12.db.DEFAULT_CLIPBOARD_HISTORY_ENABLED
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
 import com.suave.s12.db.DEFAULT_INLINE_SUGGESTIONS
 import com.suave.s12.db.DEFAULT_INLINE_SUGGESTION_HEIGHT
@@ -313,22 +312,17 @@ class IMEService :
         savedStateRegistryController.savedStateRegistry
 
     fun clipboardUsePrivate(): Boolean {
-        val settingsRepo = (application as ThumbkeyApplication).appSettingsRepository
-        val settings = settingsRepo.appSettings.getValue()
-        val clipboardHistoryEnabled = (settings?.clipboardHistoryEnabled ?: DEFAULT_CLIPBOARD_HISTORY_ENABLED).toBool()
-        val usePrivateClipboard = (settings?.usePrivateClipboard ?: DEFAULT_USE_PRIVATE_CLIPBOARD).toBool()
-        return clipboardHistoryEnabled && usePrivateClipboard
+        val settings = appSettingsOrSync()
+        return (settings?.usePrivateClipboard ?: DEFAULT_USE_PRIVATE_CLIPBOARD).toBool()
     }
 
     fun showToastOnCopy(): Boolean {
-        val settingsRepo = (application as ThumbkeyApplication).appSettingsRepository
-        val settings = settingsRepo.appSettings.getValue()
+        val settings = appSettingsOrSync()
         return (settings?.showToastOnCopy ?: DEFAULT_SHOW_TOAST_ON_COPY).toBool()
     }
 
     fun showToastOnCut(): Boolean {
-        val settingsRepo = (application as ThumbkeyApplication).appSettingsRepository
-        val settings = settingsRepo.appSettings.getValue()
+        val settings = appSettingsOrSync()
         return (settings?.showToastOnCut ?: DEFAULT_SHOW_TOAST_ON_CUT).toBool()
     }
 

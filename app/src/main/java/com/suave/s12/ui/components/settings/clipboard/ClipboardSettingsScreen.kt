@@ -1,12 +1,6 @@
 package com.suave.s12.ui.components.settings.clipboard
 
 import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CleaningServices
 import androidx.compose.material.icons.outlined.ContentPaste
@@ -18,7 +12,6 @@ import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -28,7 +21,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -53,6 +45,7 @@ import com.suave.s12.engine.feedback.hapticTypeFromDb
 import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.SettingTitle
+import com.suave.s12.ui.components.common.SettingsScreenBody
 import com.suave.s12.ui.components.common.SettingsSection
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.TAG
@@ -119,7 +112,6 @@ fun ClipboardSettingsScreen(
         hapticTypeFromDb(settings?.vibrateHoldRepeatType ?: DEFAULT_VIBRATE_HOLD_REPEAT_TYPE)
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val scrollState = rememberScrollState()
 
     fun updateClipboardSettings() {
         appSettingsViewModel.updateClipboardSettings(
@@ -150,14 +142,7 @@ fun ClipboardSettingsScreen(
             )
         },
         content = { padding ->
-            Column(
-                modifier =
-                    Modifier
-                        .padding(padding)
-                        .verticalScroll(scrollState)
-                        .background(color = MaterialTheme.colorScheme.surface)
-                        .imePadding(),
-            ) {
+            SettingsScreenBody(padding = padding) {
                 ProvidePreferenceTheme {
                     SettingsSection(title = stringResource(R.string.settings_section_history)) {
                     SettingRow {
@@ -256,7 +241,6 @@ fun ClipboardSettingsScreen(
                             usePrivateClipboardState = it
                             updateClipboardSettings()
                         },
-                        enabled = clipboardHistoryEnabledState,
                         title = {
                             SettingTitle(
                                 text = stringResource(R.string.use_private_clipboard),
