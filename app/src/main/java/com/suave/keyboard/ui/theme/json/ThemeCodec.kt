@@ -5,6 +5,7 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import com.suave.keyboard.ui.theme.SemanticExtras
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
@@ -22,7 +23,7 @@ class ThemeJsonException(
 
 fun parseThemeDocument(
     json: String,
-    migrator: ThemeSchemaMigrator = IdentityThemeSchemaMigrator,
+    migrator: ThemeSchemaMigrator = DefaultThemeSchemaMigrator,
 ): ThemeDocument {
     val raw =
         try {
@@ -82,17 +83,22 @@ private fun validateRoleMap(
 fun ThemeDocument.toColorSchemes(): Pair<ColorScheme, ColorScheme> =
     Pair(light.toLightColorScheme(), dark.toDarkColorScheme())
 
+fun ThemeDocument.toSemanticExtras(): Pair<SemanticExtras, SemanticExtras> =
+    Pair(SemanticExtras.fromRoleMap(light), SemanticExtras.fromRoleMap(dark))
+
 fun colorSchemesToThemeDocument(
     id: String,
     title: String,
     schemes: Pair<ColorScheme, ColorScheme>,
+    lightExtras: SemanticExtras = SemanticExtras.SoftLight,
+    darkExtras: SemanticExtras = SemanticExtras.SoftDark,
 ): ThemeDocument =
     ThemeDocument(
         schemaVersion = THEME_SCHEMA_VERSION,
         id = id,
         title = title,
-        light = schemes.first.toRoleMap(),
-        dark = schemes.second.toRoleMap(),
+        light = schemes.first.toRoleMap() + lightExtras.toRoleMap(),
+        dark = schemes.second.toRoleMap() + darkExtras.toRoleMap(),
     )
 
 fun ColorScheme.toRoleMap(): Map<String, String> =
@@ -113,6 +119,10 @@ fun ColorScheme.toRoleMap(): Map<String, String> =
         "inversePrimary" to inversePrimary.toArgbHex(),
         "tertiaryContainer" to tertiaryContainer.toArgbHex(),
         "onTertiaryContainer" to onTertiaryContainer.toArgbHex(),
+        "error" to error.toArgbHex(),
+        "onError" to onError.toArgbHex(),
+        "errorContainer" to errorContainer.toArgbHex(),
+        "onErrorContainer" to onErrorContainer.toArgbHex(),
     )
 
 private fun Map<String, String>.toLightColorScheme(): ColorScheme {
@@ -134,6 +144,10 @@ private fun Map<String, String>.toLightColorScheme(): ColorScheme {
         inversePrimary = roles.inversePrimary,
         tertiaryContainer = roles.tertiaryContainer,
         onTertiaryContainer = roles.onTertiaryContainer,
+        error = roles.error,
+        onError = roles.onError,
+        errorContainer = roles.errorContainer,
+        onErrorContainer = roles.onErrorContainer,
         surfaceTint = roles.primary,
     )
 }
@@ -157,6 +171,10 @@ private fun Map<String, String>.toDarkColorScheme(): ColorScheme {
         inversePrimary = roles.inversePrimary,
         tertiaryContainer = roles.tertiaryContainer,
         onTertiaryContainer = roles.onTertiaryContainer,
+        error = roles.error,
+        onError = roles.onError,
+        errorContainer = roles.errorContainer,
+        onErrorContainer = roles.onErrorContainer,
         surfaceTint = roles.primary,
     )
 }
@@ -178,6 +196,10 @@ private data class ColorRoles(
     val inversePrimary: Color,
     val tertiaryContainer: Color,
     val onTertiaryContainer: Color,
+    val error: Color,
+    val onError: Color,
+    val errorContainer: Color,
+    val onErrorContainer: Color,
 )
 
 private fun Map<String, String>.toColorRoles(): ColorRoles =
@@ -198,6 +220,10 @@ private fun Map<String, String>.toColorRoles(): ColorRoles =
         inversePrimary = parseArgbHex(getValue("inversePrimary")),
         tertiaryContainer = parseArgbHex(getValue("tertiaryContainer")),
         onTertiaryContainer = parseArgbHex(getValue("onTertiaryContainer")),
+        error = parseArgbHex(getValue("error")),
+        onError = parseArgbHex(getValue("onError")),
+        errorContainer = parseArgbHex(getValue("errorContainer")),
+        onErrorContainer = parseArgbHex(getValue("onErrorContainer")),
     )
 
 fun Color.toArgbHex(): String = String.format("#%08X", toArgb())
@@ -215,3 +241,20 @@ fun parseArgbHex(
         } ?: throw ThemeJsonException("Invalid $label hex: $value")
     return Color(argb.toInt())
 }
+
+/** Soft defaults used when migrating v1 themes that lacked error/success roles. */
+internal val DefaultLightSemanticRoles: Map<String, String> =
+    linkedMapOf(
+        "error" to "#FFB33B3B",
+        "onError" to "#FFFFFFFF",
+        "errorContainer" to "#FFF5D6D6",
+        "onErrorContainer" to "#FF3F1010",
+    ) + SemanticExtras.SoftLight.toRoleMap()
+
+internal val DefaultDarkSemanticRoles: Map<String, String> =
+    linkedMapOf(
+        "error" to "#FFFFB4AB",
+        "onError" to "#FF690005",
+        "errorContainer" to "#FF93000A",
+        "onErrorContainer" to "#FFFFDAD6",
+    ) + SemanticExtras.SoftDark.toRoleMap()

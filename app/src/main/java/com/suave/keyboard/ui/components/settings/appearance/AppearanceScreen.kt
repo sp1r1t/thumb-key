@@ -799,7 +799,7 @@ fun AppearanceScreen(
                         title = stringResource(R.string.settings_section_layers),
                     ) {
                         namedLayout
-                            .availableLayers()
+                            .availableBuiltinLayers()
                             .filter { it != LayoutLayer.NUMERIC }
                             .forEachIndexed { index, layer ->
                                 key(layer) {

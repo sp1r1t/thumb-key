@@ -15,15 +15,52 @@ class ThemeCodecTest {
 
         assertEquals(original.id, restored.id)
         assertEquals(original.title, restored.title)
-        assertEquals(original.schemaVersion, restored.schemaVersion)
+        assertEquals(THEME_SCHEMA_VERSION, restored.schemaVersion)
         assertEquals(original.light, restored.light)
         assertEquals(original.dark, restored.dark)
 
-        val (light, dark) = restored.toColorSchemes()
         for (role in THEME_COLOR_ROLES) {
-            assertEquals(role, original.light[role], light.toRoleMap()[role])
-            assertEquals(role, original.dark[role], dark.toRoleMap()[role])
+            assertTrue(role, role in restored.light)
+            assertTrue(role, role in restored.dark)
         }
+    }
+
+    @Test
+    fun `v1 themes gain error and success roles on load`() {
+        val v1Roles =
+            mapOf(
+                "primary" to "#FF1B1B1B",
+                "onPrimary" to "#FFF4F4F4",
+                "secondary" to "#FF5C5C5C",
+                "onSecondary" to "#FFF4F4F4",
+                "tertiary" to "#FF111111",
+                "onTertiary" to "#FFF4F4F4",
+                "background" to "#FFE6E6E6",
+                "onBackground" to "#FF1B1B1B",
+                "surface" to "#FFF3F3F3",
+                "onSurface" to "#FF1B1B1B",
+                "surfaceVariant" to "#FFE0E0E0",
+                "onSurfaceVariant" to "#FF4A4A4A",
+                "outline" to "#FFB5B5B5",
+                "inversePrimary" to "#FFCFCFCF",
+                "tertiaryContainer" to "#FFD2D2D2",
+                "onTertiaryContainer" to "#FF1B1B1B",
+            )
+        val json =
+            ThemeJsonFormat.encodeToString(
+                ThemeDocument(
+                    schemaVersion = 1,
+                    id = "legacy",
+                    title = "Legacy",
+                    light = v1Roles,
+                    dark = v1Roles,
+                ),
+            )
+        val restored = parseThemeDocument(json)
+        assertEquals(THEME_SCHEMA_VERSION, restored.schemaVersion)
+        assertEquals("#FFB33B3B", restored.light["error"])
+        assertEquals("#FF2E7D32", restored.light["success"])
+        assertEquals(v1Roles["primary"], restored.light["primary"])
     }
 
     @Test

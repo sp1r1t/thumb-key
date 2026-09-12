@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "id": "suave",
   "title": "Suave",
   "light": {
@@ -18,7 +18,15 @@
     "outline": "#FFB5B5B5",
     "inversePrimary": "#FFCFCFCF",
     "tertiaryContainer": "#FFD2D2D2",
-    "onTertiaryContainer": "#FF1B1B1B"
+    "onTertiaryContainer": "#FF1B1B1B",
+    "error": "#FFB33B3B",
+    "onError": "#FFFFFFFF",
+    "errorContainer": "#FFF5D6D6",
+    "onErrorContainer": "#FF3F1010",
+    "success": "#FF2E7D32",
+    "onSuccess": "#FFFFFFFF",
+    "successContainer": "#FFC8E6C9",
+    "onSuccessContainer": "#FF1B5E20"
   },
   "dark": {
     "primary": "#FFE6E6E6",
@@ -36,6 +44,14 @@
     "outline": "#FF3D3D3D",
     "inversePrimary": "#FF2E2E2E",
     "tertiaryContainer": "#FF3A3A3A",
-    "onTertiaryContainer": "#FFE6E6E6"
+    "onTertiaryContainer": "#FFE6E6E6",
+    "error": "#FFFFB4AB",
+    "onError": "#FF690005",
+    "errorContainer": "#FF93000A",
+    "onErrorContainer": "#FFFFDAD6",
+    "success": "#FF81C784",
+    "onSuccess": "#FF0A1F0C",
+    "successContainer": "#FF1B5E20",
+    "onSuccessContainer": "#FFC8E6C9"
   }
 }

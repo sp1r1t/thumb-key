@@ -3,9 +3,12 @@ package com.suave.keyboard.ui.theme.json
 import kotlinx.serialization.Serializable
 
 /** Current theme document schema version. Bump when making breaking JSON changes. */
-const val THEME_SCHEMA_VERSION = 1
+const val THEME_SCHEMA_VERSION = 2
 
-/** Color roles the keyboard theme document must define for both light and dark. */
+/**
+ * Color roles the keyboard theme document must define for both light and dark.
+ * Material error* map onto ColorScheme; success* are Suave [com.suave.keyboard.ui.theme.SemanticExtras].
+ */
 val THEME_COLOR_ROLES =
     listOf(
         "primary",
@@ -24,6 +27,14 @@ val THEME_COLOR_ROLES =
         "inversePrimary",
         "tertiaryContainer",
         "onTertiaryContainer",
+        "error",
+        "onError",
+        "errorContainer",
+        "onErrorContainer",
+        "success",
+        "onSuccess",
+        "successContainer",
+        "onSuccessContainer",
     )
 
 @Serializable

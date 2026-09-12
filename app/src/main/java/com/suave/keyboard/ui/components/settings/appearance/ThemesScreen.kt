@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.FileUpload
-import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -194,19 +193,6 @@ fun ThemesScreen(
                                 },
                             )
                         }
-                        Preference(
-                            title = { Text(stringResource(R.string.dynamic)) },
-                            summary = { Text(stringResource(R.string.theme_dynamic_summary)) },
-                            icon = { Icon(Icons.Outlined.Palette, contentDescription = null) },
-                            onClick = {
-                                Toast
-                                    .makeText(
-                                        context,
-                                        context.getString(R.string.theme_dynamic_not_editable),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                            },
-                        )
                     }
 
                     if (userThemes.isNotEmpty()) {
@@ -297,4 +283,4 @@ fun RoleSwatchStrip(theme: NamedTheme) {
 }
 
 private fun androidx.compose.material3.ColorScheme.toRolePreviewColors(): List<Color> =
-    listOf(primary, secondary, tertiary, background, surface, surfaceVariant, outline)
+    listOf(primary, secondary, tertiary, error, background, surface, outline)

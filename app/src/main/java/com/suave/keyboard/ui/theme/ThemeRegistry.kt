@@ -10,6 +10,10 @@ import com.suave.keyboard.ui.theme.json.ThemeJsonException
 import com.suave.keyboard.ui.theme.json.colorSchemesToThemeDocument
 import com.suave.keyboard.ui.theme.json.parseThemeDocument
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Resolves themes by string id. Builtin JSON under assets/themes is preferred;
@@ -24,6 +28,18 @@ object ThemeRegistry {
     private const val TAG = "ThemeRegistry"
 
     private val cache = ConcurrentHashMap<String, NamedTheme>()
+    private val revisionCounter = AtomicInteger(0)
+    private val _revision = MutableStateFlow(0)
+
+    /**
+     * Bumps when a user theme is added, replaced, or removed. [SuaveTheme] collects this so
+     * editing the active palette recomposes without changing [AppSettings.themeColor].
+     */
+    val revision: StateFlow<Int> = _revision.asStateFlow()
+
+    private fun bumpRevision() {
+        _revision.value = revisionCounter.incrementAndGet()
+    }
 
     @Volatile
     private var assetsLoaded = false
@@ -109,18 +125,29 @@ object ThemeRegistry {
         )
 
     fun putUserTheme(theme: NamedTheme) {
-        cache[theme.id] = theme.copy(builtin = false)
+        val next = theme.copy(builtin = false)
+        val previous = cache[theme.id]
+        val contentChanged =
+            previous == null || previous.toDocument() != next.toDocument()
+        cache[theme.id] = next
+        if (contentChanged) {
+            bumpRevision()
+        }
     }
 
     fun removeUserTheme(id: String) {
         val existing = cache[id] ?: return
         if (!existing.builtin) {
             cache.remove(id)
+            bumpRevision()
         }
     }
 
     fun invalidateUserCache() {
-        cache.entries.removeIf { !it.value.builtin }
+        val removed = cache.entries.removeIf { !it.value.builtin }
+        if (removed) {
+            bumpRevision()
+        }
     }
 
     /** Resolve without Android context (tests / already-loaded cache). */
@@ -183,14 +210,15 @@ object ThemeRegistry {
         }
 
     /**
-     * Ids shown in the theme picker: Dynamic, then Suave-first builtins, then user themes.
+     * Ids shown in the theme picker: Suave first, then Dynamic, then other builtins, then user themes.
      */
     fun selectableIds(context: Context): List<String> {
         ensureLoaded(context)
         val store = ThemeStore.get(context)
         store.loadIntoRegistry()
         val userIds = store.listIds().filter { it !in BUILTIN_PALETTE_IDS && it != DYNAMIC_ID }
-        return listOf(DYNAMIC_ID) + BUILTIN_PALETTE_IDS + userIds.sorted()
+        val otherBuiltins = BUILTIN_PALETTE_IDS.filter { it != DEFAULT_ID }
+        return listOf(DEFAULT_ID, DYNAMIC_ID) + otherBuiltins + userIds.sorted()
     }
 
     fun colorSchemes(
