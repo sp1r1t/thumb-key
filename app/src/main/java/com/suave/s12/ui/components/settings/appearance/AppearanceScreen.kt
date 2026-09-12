@@ -28,6 +28,7 @@ import androidx.compose.material.icons.outlined.KeyboardCapslock
 import androidx.compose.material.icons.outlined.KeyboardControlKey
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.LinearScale
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.Padding
 import androidx.compose.material.icons.outlined.Palette
@@ -38,6 +39,7 @@ import androidx.compose.material.icons.outlined.Swipe
 import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.VerticalAlignTop
 import androidx.compose.material.icons.outlined.Vibration
+import androidx.compose.material.icons.outlined.VerticalSplit
 import androidx.compose.material.icons.outlined.ViewColumn
 import androidx.compose.material.icons.outlined.ViewDay
 import androidx.compose.material.icons.outlined.WebAssetOff
@@ -93,6 +95,8 @@ import com.suave.s12.db.DEFAULT_KEY_PADDING_VERTICAL
 import com.suave.s12.db.DEFAULT_KEY_RADIUS
 import com.suave.s12.db.DEFAULT_KEYBOARD_POSITIONS
 import com.suave.s12.db.DEFAULT_PREVENT_CRAMPED_DUAL
+import com.suave.s12.db.DEFAULT_PREVENT_NEEDLESS_SPLIT
+import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH
 import com.suave.s12.db.MAX_INLINE_SUGGESTION_HEIGHT
 import com.suave.s12.db.MIN_INLINE_SUGGESTION_HEIGHT
 import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
@@ -202,6 +206,10 @@ fun AppearanceScreen(
     var keyboardPositionsState = settings?.keyboardPositions ?: DEFAULT_KEYBOARD_POSITIONS
     var preventCrampedDualState =
         (settings?.preventCrampedDual ?: DEFAULT_PREVENT_CRAMPED_DUAL).toBool()
+    var preventNeedlessSplitState =
+        (settings?.preventNeedlessSplit ?: DEFAULT_PREVENT_NEEDLESS_SPLIT).toBool()
+    var showToastOnSwitchState =
+        (settings?.showToastOnLayoutSwitch ?: DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH).toBool()
     var inlineSuggestionsState =
         (settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()
     var inlineSuggestionHeightState =
@@ -250,6 +258,8 @@ fun AppearanceScreen(
                 distinctLetterControlColors = distinctLetterControlColorsState.toInt(),
                 keyboardPositions = keyboardPositionsState,
                 preventCrampedDual = preventCrampedDualState.toInt(),
+                preventNeedlessSplit = preventNeedlessSplitState.toInt(),
+                showToastOnLayoutSwitch = showToastOnSwitchState.toInt(),
                 inlineSuggestions = inlineSuggestionsState.toInt(),
                 inlineSuggestionHeight = inlineSuggestionHeightState,
             ),
@@ -589,6 +599,68 @@ fun AppearanceScreen(
                             icon = {
                                 Icon(
                                     imageVector = Icons.Outlined.Crop75,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+                    SettingRow {
+                        SwitchPreference(
+                            value = preventNeedlessSplitState,
+                            onValueChange = {
+                                preventNeedlessSplitState = it
+                                updateAppearance()
+                            },
+                            title = {
+                                SettingTitle(
+                                    text = stringResource(R.string.prevent_needless_split),
+                                    infoText = stringResource(R.string.prevent_needless_split_info),
+                                )
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (preventNeedlessSplitState) {
+                                            R.string.prevent_needless_split_on
+                                        } else {
+                                            R.string.prevent_needless_split_off
+                                        },
+                                        MIN_DUAL_CELL_WIDTH_DP,
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.VerticalSplit,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+                    SettingRow {
+                        SwitchPreference(
+                            value = showToastOnSwitchState,
+                            onValueChange = {
+                                showToastOnSwitchState = it
+                                updateAppearance()
+                            },
+                            title = {
+                                Text(stringResource(R.string.show_toast_on_switch))
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (showToastOnSwitchState) {
+                                            R.string.show_toast_on_switch_on
+                                        } else {
+                                            R.string.show_toast_on_switch_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Notifications,
                                     contentDescription = null,
                                 )
                             },

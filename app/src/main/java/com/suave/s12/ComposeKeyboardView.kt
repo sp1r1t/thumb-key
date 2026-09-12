@@ -71,7 +71,9 @@ class ComposeKeyboardView(
                                 val next = f(current)
                                 if (next == current) return@let
                                 settingsRepo.update(s.copy(position = next.ordinal))
-                                Toast.makeText(context, context.getString(next.resId), Toast.LENGTH_SHORT).show()
+                                if (s.showToastOnLayoutSwitch.toBool()) {
+                                    Toast.makeText(context, context.getString(next.resId), Toast.LENGTH_SHORT).show()
+                                }
                             }
                         }
                     },

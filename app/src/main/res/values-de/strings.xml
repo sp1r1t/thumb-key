@@ -25,7 +25,14 @@
     <string name="prevent_cramped_dual">Doppelt bei Platzmangel überspringen</string>
     <string name="prevent_cramped_dual_on">An - Doppelt wird übersprungen, wenn zwei Kopien die Tasten schmaler als %1$d dp machen würden</string>
     <string name="prevent_cramped_dual_off">Aus - Doppelt wird auch genutzt, wenn die Tasten gequetscht würden</string>
-    <string name="prevent_cramped_dual_info">Auf einem Handy im Hochformat werden zwei volle Kopien eines 5-Spalten-Layouts zu schmal zum Tippen. Geteilt bleibt verfügbar, weil jede Hälfte weniger Spalten hat und die Tasten dadurch breiter bleiben. Schalte das aus, wenn du Doppelt trotzdem auf einem schmalen Bildschirm willst.</string>
+    <string name="prevent_cramped_dual_info">Auf einem Handy im Hochformat werden zwei volle Kopien eines 5-Spalten-Layouts zu schmal zum Tippen. Schalte das aus, wenn du Doppelt trotzdem auf einem schmalen Bildschirm willst.</string>
+    <string name="prevent_needless_split">Geteilt überspringen, wenn es nicht passt</string>
+    <string name="prevent_needless_split_on">An - Geteilt wird übersprungen, außer Doppelt wäre zu schmal und Geteilt-Tasten wären noch mindestens %1$d dp</string>
+    <string name="prevent_needless_split_off">Aus - Geteilt wird genutzt, sobald es aktiviert ist</string>
+    <string name="prevent_needless_split_info">Geteilt ist die schmale Alternative zu Doppelt: jede Hälfte hat weniger Spalten, die Tasten bleiben breiter. Wenn Doppelt schon Platz hat, oder selbst Geteilt zu schmal würde, überspringt Tastatur verschieben Geteilt. Schalte das aus, um Geteilt immer mitzunehmen, wenn es aktiviert ist.</string>
+    <string name="show_toast_on_switch">Hinweis beim Wechsel</string>
+    <string name="show_toast_on_switch_on">An - ein Hinweis nennt Layout oder Position nach dem Wechsel</string>
+    <string name="show_toast_on_switch_off">Aus - Layout- oder Positionswechsel bleiben still</string>
     <string name="about">Über</string>
     <string name="whats_new">Neuigkeiten</string>
     <string name="version">Version %1$s</string>
