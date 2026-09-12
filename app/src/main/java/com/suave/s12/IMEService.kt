@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.inputmethodservice.InputMethodService
 import android.util.Log
 import android.util.TypedValue
+import android.view.View
 import android.view.inputmethod.CursorAnchorInfo
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InlineSuggestionsRequest
@@ -27,6 +28,7 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.suave.s12.db.AppDB
+import com.suave.s12.db.AppSettings
 import com.suave.s12.db.DEFAULT_CLIPBOARD_HISTORY_ENABLED
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
 import com.suave.s12.db.DEFAULT_INLINE_SUGGESTIONS
@@ -41,6 +43,7 @@ import com.suave.s12.utils.KeyboardLayout
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.ThumbKeyClipboardManager
 import com.suave.s12.utils.toBool
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class IMEService :
     InputMethodService(),
@@ -57,7 +60,9 @@ class IMEService :
         }
 
         val view = ComposeKeyboardView(this, settingsRepo)
+        suppressImeAutofill(view)
         window?.window?.decorView?.let { decorView ->
+            suppressImeAutofill(decorView)
             decorView.setViewTreeLifecycleOwner(this)
             decorView.setViewTreeViewModelStoreOwner(this)
             decorView.setViewTreeSavedStateRegistryOwner(this)
@@ -74,18 +79,30 @@ class IMEService :
     private var clipboardManager: ThumbKeyClipboardManager? = null
     private var unlockReceiver: BroadcastReceiver? = null
     val inlineAutofill = InlineAutofillHost()
+    val inputEpoch = MutableStateFlow(0)
 
     /**
-     * This is called every time the keyboard is brought up.
-     * You can't use onCreate, because that can't pick up new numeric inputs
+     * Keep one input view for the IME session. Replacing it on every [onStartInput] tears down
+     * inflated Autofill chips (Firefox and Chrome restart input when a login field focuses).
+     * Numeric/editor changes still apply because Compose keys off [inputEpoch].
      */
+    override fun onCreateInputView(): View = setupView()
+
     override fun onStartInput(
         attribute: EditorInfo?,
         restarting: Boolean,
     ) {
         super.onStartInput(attribute, restarting)
-        val view = this.setupView()
-        this.setInputView(view)
+        refreshCurrentKeyboardDefinition()
+        bumpInputEpoch()
+    }
+
+    override fun onStartInputView(
+        info: EditorInfo?,
+        restarting: Boolean,
+    ) {
+        super.onStartInputView(info, restarting)
+        bumpInputEpoch()
     }
 
     // Lifecycle Methods
@@ -144,6 +161,7 @@ class IMEService :
         AppDB.getDatabase(this)
         startClipboard()
         setInputView(setupView())
+        bumpInputEpoch()
         unregisterUnlockReceiver()
     }
 
@@ -187,10 +205,11 @@ class IMEService :
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreateInlineSuggestionsRequest(uiExtras: Bundle): InlineSuggestionsRequest? {
-        val settings = (application as ThumbkeyApplication).appSettingsRepository.appSettings.value
+        val settings = appSettingsOrSync()
         if (!(settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()) {
             return null
         }
+        inlineAutofill.markWaiting()
         val heightDp = settings?.inlineSuggestionHeight ?: DEFAULT_INLINE_SUGGESTION_HEIGHT
         val heightPx =
             TypedValue
@@ -200,26 +219,19 @@ class IMEService :
                     resources.displayMetrics,
                 ).toInt()
                 .coerceAtLeast(1)
+        Log.d(TAG, "inline suggestions request heightPx=$heightPx")
         return createInlineSuggestionsRequest(this, heightPx)
     }
 
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onInlineSuggestionsResponse(response: InlineSuggestionsResponse): Boolean {
-        val settings = (application as ThumbkeyApplication).appSettingsRepository.appSettings.value
+        val settings = appSettingsOrSync()
         if (!(settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()) {
             inlineAutofill.clear()
             return false
         }
-        val heightDp = settings?.inlineSuggestionHeight ?: DEFAULT_INLINE_SUGGESTION_HEIGHT
-        val heightPx =
-            TypedValue
-                .applyDimension(
-                    TypedValue.COMPLEX_UNIT_DIP,
-                    heightDp.toFloat(),
-                    resources.displayMetrics,
-                ).toInt()
-                .coerceAtLeast(1)
-        inlineAutofill.show(this, response.inlineSuggestions, heightPx)
+        Log.d(TAG, "inline suggestions response count=${response.inlineSuggestions.size}")
+        inlineAutofill.show(this, response.inlineSuggestions)
         return true
     }
 
@@ -287,4 +299,28 @@ class IMEService :
     fun clipboardWasLastCopyDoneViaSystem(): Boolean = clipboardManager?.wasLastCopyOperationDoneViaSystem() ?: true
 
     fun clipboardGetLastClip(): String? = clipboardManager?.getLastClip()
+
+    private fun bumpInputEpoch() {
+        inputEpoch.value = inputEpoch.value + 1
+    }
+
+    private fun refreshCurrentKeyboardDefinition() {
+        val layoutIndex = appSettingsOrSync()?.keyboardLayout
+        if (layoutIndex != null && layoutIndex in KeyboardLayout.entries.indices) {
+            currentKeyboardDefinition = KeyboardLayout.entries[layoutIndex].keyboardDefinition
+        }
+    }
+
+    private fun appSettingsOrSync(): AppSettings? {
+        val repo = (application as ThumbkeyApplication).appSettingsRepository
+        return repo.getSettingsSync()
+    }
+
+    private fun suppressImeAutofill(view: View) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            view.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            view.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
+        }
+    }
 }

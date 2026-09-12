@@ -599,6 +599,8 @@ class AppSettingsRepository(
     // Observed Flow will notify the observer when the data has changed.
     val appSettings = appSettingsDao.getSettings()
 
+    fun getSettingsSync(): AppSettings? = appSettings.value ?: appSettingsDao.getSettingsSync()
+
     @WorkerThread
     suspend fun update(appSettings: AppSettings) {
         appSettingsDao.updateAppSettings(appSettings)

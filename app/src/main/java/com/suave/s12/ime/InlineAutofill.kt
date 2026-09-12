@@ -4,10 +4,10 @@ import android.content.Context
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.util.Size
 import android.util.TypedValue
 import android.view.View
-import android.view.ViewGroup
 import android.view.inputmethod.InlineSuggestion
 import android.view.inputmethod.InlineSuggestionsRequest
 import android.widget.inline.InlinePresentationSpec
@@ -19,6 +19,7 @@ import androidx.autofill.inline.common.ViewStyle
 import androidx.autofill.inline.v1.InlineSuggestionUi
 import androidx.core.content.ContextCompat
 import com.suave.s12.R
+import com.suave.s12.utils.TAG
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +47,8 @@ class InlineAutofillHost {
     private val sequence = AtomicInteger(0)
     private val _suggestions = MutableStateFlow<List<InflatedInlineSuggestion>>(emptyList())
     val suggestions: StateFlow<List<InflatedInlineSuggestion>> = _suggestions.asStateFlow()
+    private val _status = MutableStateFlow(INLINE_STATUS_IDLE)
+    val status: StateFlow<String> = _status.asStateFlow()
 
     fun pickTopFillable(): InflatedInlineSuggestion? = pickTopFillable(_suggestions.value)
 
@@ -55,8 +58,13 @@ class InlineAutofillHost {
         return true
     }
 
+    fun markWaiting() {
+        _status.value = INLINE_STATUS_WAIT
+    }
+
     fun clear() {
         val id = sequence.incrementAndGet()
+        _status.value = INLINE_STATUS_IDLE
         scope.launch {
             setterGuard.withLock {
                 if (sequence.get() == id) {
@@ -70,15 +78,21 @@ class InlineAutofillHost {
     fun show(
         context: Context,
         raw: List<InlineSuggestion>,
-        heightPx: Int,
     ) {
         val id = sequence.incrementAndGet()
-        if (raw.isEmpty() || heightPx <= 0) {
-            clear()
+        if (raw.isEmpty()) {
+            _status.value = inlineChipStatus(0, 0)
+            scope.launch {
+                setterGuard.withLock {
+                    if (sequence.get() == id) {
+                        _suggestions.value = emptyList()
+                    }
+                }
+            }
             return
         }
         scope.launch {
-            val size = Size(ViewGroup.LayoutParams.WRAP_CONTENT, heightPx)
+            val size = Size(INLINE_INFLATE_WRAP, INLINE_INFLATE_WRAP)
             val slots = arrayOfNulls<InflatedInlineSuggestion>(raw.size)
             val latch = java.util.concurrent.CountDownLatch(raw.size)
             val executor = ContextCompat.getMainExecutor(context)
@@ -90,16 +104,22 @@ class InlineAutofillHost {
                         }
                         latch.countDown()
                     }
-                } catch (_: RuntimeException) {
+                } catch (e: RuntimeException) {
+                    Log.w(TAG, "inline suggestion inflate failed at $index", e)
                     latch.countDown()
                 }
             }
             latch.await(2, java.util.concurrent.TimeUnit.SECONDS)
             val inflated =
                 slots.filterNotNull().sortedBy { it.pinned }
+            val label = inlineChipStatus(raw.size, inflated.size)
+            if (inflated.size < raw.size) {
+                Log.w(TAG, "inline suggestion inflate $label of ${raw.size}")
+            }
             setterGuard.withLock {
                 if (sequence.get() == id) {
                     _suggestions.value = inflated
+                    _status.value = label
                 }
             }
         }
@@ -121,10 +141,10 @@ fun createInlineSuggestionsRequest(
     maxCount: Int = INLINE_SUGGESTION_MAX_COUNT,
 ): InlineSuggestionsRequest {
     val height = heightPx.coerceAtLeast(1)
-    val minWidth = dp(context, 48).coerceAtLeast(1)
-    val maxWidth = context.resources.displayMetrics.widthPixels.coerceAtLeast(minWidth)
+    val minEdge = INLINE_PRESENTATION_MIN_PX
+    val maxWidth = context.resources.displayMetrics.widthPixels.coerceAtLeast(minEdge)
     val spec =
-        InlinePresentationSpec.Builder(Size(minWidth, height), Size(maxWidth, height))
+        InlinePresentationSpec.Builder(Size(minEdge, minEdge), Size(maxWidth, height))
             .setStyle(inlineSuggestionStyleBundle(context))
             .build()
     val specs = List(maxCount.coerceAtLeast(1)) { spec }
@@ -134,6 +154,22 @@ fun createInlineSuggestionsRequest(
 }
 
 internal const val INLINE_SUGGESTION_MAX_COUNT = 4
+internal const val INLINE_PRESENTATION_MIN_PX = 1
+internal const val INLINE_INFLATE_WRAP = -2
+internal const val INLINE_STATUS_IDLE = "-"
+internal const val INLINE_STATUS_WAIT = "wait"
+internal const val INLINE_STATUS_EMPTY = "0"
+internal const val INLINE_STATUS_FAIL = "fail"
+
+internal fun inlineChipStatus(
+    rawCount: Int,
+    inflatedCount: Int,
+): String =
+    when {
+        rawCount <= 0 -> INLINE_STATUS_EMPTY
+        inflatedCount <= 0 -> INLINE_STATUS_FAIL
+        else -> inflatedCount.toString()
+    }
 
 @RequiresApi(Build.VERSION_CODES.R)
 private fun inlineSuggestionStyleBundle(context: Context): Bundle {

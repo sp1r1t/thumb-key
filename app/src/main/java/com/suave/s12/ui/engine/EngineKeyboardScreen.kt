@@ -1,6 +1,7 @@
 package com.suave.s12.ui.engine
 
 import android.content.Intent
+import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
@@ -104,6 +106,7 @@ import com.suave.s12.engine.modifier.ModifierBehavior
 import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.engine.modifier.modifierBehaviors
 import com.suave.s12.engine.output.OutputExecutor
+import com.suave.s12.ime.INLINE_STATUS_IDLE
 import com.suave.s12.layout.BuiltinLayouts
 import com.suave.s12.layout.DEFAULT_LAYER_HEIGHTS
 import com.suave.s12.layout.LayerContent
@@ -274,14 +277,16 @@ fun EngineKeyboardScreen(
             releaseFlash = (settings?.animationReleaseFlash ?: DEFAULT_ANIMATION_RELEASE_FLASH).toBool(),
             letterDrop = (settings?.animationLetterDrop ?: DEFAULT_ANIMATION_LETTER_DROP).toBool(),
         )
-    val passwordField = remember { isPasswordField(ime) }
     val distinctLetterControlColors =
         (settings?.distinctLetterControlColors ?: DEFAULT_DISTINCT_LETTER_CONTROL_COLORS).toBool()
 
     val hapticPlayer = remember(view) { HapticFeedbackPlayer(view) }
-    // Resolved once per IME session (onStartInput recreates this whole screen on every new
-    // input focus), matching how the old engine treated editor capability too.
-    val capabilities = remember { EditorCapabilityResolver.resolve(ime.currentInputEditorInfo) }
+    val inputEpoch by ime.inputEpoch.collectAsState()
+    val autofillStatus by ime.inlineAutofill.status.collectAsState()
+    val capabilities = remember(inputEpoch) { EditorCapabilityResolver.resolve(ime.currentInputEditorInfo) }
+    val passwordField = remember(inputEpoch) {
+        ime.currentInputEditorInfo?.let { isPasswordField(ime) } ?: false
+    }
 
     LaunchedEffect(namedLayout.id) {
         layerSessionState.value = LayerSession()
@@ -427,9 +432,16 @@ fun EngineKeyboardScreen(
                     val info = ime.packageManager.getPackageInfo(ime.packageName, 0)
                     SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault()).format(Date(info.lastUpdateTime))
                 }
-            val targetApp = ime.currentInputEditorInfo?.packageName ?: "?"
+            val targetApp = remember(inputEpoch) { ime.currentInputEditorInfo?.packageName ?: "?" }
+            val inlineEnabled = (settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()
+            val af =
+                when {
+                    Build.VERSION.SDK_INT < Build.VERSION_CODES.R -> "na"
+                    !inlineEnabled -> "off"
+                    else -> autofillStatus.ifEmpty { INLINE_STATUS_IDLE }
+                }
             Text(
-                text = "$installTime | $targetApp (${capabilities.level})",
+                text = "$installTime | $targetApp (${capabilities.level}) af=$af",
                 modifier =
                     Modifier
                         .fillMaxWidth()

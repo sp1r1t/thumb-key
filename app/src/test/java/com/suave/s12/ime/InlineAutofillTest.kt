@@ -19,4 +19,18 @@ class InlineAutofillTest {
         assertEquals(logo, pickTopFillable(listOf(logo)) { it.pinned })
         assertNull(pickTopFillable(emptyList<Slot>()) { it.pinned })
     }
+
+    @Test
+    fun `chip status reports empty fail and count`() {
+        assertEquals(INLINE_STATUS_EMPTY, inlineChipStatus(0, 0))
+        assertEquals(INLINE_STATUS_FAIL, inlineChipStatus(3, 0))
+        assertEquals("2", inlineChipStatus(3, 2))
+        assertEquals("3", inlineChipStatus(3, 3))
+    }
+
+    @Test
+    fun `inflate wrap content matches Android WRAP_CONTENT`() {
+        assertEquals(-2, INLINE_INFLATE_WRAP)
+        assertEquals(1, INLINE_PRESENTATION_MIN_PX)
+    }
 }
