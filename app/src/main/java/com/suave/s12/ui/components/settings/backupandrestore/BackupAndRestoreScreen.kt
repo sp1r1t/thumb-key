@@ -81,7 +81,6 @@ import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
 import com.suave.s12.layout.DEFAULT_LAYER_HEIGHTS
 import com.suave.s12.utils.SimpleTopAppBar
-import com.suave.s12.utils.keyboardLayoutsSetFromDbIndexString
 import com.suave.s12.utils.updateLayouts
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
@@ -224,8 +223,7 @@ fun BackupAndRestoreScreen(
 }
 
 private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel) {
-    val layoutsDefault = keyboardLayoutsSetFromDbIndexString(DEFAULT_KEYBOARD_LAYOUT.toString())
-    updateLayouts(appSettingsViewModel, layoutsDefault)
+    updateLayouts(appSettingsViewModel, setOf(DEFAULT_KEYBOARD_LAYOUT))
 
     appSettingsViewModel.update(
         AppSettings(

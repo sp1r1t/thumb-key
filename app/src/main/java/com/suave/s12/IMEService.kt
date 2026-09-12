@@ -41,8 +41,6 @@ import com.suave.s12.engine.output.LiveClipboardImage
 import com.suave.s12.ime.InlineAutofillHost
 import com.suave.s12.ime.createInlineSuggestionsRequest
 import com.suave.s12.ime.inlineChipSlotHeightDp
-import com.suave.s12.legacy.utils.KeyboardDefinition
-import com.suave.s12.legacy.KeyboardLayout
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.ThumbKeyClipboardManager
 import com.suave.s12.utils.toBool
@@ -60,11 +58,6 @@ class IMEService :
         val app = application as ThumbkeyApplication
         val settingsRepo = app.appSettingsRepository
 
-        val layoutIndex = settingsRepo.appSettings.value?.keyboardLayout
-        if (layoutIndex != null) {
-            currentKeyboardDefinition = KeyboardLayout.entries[layoutIndex].keyboardDefinition
-        }
-
         val view = ComposeKeyboardView(this, settingsRepo)
         suppressImeAutofill(view)
         window?.window?.decorView?.let { decorView ->
@@ -81,7 +74,6 @@ class IMEService :
         return view
     }
 
-    var currentKeyboardDefinition: KeyboardDefinition? = null
     private var clipboardManager: ThumbKeyClipboardManager? = null
     private val noLiveClipboardImage = MutableStateFlow<LiveClipboardImage?>(null)
     private var unlockReceiver: BroadcastReceiver? = null
@@ -115,7 +107,6 @@ class IMEService :
         restarting: Boolean,
     ) {
         super.onStartInput(attribute, restarting)
-        refreshCurrentKeyboardDefinition()
         bumpInputEpoch()
     }
 
@@ -218,14 +209,6 @@ class IMEService :
                     cursorAnchorInfo.selectionEnd != selectionEnd
             }
 
-        currentKeyboardDefinition?.settings?.textProcessor?.handleCursorUpdate(
-            this,
-            selectionStart,
-            selectionEnd,
-            cursorAnchorInfo.selectionStart,
-            cursorAnchorInfo.selectionEnd,
-        )
-
         selectionStart = cursorAnchorInfo.selectionStart
         selectionEnd = cursorAnchorInfo.selectionEnd
     }
@@ -302,7 +285,6 @@ class IMEService :
 
     override fun onWindowHidden() {
         inlineAutofill.clear()
-        currentKeyboardDefinition?.settings?.textProcessor?.handleFinishInput(this)
         super.onWindowHidden()
     }
 
@@ -349,13 +331,6 @@ class IMEService :
 
     private fun bumpInputEpoch() {
         inputEpoch.value = inputEpoch.value + 1
-    }
-
-    private fun refreshCurrentKeyboardDefinition() {
-        val layoutIndex = appSettingsOrSync()?.keyboardLayout
-        if (layoutIndex != null && layoutIndex in KeyboardLayout.entries.indices) {
-            currentKeyboardDefinition = KeyboardLayout.entries[layoutIndex].keyboardDefinition
-        }
     }
 
     private fun appSettingsOrSync(): AppSettings? {

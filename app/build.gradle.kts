@@ -161,16 +161,6 @@ dependencies {
     // Inline Autofill chips (Bitwarden and other Autofill services, Android 11+)
     implementation("androidx.autofill:autofill:1.3.0")
 
-    // YAML serialization
-    implementation("com.charleskorn.kaml:kaml:0.104.0")
-
-    // Kotlin Reflect
-    implementation("org.jetbrains.kotlin:kotlin-reflect:2.3.21")
-
-    // Arrow-kt for mutating deeply nested data classes
-    implementation("io.arrow-kt:arrow-optics:2.2.2.1")
-    ksp("io.arrow-kt:arrow-optics-ksp-plugin:2.2.2.1")
-
     // Unit tests for the engine/ package (pure Kotlin, no Android dependency needed)
     testImplementation("junit:junit:4.13.2")
 }

@@ -34,7 +34,6 @@ import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
 import com.suave.s12.db.DEFAULT_KEYBOARD_LAYOUT
 import com.suave.s12.db.LayoutsUpdate
-import com.suave.s12.legacy.KeyboardLayout
 
 const val TAG = "com.thumbkey"
 
@@ -168,13 +167,20 @@ fun Int.toBool() = this == 1
 fun Boolean.toInt() = this.compareTo(false)
 
 /**
- * The layouts there are whats stored in the DB, a string comma set of title index numbers
+ * Layout indices stored in the DB as a comma-separated string. Empty or invalid
+ * falls back to [DEFAULT_KEYBOARD_LAYOUT].
  */
-fun keyboardLayoutsSetFromDbIndexString(layouts: String?): Set<KeyboardLayout> =
-    layouts?.split(",")?.map { KeyboardLayout.entries[it.trim().toInt()] }?.toSet()
-        ?: setOf(
-            KeyboardLayout.entries[DEFAULT_KEYBOARD_LAYOUT],
-        )
+fun keyboardLayoutIndicesFromDb(layouts: String?): Set<Int> {
+    val parsed =
+        layouts
+            ?.split(",")
+            ?.mapNotNull { it.trim().toIntOrNull() }
+            ?.toSet()
+            .orEmpty()
+    return parsed.ifEmpty { setOf(DEFAULT_KEYBOARD_LAYOUT) }
+}
+
+fun keyboardLayoutsSetFromDbIndexString(layouts: String?): Set<Int> = keyboardLayoutIndicesFromDb(layouts)
 
 fun Context.getPackageInfo(): PackageInfo =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -202,17 +208,14 @@ fun Context.getImeNames(): List<String> =
 
 fun updateLayouts(
     appSettingsViewModel: AppSettingsViewModel,
-    layoutsState: Set<KeyboardLayout>,
+    layoutIndices: Set<Int>,
 ) {
+    val ordered = layoutIndices.ifEmpty { setOf(DEFAULT_KEYBOARD_LAYOUT) }
     appSettingsViewModel.updateLayouts(
         LayoutsUpdate(
             id = 1,
-            // Set the current to the first
-            keyboardLayout = layoutsState.first().ordinal,
-            keyboardLayouts =
-                layoutsState
-                    .map { it.ordinal }
-                    .joinToString(),
+            keyboardLayout = ordered.first(),
+            keyboardLayouts = ordered.joinToString(","),
         ),
     )
 }
