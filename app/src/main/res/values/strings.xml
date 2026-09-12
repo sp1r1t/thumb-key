@@ -43,6 +43,13 @@
     <string name="appearance">Appearance</string>
     <string name="settings_section_labels">Labels</string>
     <string name="settings_section_keyboard">Keyboard</string>
+    <string name="settings_section_suggestions">Suggestions</string>
+    <string name="inline_suggestions">Autofill suggestions</string>
+    <string name="inline_suggestions_on">On - Bitwarden and other Autofill services can show chips above the keyboard</string>
+    <string name="inline_suggestions_off">Off - Autofill stays in the system dropdown instead of this keyboard</string>
+    <string name="inline_suggestions_info">This uses Android Autofill, not a Bitwarden-only hook. Set Bitwarden as the Autofill service in system settings, then focus a username or password field. Tap a chip to fill it. Swipe right on space fills the top (non-logo) chip. The keyboard never sees the password text.</string>
+    <string name="inline_suggestion_height">Suggestion height</string>
+    <string name="inline_suggestion_height_summary">Currently %1$d dp - height of the strip above the keys</string>
     <string name="settings_section_keys">Keys</string>
     <string name="letter_and_control_colors">Letter and control colors</string>
     <string name="letter_and_control_colors_on">On - letter keys and control keys use different background colors</string>

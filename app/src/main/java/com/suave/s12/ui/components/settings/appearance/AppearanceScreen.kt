@@ -86,6 +86,8 @@ import com.suave.s12.db.DEFAULT_HIDE_NUMBERS
 import com.suave.s12.db.DEFAULT_HIDE_SPECIALS
 import com.suave.s12.db.DEFAULT_HIDE_SYMBOLS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
+import com.suave.s12.db.DEFAULT_INLINE_SUGGESTIONS
+import com.suave.s12.db.DEFAULT_INLINE_SUGGESTION_HEIGHT
 import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
 import com.suave.s12.db.DEFAULT_KEY_PADDING
@@ -93,6 +95,8 @@ import com.suave.s12.db.DEFAULT_KEY_PADDING_VERTICAL
 import com.suave.s12.db.DEFAULT_KEY_RADIUS
 import com.suave.s12.db.DEFAULT_KEYBOARD_POSITIONS
 import com.suave.s12.db.DEFAULT_PREVENT_CRAMPED_DUAL
+import com.suave.s12.db.MAX_INLINE_SUGGESTION_HEIGHT
+import com.suave.s12.db.MIN_INLINE_SUGGESTION_HEIGHT
 import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_THEME
 import com.suave.s12.db.DEFAULT_THEME_COLOR
@@ -200,6 +204,10 @@ fun AppearanceScreen(
     var keyboardPositionsState = settings?.keyboardPositions ?: DEFAULT_KEYBOARD_POSITIONS
     var preventCrampedDualState =
         (settings?.preventCrampedDual ?: DEFAULT_PREVENT_CRAMPED_DUAL).toBool()
+    var inlineSuggestionsState =
+        (settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()
+    var inlineSuggestionHeightState =
+        settings?.inlineSuggestionHeight ?: DEFAULT_INLINE_SUGGESTION_HEIGHT
     val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
     val layerHeightOverrides = parseLayerHeightOverrides(layerHeightsState)
 
@@ -244,6 +252,8 @@ fun AppearanceScreen(
                 distinctLetterControlColors = distinctLetterControlColorsState.toInt(),
                 keyboardPositions = keyboardPositionsState,
                 preventCrampedDual = preventCrampedDualState.toInt(),
+                inlineSuggestions = inlineSuggestionsState.toInt(),
+                inlineSuggestionHeight = inlineSuggestionHeightState,
             ),
         )
     }
@@ -594,6 +604,79 @@ fun AppearanceScreen(
                                 )
                             },
                         )
+                    }
+                    }
+
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                    SettingsSection(title = stringResource(R.string.settings_section_suggestions)) {
+                    SettingRow {
+                        SwitchPreference(
+                            value = inlineSuggestionsState,
+                            onValueChange = {
+                                inlineSuggestionsState = it
+                                updateAppearance()
+                            },
+                            title = {
+                                SettingTitle(
+                                    text = stringResource(R.string.inline_suggestions),
+                                    infoText = stringResource(R.string.inline_suggestions_info),
+                                )
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (inlineSuggestionsState) {
+                                            R.string.inline_suggestions_on
+                                        } else {
+                                            R.string.inline_suggestions_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.AutoAwesome,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+                    if (inlineSuggestionsState) {
+                    SettingRow(
+                        onReset = {
+                            inlineSuggestionHeightState = DEFAULT_INLINE_SUGGESTION_HEIGHT
+                            updateAppearance()
+                        },
+                    ) {
+                        IntStepperPreference(
+                            value = inlineSuggestionHeightState,
+                            onValueChange = {
+                                inlineSuggestionHeightState = it
+                                updateAppearance()
+                            },
+                            valueRange = MIN_INLINE_SUGGESTION_HEIGHT..MAX_INLINE_SUGGESTION_HEIGHT,
+                            vibrateOnRepeat = vibrateOnHoldRepeatState,
+                            repeatHapticType = vibrateHoldRepeatTypeState,
+                            title = {
+                                SettingTitle(text = stringResource(R.string.inline_suggestion_height))
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        R.string.inline_suggestion_height_summary,
+                                        inlineSuggestionHeightState,
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Height,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+                    }
                     }
                     }
 

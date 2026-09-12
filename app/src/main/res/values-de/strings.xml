@@ -43,6 +43,13 @@
     <string name="appearance">Erscheinungsbild</string>
     <string name="settings_section_labels">Beschriftungen</string>
     <string name="settings_section_keyboard">Tastatur</string>
+    <string name="settings_section_suggestions">Vorschläge</string>
+    <string name="inline_suggestions">Autofill-Vorschläge</string>
+    <string name="inline_suggestions_on">An - Bitwarden und andere Autofill-Dienste können Chips über der Tastatur zeigen</string>
+    <string name="inline_suggestions_off">Aus - Autofill bleibt im System-Dropdown statt auf dieser Tastatur</string>
+    <string name="inline_suggestions_info">Das nutzt Android-Autofill, keinen Bitwarden-eigenen Haken. Setze Bitwarden in den Systemeinstellungen als Autofill-Dienst, dann fokussiere ein Benutzer- oder Passwortfeld. Tippe einen Chip zum Ausfüllen. Wisch nach rechts auf der Leertaste füllt den obersten (nicht-Logo-) Chip. Die Tastatur sieht den Passworttext nie.</string>
+    <string name="inline_suggestion_height">Vorschlagshöhe</string>
+    <string name="inline_suggestion_height_summary">Aktuell %1$d dp - Höhe der Leiste über den Tasten</string>
     <string name="settings_section_keys">Tasten</string>
     <string name="letter_and_control_colors">Farben für Buchstaben und Steuertasten</string>
     <string name="letter_and_control_colors_on">An - Buchstaben- und Steuertasten nutzen unterschiedliche Hintergrundfarben</string>

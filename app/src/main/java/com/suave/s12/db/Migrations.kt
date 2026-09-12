@@ -633,3 +633,15 @@ val MIGRATION_42_43 =
             )
         }
     }
+
+val MIGRATION_43_44 =
+    object : Migration(43, 44) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN inline_suggestions INTEGER NOT NULL DEFAULT $DEFAULT_INLINE_SUGGESTIONS",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN inline_suggestion_height INTEGER NOT NULL DEFAULT $DEFAULT_INLINE_SUGGESTION_HEIGHT",
+            )
+        }
+    }

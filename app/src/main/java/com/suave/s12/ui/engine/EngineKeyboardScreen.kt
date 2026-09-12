@@ -59,6 +59,8 @@ import com.suave.s12.db.DEFAULT_HIDE_NUMBERS
 import com.suave.s12.db.DEFAULT_HIDE_SPECIALS
 import com.suave.s12.db.DEFAULT_HIDE_SYMBOLS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
+import com.suave.s12.db.DEFAULT_INLINE_SUGGESTIONS
+import com.suave.s12.db.DEFAULT_INLINE_SUGGESTION_HEIGHT
 import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
 import com.suave.s12.db.DEFAULT_KEY_PADDING
@@ -83,6 +85,7 @@ import com.suave.s12.db.DEFAULT_VIBRATE_SLIDE_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_SWIPE_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_TAP_TYPE
 import com.suave.s12.engine.action.SemanticAction
+import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.capability.EditorCapabilities
 import com.suave.s12.engine.capability.EditorCapabilityResolver
 import com.suave.s12.engine.feedback.FeedbackDispatcher
@@ -388,12 +391,19 @@ fun EngineKeyboardScreen(
         val onExecute =
             remember(capabilities, ime, appHost) {
                 { action: SemanticAction ->
-                    ActionExecutor.execute(
-                        action = action,
-                        capabilities = capabilities,
-                        ime = ime,
-                        host = appHost,
-                    )
+                    val filledTop =
+                        action is SemanticAction.TypeCommand &&
+                            action.id == CommandId.ARROW_RIGHT &&
+                            action.modifiers.isEmpty() &&
+                            ime.acceptTopInlineSuggestion()
+                    if (!filledTop) {
+                        ActionExecutor.execute(
+                            action = action,
+                            capabilities = capabilities,
+                            ime = ime,
+                            host = appHost,
+                        )
+                    }
                 }
             }
         val onFeedback =
@@ -426,6 +436,12 @@ fun EngineKeyboardScreen(
                 textAlign = TextAlign.Center,
                 fontSize = 10.sp,
                 color = MaterialTheme.colorScheme.onError,
+            )
+        }
+        if ((settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()) {
+            InlineSuggestionStrip(
+                ime = ime,
+                heightDp = settings?.inlineSuggestionHeight ?: DEFAULT_INLINE_SUGGESTION_HEIGHT,
             )
         }
         val renderPanel: @Composable (Modifier, Boolean) -> Unit = { panelModifier, splitHalves ->

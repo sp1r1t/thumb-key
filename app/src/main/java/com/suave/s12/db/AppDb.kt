@@ -98,6 +98,10 @@ const val DEFAULT_USE_PRIVATE_CLIPBOARD = 0
 const val DEFAULT_CAPTURE_SYSTEM_CLIPBOARD = 1
 const val DEFAULT_SHOW_ON_SCREEN_KEYBOARD = 0
 const val DEFAULT_SHOW_DEBUG_BAR = 1
+const val DEFAULT_INLINE_SUGGESTIONS = 1
+const val DEFAULT_INLINE_SUGGESTION_HEIGHT = 36
+const val MIN_INLINE_SUGGESTION_HEIGHT = 24
+const val MAX_INLINE_SUGGESTION_HEIGHT = 64
 const val DEFAULT_ANIMATION_PRESS_HIGHLIGHT = 1
 const val DEFAULT_ANIMATION_RELEASE_FLASH = 1
 const val DEFAULT_ANIMATION_LETTER_DROP = 1
@@ -260,6 +264,16 @@ data class AppSettings(
         defaultValue = DEFAULT_PREVENT_CRAMPED_DUAL.toString(),
     )
     val preventCrampedDual: Int = DEFAULT_PREVENT_CRAMPED_DUAL,
+    @ColumnInfo(
+        name = "inline_suggestions",
+        defaultValue = DEFAULT_INLINE_SUGGESTIONS.toString(),
+    )
+    val inlineSuggestions: Int = DEFAULT_INLINE_SUGGESTIONS,
+    @ColumnInfo(
+        name = "inline_suggestion_height",
+        defaultValue = DEFAULT_INLINE_SUGGESTION_HEIGHT.toString(),
+    )
+    val inlineSuggestionHeight: Int = DEFAULT_INLINE_SUGGESTION_HEIGHT,
     @ColumnInfo(
         name = "last_version_code_viewed",
         defaultValue = "0",
@@ -485,6 +499,10 @@ data class AppearanceUpdate(
     val keyboardPositions: String,
     @ColumnInfo(name = "prevent_cramped_dual")
     val preventCrampedDual: Int,
+    @ColumnInfo(name = "inline_suggestions")
+    val inlineSuggestions: Int,
+    @ColumnInfo(name = "inline_suggestion_height")
+    val inlineSuggestionHeight: Int,
 )
 
 data class BehaviorUpdate(
@@ -624,7 +642,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 43,
+    version = 44,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -712,6 +730,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_40_41,
                             MIGRATION_41_42,
                             MIGRATION_42_43,
+                            MIGRATION_43_44,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

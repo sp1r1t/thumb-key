@@ -158,6 +158,9 @@ dependencies {
     // App compat
     implementation("androidx.appcompat:appcompat:1.7.1")
 
+    // Inline Autofill chips (Bitwarden and other Autofill services, Android 11+)
+    implementation("androidx.autofill:autofill:1.3.0")
+
     // YAML serialization
     implementation("com.charleskorn.kaml:kaml:0.104.0")
 

@@ -4,10 +4,16 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
+import android.os.Bundle
 import android.inputmethodservice.InputMethodService
 import android.util.Log
+import android.util.TypedValue
 import android.view.inputmethod.CursorAnchorInfo
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InlineSuggestionsRequest
+import android.view.inputmethod.InlineSuggestionsResponse
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
@@ -23,9 +29,13 @@ import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.suave.s12.db.AppDB
 import com.suave.s12.db.DEFAULT_CLIPBOARD_HISTORY_ENABLED
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
+import com.suave.s12.db.DEFAULT_INLINE_SUGGESTIONS
+import com.suave.s12.db.DEFAULT_INLINE_SUGGESTION_HEIGHT
 import com.suave.s12.db.DEFAULT_SHOW_ON_SCREEN_KEYBOARD
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
 import com.suave.s12.db.isCredentialStorageUnlocked
+import com.suave.s12.ime.InlineAutofillHost
+import com.suave.s12.ime.createInlineSuggestionsRequest
 import com.suave.s12.utils.KeyboardDefinition
 import com.suave.s12.utils.KeyboardLayout
 import com.suave.s12.utils.TAG
@@ -63,6 +73,7 @@ class IMEService :
     var currentKeyboardDefinition: KeyboardDefinition? = null
     private var clipboardManager: ThumbKeyClipboardManager? = null
     private var unlockReceiver: BroadcastReceiver? = null
+    val inlineAutofill = InlineAutofillHost()
 
     /**
      * This is called every time the keyboard is brought up.
@@ -168,6 +179,51 @@ class IMEService :
         selectionStart = cursorAnchorInfo.selectionStart
         selectionEnd = cursorAnchorInfo.selectionEnd
     }
+
+    override fun onFinishInput() {
+        inlineAutofill.clear()
+        super.onFinishInput()
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    override fun onCreateInlineSuggestionsRequest(uiExtras: Bundle): InlineSuggestionsRequest? {
+        val settings = (application as ThumbkeyApplication).appSettingsRepository.appSettings.value
+        if (!(settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()) {
+            return null
+        }
+        val heightDp = settings?.inlineSuggestionHeight ?: DEFAULT_INLINE_SUGGESTION_HEIGHT
+        val heightPx =
+            TypedValue
+                .applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    heightDp.toFloat(),
+                    resources.displayMetrics,
+                ).toInt()
+                .coerceAtLeast(1)
+        return createInlineSuggestionsRequest(this, heightPx)
+    }
+
+    @RequiresApi(Build.VERSION_CODES.R)
+    override fun onInlineSuggestionsResponse(response: InlineSuggestionsResponse): Boolean {
+        val settings = (application as ThumbkeyApplication).appSettingsRepository.appSettings.value
+        if (!(settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()) {
+            inlineAutofill.clear()
+            return false
+        }
+        val heightDp = settings?.inlineSuggestionHeight ?: DEFAULT_INLINE_SUGGESTION_HEIGHT
+        val heightPx =
+            TypedValue
+                .applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    heightDp.toFloat(),
+                    resources.displayMetrics,
+                ).toInt()
+                .coerceAtLeast(1)
+        inlineAutofill.show(this, response.inlineSuggestions, heightPx)
+        return true
+    }
+
+    fun acceptTopInlineSuggestion(): Boolean = inlineAutofill.acceptTop()
 
     override fun onEvaluateInputViewShown(): Boolean {
         val settingsRepo = (application as ThumbkeyApplication).appSettingsRepository
