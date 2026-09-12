@@ -259,7 +259,8 @@ class IMEService :
         val pinned = items.count { it.info.isPinned }
         Log.d(TAG, "inline suggestions response count=${items.size} pinned=$pinned")
         inlineAutofill.show(this, items)
-        return items.isNotEmpty()
+        // false means "IME is not interested" and Samsung/AOSP then drop later fills.
+        return true
     }
 
     fun acceptTopInlineSuggestion(): Boolean = inlineAutofill.acceptTop()

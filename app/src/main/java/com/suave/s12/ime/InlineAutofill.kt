@@ -31,6 +31,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -85,23 +86,28 @@ class InlineAutofillHost {
 
     /**
      * AOSP injects an empty InlineSuggestionsResponse on every [onStartInput] before the real
-     * fill. Wiping chips on that ping hides a later non-empty response. Keep chips if we already
-     * inflated some. Only a fill that arrives while we are still waiting is a real empty result.
+     * fill. Returning false from [android.inputmethodservice.InputMethodService.onInlineSuggestionsResponse]
+     * tells the framework the IME is not interested, which cancels the session and drops
+     * Bitwarden's later chips. Keep waiting; only time out to [INLINE_STATUS_EMPTY] if nothing
+     * arrives.
      */
     fun offerEmptyResponse(): Boolean {
         if (_suggestions.value.isNotEmpty()) {
-            Log.d(TAG, "keep inline chips on empty ping status=${_status.value}")
-            return false
+            return true
         }
-        if (_status.value != INLINE_STATUS_WAIT || sequence.get() != waitingAt.get()) {
-            return false
+        if (_status.value != INLINE_STATUS_WAIT) {
+            return true
         }
-        waitingAt.set(-1)
-        _status.value = INLINE_STATUS_EMPTY
+        val waitSeq = sequence.get()
         scope.launch {
+            delay(INLINE_EMPTY_GRACE_MS)
             setterGuard.withLock {
-                if (_status.value == INLINE_STATUS_EMPTY) {
-                    _suggestions.value = emptyList()
+                if (sequence.get() == waitSeq &&
+                    _status.value == INLINE_STATUS_WAIT &&
+                    _suggestions.value.isEmpty()
+                ) {
+                    waitingAt.set(-1)
+                    _status.value = INLINE_STATUS_EMPTY
                 }
             }
         }
@@ -180,8 +186,13 @@ fun createInlineSuggestionsRequest(
     if (extrasVersions.isNotEmpty() && !extrasVersions.contains(UiVersions.INLINE_UI_VERSION_1)) {
         Log.w(TAG, "inline ui extras versions=$extrasVersions omit v1")
     }
-    val min = inlinePresentationMinSize(heightPx)
-    val max = inlinePresentationMaxSize(heightPx, context.resources.displayMetrics.widthPixels)
+    val min =
+        inlinePresentationMinSize(
+            dp(context, INLINE_PRESENTATION_MIN_WIDTH_DP),
+            dp(context, INLINE_PRESENTATION_MIN_HEIGHT_DP),
+        )
+    val maxHeight = max(heightPx, dp(context, INLINE_PRESENTATION_MAX_HEIGHT_DP))
+    val max = inlinePresentationMaxSize(maxHeight, context.resources.displayMetrics.widthPixels)
     val count = maxCount.coerceAtLeast(1)
     val specs =
         List(specCount.coerceAtLeast(1)) {
@@ -207,10 +218,12 @@ internal fun inlinePresentationMaxWidthPx(screenWidthPx: Int): Int =
     max(
         INLINE_PRESENTATION_MAX_WIDTH_PX,
         screenWidthPx * 2 / 3,
-    ).coerceAtLeast(INLINE_PRESENTATION_MIN_WIDTH_PX)
+    ).coerceAtLeast(1)
 
-internal fun inlinePresentationMinSize(heightPx: Int): Size =
-    Size(INLINE_PRESENTATION_MIN_WIDTH_PX, heightPx.coerceAtLeast(1))
+internal fun inlinePresentationMinSize(
+    minWidthPx: Int,
+    minHeightPx: Int,
+): Size = Size(minWidthPx.coerceAtLeast(1), minHeightPx.coerceAtLeast(1))
 
 internal fun inlinePresentationMaxSize(
     heightPx: Int,
@@ -219,8 +232,11 @@ internal fun inlinePresentationMaxSize(
 
 internal const val INLINE_SUGGESTION_MAX_COUNT = 6
 internal const val INLINE_SUGGESTION_SPEC_COUNT = 6
-internal const val INLINE_PRESENTATION_MIN_WIDTH_PX = 100
+internal const val INLINE_PRESENTATION_MIN_WIDTH_DP = 32
+internal const val INLINE_PRESENTATION_MIN_HEIGHT_DP = 8
+internal const val INLINE_PRESENTATION_MAX_HEIGHT_DP = 48
 internal const val INLINE_PRESENTATION_MAX_WIDTH_PX = 740
+internal const val INLINE_EMPTY_GRACE_MS = 1_500L
 internal const val INLINE_STATUS_IDLE = "-"
 internal const val INLINE_STATUS_WAIT = "wait"
 internal const val INLINE_STATUS_EMPTY = "0"

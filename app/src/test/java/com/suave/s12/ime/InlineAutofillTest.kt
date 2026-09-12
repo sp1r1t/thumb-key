@@ -30,9 +30,10 @@ class InlineAutofillTest {
     }
 
     @Test
-    fun `presentation sizes match Gboard-style strip height`() {
-        assertEquals(INLINE_PRESENTATION_MIN_WIDTH_PX, 100)
-        assertEquals(INLINE_PRESENTATION_MAX_WIDTH_PX, 740)
+    fun `presentation sizes keep a height range Bitwarden can fill`() {
+        assertEquals(32, INLINE_PRESENTATION_MIN_WIDTH_DP)
+        assertEquals(8, INLINE_PRESENTATION_MIN_HEIGHT_DP)
+        assertEquals(48, INLINE_PRESENTATION_MAX_HEIGHT_DP)
         assertEquals(INLINE_PRESENTATION_MAX_WIDTH_PX, inlinePresentationMaxWidthPx(1080))
         assertTrue(inlinePresentationMaxWidthPx(2640) > INLINE_PRESENTATION_MAX_WIDTH_PX)
         assertEquals(6, INLINE_SUGGESTION_MAX_COUNT)
@@ -40,23 +41,22 @@ class InlineAutofillTest {
     }
 
     @Test
-    fun `empty response is ignored unless waiting`() {
+    fun `empty ping while waiting stays wait so a later fill can arrive`() {
         val host = InlineAutofillHost()
-        assertEquals(false, host.offerEmptyResponse())
+        assertEquals(true, host.offerEmptyResponse())
         assertEquals(INLINE_STATUS_IDLE, host.status.value)
         host.markWaiting(40)
         assertEquals(INLINE_STATUS_WAIT, host.status.value)
         assertEquals(true, host.offerEmptyResponse())
-        assertEquals(INLINE_STATUS_EMPTY, host.status.value)
-        assertEquals(false, host.offerEmptyResponse())
+        assertEquals(INLINE_STATUS_WAIT, host.status.value)
     }
 
     @Test
-    fun `clear after wait makes the AOSP empty ping a no-op`() {
+    fun `clear after wait makes a stale empty timeout a no-op`() {
         val host = InlineAutofillHost()
         host.markWaiting(40)
         host.clear()
-        assertEquals(false, host.offerEmptyResponse())
+        assertEquals(true, host.offerEmptyResponse())
         assertEquals(INLINE_STATUS_IDLE, host.status.value)
     }
 }
