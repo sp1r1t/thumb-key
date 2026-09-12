@@ -165,6 +165,23 @@ internal fun inlineChipStatus(
         else -> inflatedCount.toString()
     }
 
+/**
+ * Compact debug-bar token: whether this field has Autofill, plus chip state in brackets
+ * when it does. Examples: `af=y [6]`, `af=n`, `af=off`, `af=na`.
+ */
+internal fun formatAutofillDebug(
+    sdkAtLeastR: Boolean,
+    inlineEnabled: Boolean,
+    hasAutofillId: Boolean,
+    status: String,
+): String {
+    if (!sdkAtLeastR) return "af=na"
+    if (!inlineEnabled) return "af=off"
+    if (!hasAutofillId) return "af=n"
+    val state = status.ifEmpty { INLINE_STATUS_IDLE }
+    return "af=y [$state]"
+}
+
 @SuppressLint("RestrictedApi")
 @RequiresApi(Build.VERSION_CODES.R)
 private fun inlineSuggestionStyleBundle(context: Context): Bundle {

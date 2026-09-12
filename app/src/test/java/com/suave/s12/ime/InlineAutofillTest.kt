@@ -29,6 +29,64 @@ class InlineAutofillTest {
     }
 
     @Test
+    fun `debug token nests chip state only when the field has Autofill`() {
+        assertEquals(
+            "af=na",
+            formatAutofillDebug(
+                sdkAtLeastR = false,
+                inlineEnabled = true,
+                hasAutofillId = true,
+                status = "6",
+            ),
+        )
+        assertEquals(
+            "af=off",
+            formatAutofillDebug(
+                sdkAtLeastR = true,
+                inlineEnabled = false,
+                hasAutofillId = true,
+                status = "6",
+            ),
+        )
+        assertEquals(
+            "af=n",
+            formatAutofillDebug(
+                sdkAtLeastR = true,
+                inlineEnabled = true,
+                hasAutofillId = false,
+                status = "wait",
+            ),
+        )
+        assertEquals(
+            "af=y [6]",
+            formatAutofillDebug(
+                sdkAtLeastR = true,
+                inlineEnabled = true,
+                hasAutofillId = true,
+                status = "6",
+            ),
+        )
+        assertEquals(
+            "af=y [wait]",
+            formatAutofillDebug(
+                sdkAtLeastR = true,
+                inlineEnabled = true,
+                hasAutofillId = true,
+                status = INLINE_STATUS_WAIT,
+            ),
+        )
+        assertEquals(
+            "af=y [-]",
+            formatAutofillDebug(
+                sdkAtLeastR = true,
+                inlineEnabled = true,
+                hasAutofillId = true,
+                status = "",
+            ),
+        )
+    }
+
+    @Test
     fun `empty ping does not clear wait until a real fill is missing`() {
         val host = InlineAutofillHost()
         host.markWaiting(40)

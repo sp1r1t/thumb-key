@@ -123,7 +123,7 @@ import com.suave.s12.engine.modifier.modifierBehaviors
 import com.suave.s12.engine.output.ClipboardPaste
 import com.suave.s12.engine.output.LiveClipboardImage
 import com.suave.s12.engine.output.OutputExecutor
-import com.suave.s12.ime.INLINE_STATUS_IDLE
+import com.suave.s12.ime.formatAutofillDebug
 import com.suave.s12.layout.BuiltinLayouts
 import com.suave.s12.layout.DEFAULT_LAYER_HEIGHTS
 import com.suave.s12.layout.LayerContent
@@ -476,22 +476,20 @@ fun EngineKeyboardScreen(
             val targetApp = remember(inputEpoch) { ime.currentInputEditorInfo?.packageName ?: "?" }
             val editorDebug = remember(inputEpoch) { EditorInfoDebug.label(ime.currentInputEditorInfo) }
             val inlineEnabled = (settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()
-            val af =
-                when {
-                    Build.VERSION.SDK_INT < Build.VERSION_CODES.R -> "na"
-                    !inlineEnabled -> "off"
-                    else -> autofillStatus.ifEmpty { INLINE_STATUS_IDLE }
-                }
-            val autofillIdMark =
+            val hasAutofillId =
                 remember(inputEpoch) {
-                    when {
-                        Build.VERSION.SDK_INT < Build.VERSION_CODES.R -> "na"
-                        ime.currentInputEditorInfo?.autofillId != null -> "y"
-                        else -> "n"
-                    }
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.R &&
+                        ime.currentInputEditorInfo?.autofillId != null
                 }
+            val af =
+                formatAutofillDebug(
+                    sdkAtLeastR = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R,
+                    inlineEnabled = inlineEnabled,
+                    hasAutofillId = hasAutofillId,
+                    status = autofillStatus,
+                )
             EditorDebugBar(
-                meta = "$installTime | $targetApp | af=$af | id=$autofillIdMark",
+                meta = "$installTime | $targetApp | $af",
                 compact = editorDebug.compact,
                 verbose = editorDebug.verbose,
                 onCopy = { text ->

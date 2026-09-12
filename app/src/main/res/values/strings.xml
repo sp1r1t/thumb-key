@@ -64,7 +64,7 @@
     <string name="inline_suggestions">Autofill suggestions</string>
     <string name="inline_suggestions_on">On - Bitwarden and other Autofill services can show chips above the keyboard</string>
     <string name="inline_suggestions_off">Off - Autofill stays in the system dropdown instead of this keyboard</string>
-    <string name="inline_suggestions_info">This uses Android Autofill. Set Bitwarden as the Autofill service in system settings, and in Bitwarden set Display autofill suggestions to Inline (not Popup). Popup and keyboard chips are mutually exclusive there. Chrome also needs Autofill using another service. Tap a chip to fill. Swipe right on space fills the top (non-logo) chip. The keyboard never sees the password. Debug af=wait / 0 / N is Android asked / no chips / N chips on this keyboard.</string>
+    <string name="inline_suggestions_info">This uses Android Autofill. Set Bitwarden as the Autofill service in system settings, and in Bitwarden set Display autofill suggestions to Inline (not Popup). Popup and keyboard chips are mutually exclusive there. Chrome also needs Autofill using another service. Tap a chip to fill. Swipe right on space fills the top (non-logo) chip. The keyboard never sees the password. Debug af=y [6] means this field has Autofill and 6 chips are on the keyboard. Brackets are wait / 0 / N / fail / - (Android asked / no chips / chip count / inflate failed / idle). af=n means no Autofill id. af=off / af=na is Inline off / below Android 11.</string>
     <string name="inline_suggestion_height">Suggestion height</string>
     <string name="inline_suggestion_height_summary">Currently %1$d dp - height of the strip above the keys</string>
     <string name="settings_section_keys">Keys</string>
