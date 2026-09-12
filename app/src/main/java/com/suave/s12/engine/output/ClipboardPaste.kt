@@ -5,9 +5,7 @@ import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Build
 import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
@@ -122,16 +120,7 @@ object ClipboardPaste {
                 offered.addAll(descMimes)
                 val mime = MimeTypeMatcher.chooseOfferedMime(accepted, offered)
                 if (mime != null) {
-                    return ClipboardImage(uri = uri, bitmap = null, mimeType = mime)
-                }
-            }
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val bitmap = item.bitmap
-                if (bitmap != null) {
-                    val mime = MimeTypeMatcher.chooseOfferedMime(accepted, descMimes + "image/png")
-                    if (mime != null) {
-                        return ClipboardImage(uri = null, bitmap = bitmap, mimeType = mime)
-                    }
+                    return ClipboardImage(uri = uri, mimeType = mime)
                 }
             }
         }
@@ -182,21 +171,9 @@ object ClipboardPaste {
                 ?: if (MimeTypeMatcher.isImage(image.mimeType)) "png" else "bin"
         val file = File(dir, "clip_${System.currentTimeMillis()}.$ext")
         try {
-            when {
-                image.uri != null -> {
-                    context.contentResolver.openInputStream(image.uri)?.use { input ->
-                        file.outputStream().use { output -> input.copyTo(output) }
-                    } ?: return null
-                }
-                image.bitmap != null -> {
-                    file.outputStream().use { output ->
-                        if (!image.bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)) {
-                            return null
-                        }
-                    }
-                }
-                else -> return null
-            }
+            context.contentResolver.openInputStream(image.uri)?.use { input ->
+                file.outputStream().use { output -> input.copyTo(output) }
+            } ?: return null
         } catch (e: Exception) {
             Log.w(TAG, "Failed to copy clipboard image for commitContent", e)
             file.delete()
@@ -230,7 +207,6 @@ object ClipboardPaste {
 }
 
 internal data class ClipboardImage(
-    val uri: Uri?,
-    val bitmap: Bitmap?,
+    val uri: Uri,
     val mimeType: String,
 )
