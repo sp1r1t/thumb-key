@@ -43,6 +43,7 @@ import com.suave.s12.utils.KeyboardLayout
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.ThumbKeyClipboardManager
 import com.suave.s12.utils.toBool
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class IMEService :
@@ -80,6 +81,18 @@ class IMEService :
     private var unlockReceiver: BroadcastReceiver? = null
     val inlineAutofill = InlineAutofillHost()
     val inputEpoch = MutableStateFlow(0)
+    val notice = MutableStateFlow<ImeNotice?>(null)
+    private val noticeSeq = AtomicInteger(0)
+
+    fun showNotice(text: String) {
+        notice.value = ImeNotice(text = text, seq = noticeSeq.incrementAndGet())
+    }
+
+    fun clearNotice(seq: Int) {
+        if (notice.value?.seq == seq) {
+            notice.value = null
+        }
+    }
 
     /**
      * Keep one input view for the IME session. Replacing it on every [onStartInput] tears down
@@ -324,3 +337,8 @@ class IMEService :
         }
     }
 }
+
+data class ImeNotice(
+    val text: String,
+    val seq: Int,
+)

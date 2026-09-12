@@ -2,6 +2,7 @@ package com.suave.s12.ui.engine
 
 import android.content.Intent
 import android.os.Build
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -129,10 +130,11 @@ import com.suave.s12.ui.components.keyboard.ClipboardHistoryScreen
 import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.isPasswordField
 import com.suave.s12.utils.toBool
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /**
  * Renders the selected [NamedLayout] on the new engine end to end. Owns the two pieces of
@@ -455,6 +457,7 @@ fun EngineKeyboardScreen(
                 color = MaterialTheme.colorScheme.onError,
             )
         }
+        ImeNoticeBanner(ime = ime)
         if ((settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()) {
             InlineSuggestionStrip(
                 ime = ime,
@@ -833,5 +836,28 @@ private fun RowScope.LayoutRowKeys(
                 modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
             )
         }
+    }
+}
+
+@Composable
+private fun ImeNoticeBanner(ime: IMEService) {
+    val notice by ime.notice.collectAsState()
+    LaunchedEffect(notice) {
+        val current = notice ?: return@LaunchedEffect
+        delay(1600)
+        ime.clearNotice(current.seq)
+    }
+    AnimatedVisibility(visible = notice != null) {
+        Text(
+            text = notice?.text.orEmpty(),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.inverseSurface)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            color = MaterialTheme.colorScheme.inverseOnSurface,
+            textAlign = TextAlign.Center,
+            fontSize = 14.sp,
+        )
     }
 }

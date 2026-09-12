@@ -7,7 +7,6 @@ import android.os.Handler
 import android.os.Looper
 import android.view.inputmethod.InputMethodInfo
 import android.view.inputmethod.InputMethodManager
-import android.widget.Toast
 import com.suave.s12.IMEService
 import com.suave.s12.MainActivity
 import com.suave.s12.R
@@ -99,11 +98,11 @@ object ActionExecutor {
             if (ime.clipboardUsePrivate()) {
                 val text = ic.getSelectedText(0) ?: return
                 ime.clipboardAddPrivateClip(text.toString())?.let {
-                    Toast.makeText(ime, ime.getString(R.string.copy), Toast.LENGTH_SHORT).show()
+                    ime.showNotice(ime.getString(R.string.copy))
                 }
             } else {
                 ic.performContextMenuAction(android.R.id.copy)
-                Toast.makeText(ime, ime.getString(R.string.copy), Toast.LENGTH_SHORT).show()
+                ime.showNotice(ime.getString(R.string.copy))
             }
         }
         withSelectionOrAll(ime, ::performCopy)

@@ -15,7 +15,6 @@ import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodInfo
 import android.view.inputmethod.InputMethodManager
-import android.widget.Toast
 import androidx.activity.compose.LocalActivity
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -1349,13 +1348,13 @@ fun performKeyAction(
                         ime.clipboardAddPrivateClip(text.toString())?.let {
                             // Text successfully added to clipboard history
                             val message = ime.getString(R.string.copy)
-                            Toast.makeText(ime, message, Toast.LENGTH_SHORT).show()
+                            ime.showNotice(message)
                         }
                     }
                 } else {
                     ime.currentInputConnection.performContextMenuAction(android.R.id.copy)
                     val message = ime.getString(R.string.copy)
-                    Toast.makeText(ime, message, Toast.LENGTH_SHORT).show()
+                    ime.showNotice(message)
                 }
             }
             keyboardSettings.textProcessor?.handleFinishInput(ime)

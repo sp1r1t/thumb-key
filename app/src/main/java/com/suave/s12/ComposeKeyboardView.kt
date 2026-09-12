@@ -2,7 +2,6 @@ package com.suave.s12
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -57,7 +56,7 @@ class ComposeKeyboardView(
                                 val s2 = s.copy(keyboardLayout = nextIndex)
                                 settingsRepo.update(s2)
                                 if (s.showToastOnLayoutSwitch.toBool()) {
-                                    Toast.makeText(context, next.title, Toast.LENGTH_SHORT).show()
+                                    ctx.showNotice(next.title)
                                 }
                             }
                         }
@@ -72,7 +71,7 @@ class ComposeKeyboardView(
                                 if (next == current) return@let
                                 settingsRepo.update(s.copy(position = next.ordinal))
                                 if (s.showToastOnLayoutSwitch.toBool()) {
-                                    Toast.makeText(context, context.getString(next.resId), Toast.LENGTH_SHORT).show()
+                                    ctx.showNotice(context.getString(next.resId))
                                 }
                             }
                         }
