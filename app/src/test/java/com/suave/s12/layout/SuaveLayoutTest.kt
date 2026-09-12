@@ -1,13 +1,21 @@
 package com.suave.s12.layout
 
+import com.suave.s12.engine.action.SemanticAction
+import com.suave.s12.engine.dispatch.KeyDispatcher
 import com.suave.s12.engine.gesture.Direction
+import com.suave.s12.engine.gesture.GestureRecognizer
+import com.suave.s12.engine.gesture.RecognizerInput
 import com.suave.s12.engine.gesture.SlideAxis
+import com.suave.s12.engine.gesture.SwipeDirections
+import com.suave.s12.engine.gesture.TouchEvent
+import com.suave.s12.engine.gesture.TouchPhase
 import com.suave.s12.engine.gesture.Zone
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.KeyPosition
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.intent.SlideBehavior
+import com.suave.s12.engine.modifier.ModifierState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -59,6 +67,41 @@ class SuaveLayoutTest {
 
         assertEquals(KeyIntent.Text("ch"), eKey.intents[Zone.Directional(Direction.DOWN_RIGHT)])
         assertEquals(KeyIntent.Text("sch"), sKey.intents[Zone.Directional(Direction.DOWN_LEFT)])
+    }
+
+    @Test
+    fun `n-cluster is four-way so a slightly high left swipe still types g`() {
+        val n = SUAVE_LAYOUT.getValue(KeyPosition(1, 3))
+        assertEquals(SwipeDirections.FOUR_WAY, n.gestureConfig.directions)
+        assertEquals(KeyIntent.Text("n"), n.intents[Zone.Center])
+        assertEquals(KeyIntent.Text("g"), n.intents[Zone.Directional(Direction.LEFT)])
+        assertEquals(null, n.intents[Zone.Directional(Direction.UP_LEFT)])
+
+        val recognizer = GestureRecognizer(n.gestureConfig.copy(minSwipeDistancePx = 20f))
+        val dispatcher = KeyDispatcher(n)
+        val executed = mutableListOf<SemanticAction>()
+        var state = ModifierState()
+
+        fun feed(input: RecognizerInput) {
+            recognizer.process(input).forEach { gesture ->
+                state = dispatcher.handle(gesture, state, executed::add)
+            }
+        }
+        feed(RecognizerInput.Touch(TouchEvent(0f, 0f, 1_000L, TouchPhase.DOWN)))
+        feed(RecognizerInput.Touch(TouchEvent(-40f, -20f, 1_050L, TouchPhase.MOVE)))
+        feed(RecognizerInput.Touch(TouchEvent(-40f, -20f, 1_100L, TouchPhase.UP)))
+
+        assertEquals(listOf(SemanticAction.TypeText("g")), executed)
+    }
+
+    @Test
+    fun `keys that actually have diagonal tokens stay eight-way`() {
+        val r = SUAVE_LAYOUT.getValue(KeyPosition(0, 1))
+        val e = SUAVE_LAYOUT.getValue(KeyPosition(1, 1))
+        assertEquals(SwipeDirections.EIGHT_WAY, r.gestureConfig.directions)
+        assertEquals(SwipeDirections.EIGHT_WAY, e.gestureConfig.directions)
+        assertEquals(KeyIntent.Text("?"), r.intents[Zone.Directional(Direction.DOWN_LEFT)])
+        assertEquals(KeyIntent.Text("ch"), e.intents[Zone.Directional(Direction.DOWN_RIGHT)])
     }
 
     @Test

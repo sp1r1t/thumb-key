@@ -117,7 +117,7 @@ private fun key(
     bottom: String? = null,
     bottomLeft: String? = null,
     bottomRight: String? = null,
-    gesture: GestureConfig = EIGHT_WAY_KEY,
+    gesture: GestureConfig? = null,
     slideBehavior: SlideBehavior? = null,
     columnSpan: Int = 1,
 ): KeyMapping {
@@ -133,7 +133,13 @@ private fun key(
             bottomLeft?.let { put(Zone.Directional(Direction.DOWN_LEFT), token(it)) }
             bottomRight?.let { put(Zone.Directional(Direction.DOWN_RIGHT), token(it)) }
         }
-    return KeyMapping(gesture, intents, slideBehavior, columnSpan)
+    // Cardinal-only keys must not use eight-way: a slightly high/low left swipe on n
+    // would lock the empty UP_LEFT/DOWN_LEFT diagonal, buzz twice, and type nothing.
+    // Diagonal tokens opt into eight-way; space/backspace/ctrl still pass an explicit config.
+    val hasDiagonal =
+        topLeft != null || topRight != null || bottomLeft != null || bottomRight != null
+    val resolvedGesture = gesture ?: if (hasDiagonal) EIGHT_WAY_KEY else FOUR_WAY_KEY
+    return KeyMapping(resolvedGesture, intents, slideBehavior, columnSpan)
 }
 
 private val SUAVE_BACKSPACE =

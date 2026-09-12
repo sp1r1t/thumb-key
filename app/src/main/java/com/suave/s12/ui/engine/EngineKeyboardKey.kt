@@ -252,15 +252,26 @@ fun EngineKeyboardKey(
                                     continue
                                 }
                                 val change = event.changes.firstOrNull { it.id == down.id }
-                                if (change == null || !change.pressed) {
+                                if (change == null) {
+                                    // Another pointer's event (hover, second finger, overlay).
+                                    // Cancelling here dropped the commit after press+swipe
+                                    // already buzzed.
+                                    continue
+                                }
+                                if (!change.pressed) {
                                     pressed = false
-                                    val phase = if (change == null) TouchPhase.CANCEL else TouchPhase.UP
-                                    val position = change?.position ?: down.position
                                     recognizer
                                         .process(
-                                            RecognizerInput.Touch(TouchEvent(position.x, position.y, System.currentTimeMillis(), phase)),
+                                            RecognizerInput.Touch(
+                                                TouchEvent(
+                                                    change.position.x,
+                                                    change.position.y,
+                                                    System.currentTimeMillis(),
+                                                    TouchPhase.UP,
+                                                ),
+                                            ),
                                         ).forEach(::handle)
-                                    change?.consume()
+                                    change.consume()
                                 } else {
                                     recognizer
                                         .process(

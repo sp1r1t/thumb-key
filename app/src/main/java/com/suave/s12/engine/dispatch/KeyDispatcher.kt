@@ -119,7 +119,10 @@ class KeyDispatcher(
      * modifier activation - it no longer looks like a modifier at all.
      */
     private fun intentFor(zone: Zone): KeyIntent? {
-        val intent = mapping.intents[zone] ?: return null
+        val intent =
+            mapping.intents[zone]
+                ?: mapping.intents[Zone.Center].takeIf { zone is Zone.Directional }
+                ?: return null
         if (intent is KeyIntent.ModifierPress && !behaviorOf(intent.modifier).actsAsModifier) {
             return KeyIntent.Command(intent.modifier.standaloneCommand)
         }

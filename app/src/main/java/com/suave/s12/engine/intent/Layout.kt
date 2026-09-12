@@ -22,7 +22,9 @@ enum class SlideBehavior { MOVE_CURSOR, SELECT_AND_DELETE }
  * One physical key: its gesture shape, and what each zone means. [Gesture.Tap], [Gesture.Hold]
  * and [Gesture.HoldRepeat] for the same [Zone] all resolve through the same [intents] entry -
  * repeat-on-hold isn't a distinct layout concept, it's the gesture recognizer emitting the same
- * zone's intent multiple times (see [GestureRecognizer]). A zone with no entry does nothing.
+ * zone's intent multiple times (see [GestureRecognizer]). A directional zone with no entry
+ * falls back to [Zone.Center] (Thumb-Key's empty-swipe behavior) so a locked swipe never
+ * buzzes twice and then types nothing.
  *
  * [columnSpan] is how many grid columns this key occupies in its row (Enter is 2 on Suave so
  * the 4-key bottom row still fills the same width as the 5-key letter rows). The renderer

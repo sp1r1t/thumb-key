@@ -191,6 +191,31 @@ class KeyDispatcherTest {
     }
 
     @Test
+    fun `a swipe onto an empty diagonal still types the center letter rather than going silent`() {
+        val key =
+            KeyMapping(
+                GestureConfig(minSwipeDistancePx = 64f, directions = SwipeDirections.EIGHT_WAY),
+                mapOf(
+                    Zone.Center to KeyIntent.Text("n"),
+                    Zone.Directional(Direction.LEFT) to KeyIntent.Text("g"),
+                    Zone.Directional(Direction.UP) to KeyIntent.Text("b"),
+                    Zone.Directional(Direction.RIGHT) to KeyIntent.Text("k"),
+                    Zone.Directional(Direction.DOWN) to KeyIntent.Text("m"),
+                ),
+            )
+        val dispatcher = KeyDispatcher(key)
+        val executed = mutableListOf<SemanticAction>()
+        val feedback = mutableListOf<FeedbackEvent>()
+
+        dispatcher.handle(Gesture.Pressed, ModifierState(), executed::add, feedback::add)
+        dispatcher.handle(Gesture.SwipeLocked(Direction.UP_LEFT), ModifierState(), executed::add, feedback::add)
+        dispatcher.handle(Gesture.Tap(Zone.Directional(Direction.UP_LEFT)), ModifierState(), executed::add, feedback::add)
+
+        assertEquals(listOf(FeedbackEvent.TapRecognized, FeedbackEvent.SwipeLocked(Direction.UP_LEFT)), feedback)
+        assertEquals(listOf(SemanticAction.TypeText("n")), executed)
+    }
+
+    @Test
     fun `a plain tap (no swipe) buzzes exactly once, on press, not again on commit`() {
         val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Text("o")))
         val dispatcher = KeyDispatcher(key)

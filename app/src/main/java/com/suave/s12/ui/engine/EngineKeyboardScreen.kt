@@ -5,8 +5,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,15 +38,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -57,7 +54,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.MutableLiveData
 import com.suave.s12.IMEService
-import com.suave.s12.ImeNotice
 import com.suave.s12.MainActivity
 import com.suave.s12.db.AppSettings
 import com.suave.s12.db.ClipboardItem
@@ -148,7 +144,6 @@ import com.suave.s12.ui.components.keyboard.ClipboardHistoryScreen
 import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.isPasswordField
 import com.suave.s12.utils.toBool
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -303,6 +298,8 @@ fun EngineKeyboardScreen(
     val distinctLetterControlColors =
         (settings?.distinctLetterControlColors ?: DEFAULT_DISTINCT_LETTER_CONTROL_COLORS).toBool()
 
+    val imeNotice = rememberImeNoticeDraw(ime)
+    val imeNoticeMeasurer = rememberTextMeasurer()
     val hapticPlayer = remember(view) { HapticFeedbackPlayer(view) }
     val inputEpoch by ime.inputEpoch.collectAsState()
     val autofillStatus by ime.inlineAutofill.status.collectAsState()
@@ -532,7 +529,7 @@ fun EngineKeyboardScreen(
                         } else {
                             Modifier
                         },
-                    ),
+                    ).drawImeNotice(imeNotice, imeNoticeMeasurer),
         ) {
             if (backdropEnabled) {
                 Box(
@@ -569,7 +566,6 @@ fun EngineKeyboardScreen(
                     }
                 }
             }
-            ImeNoticeOverlay(ime = ime, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }
@@ -933,44 +929,4 @@ private fun EditorDebugBar(
             }
         }
     }
-}
-
-@Composable
-private fun ImeNoticeOverlay(
-    ime: IMEService,
-    modifier: Modifier = Modifier,
-) {
-    val notice by ime.notice.collectAsState()
-    var fading by remember { mutableStateOf<ImeNotice?>(null) }
-    val visible = notice != null
-    val alpha by animateFloatAsState(
-        targetValue = if (visible) 1f else 0f,
-        animationSpec = tween(durationMillis = 90),
-        label = "imeNotice",
-        finishedListener = { if (!visible) fading = null },
-    )
-    LaunchedEffect(notice) {
-        val current = notice ?: return@LaunchedEffect
-        fading = current
-        delay(1100)
-        ime.clearNotice(current.seq)
-    }
-    val text = (notice ?: fading)?.text ?: return
-    if (alpha == 0f && !visible) return
-    Text(
-        text = text,
-        modifier =
-            modifier
-                .padding(top = 8.dp)
-                .graphicsLayer { this.alpha = alpha }
-                .background(
-                    color = MaterialTheme.colorScheme.inverseSurface,
-                    shape = RoundedCornerShape(50),
-                ).padding(horizontal = 16.dp, vertical = 8.dp),
-        color = MaterialTheme.colorScheme.inverseOnSurface,
-        textAlign = TextAlign.Center,
-        fontSize = 14.sp,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-    )
 }

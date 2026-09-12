@@ -242,4 +242,24 @@ class GestureRecognizerTest {
 
         assertEquals("horizontal movement after a vertical lock does not emit horizontal steps", emptyList<Gesture>(), sideways)
     }
+
+    @Test
+    fun `eight-way classifies a slightly high left swipe as UP_LEFT`() {
+        val config = GestureConfig(minSwipeDistancePx = 20f, directions = SwipeDirections.EIGHT_WAY)
+        val recognizer = GestureRecognizer(config)
+        recognizer.process(down())
+        val locked = recognizer.process(move(x = -40f, y = -20f, t = START_MS + 50))
+
+        assertEquals(listOf(Gesture.SwipeLocked(Direction.UP_LEFT)), locked)
+    }
+
+    @Test
+    fun `four-way classifies the same slightly high left swipe as LEFT`() {
+        val config = GestureConfig(minSwipeDistancePx = 20f, directions = SwipeDirections.FOUR_WAY)
+        val recognizer = GestureRecognizer(config)
+        recognizer.process(down())
+        val locked = recognizer.process(move(x = -40f, y = -20f, t = START_MS + 50))
+
+        assertEquals(listOf(Gesture.SwipeLocked(Direction.LEFT)), locked)
+    }
 }
