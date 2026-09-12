@@ -92,6 +92,11 @@ class ThumbKeyClipboardManager(
                 }
             }
         if (inspected.hasImage) {
+            if (!clipboardRepository.clipboardImagesEnabled()) {
+                liveImageState.value = null
+                lastImageSourceKey = null
+                return
+            }
             wasLastCopyOperationDoneViaSystem = true
             val uriString = inspected.imageUri ?: return
             val mime = inspected.imageMime ?: return

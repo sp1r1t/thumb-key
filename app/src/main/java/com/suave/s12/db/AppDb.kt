@@ -99,6 +99,7 @@ const val MIN_CLIPBOARD_MAX_SIZE = 2
 const val MAX_CLIPBOARD_MAX_SIZE = 100
 const val DEFAULT_USE_PRIVATE_CLIPBOARD = 0
 const val DEFAULT_CAPTURE_SYSTEM_CLIPBOARD = 1
+const val DEFAULT_CLIPBOARD_IMAGES_ENABLED = 1
 const val DEFAULT_SHOW_ON_SCREEN_KEYBOARD = 0
 const val DEFAULT_SHOW_DEBUG_BAR = 1
 const val DEFAULT_INLINE_SUGGESTIONS = 1
@@ -333,6 +334,11 @@ data class AppSettings(
     )
     val captureSystemClipboard: Int = DEFAULT_CAPTURE_SYSTEM_CLIPBOARD,
     @ColumnInfo(
+        name = "clipboard_images_enabled",
+        defaultValue = DEFAULT_CLIPBOARD_IMAGES_ENABLED.toString(),
+    )
+    val clipboardImagesEnabled: Int = DEFAULT_CLIPBOARD_IMAGES_ENABLED,
+    @ColumnInfo(
         name = "show_on_screen_keyboard",
         defaultValue = DEFAULT_SHOW_ON_SCREEN_KEYBOARD.toString(),
     )
@@ -563,6 +569,8 @@ data class ClipboardSettingsUpdate(
     val usePrivateClipboard: Int,
     @ColumnInfo(name = "capture_system_clipboard")
     val captureSystemClipboard: Int,
+    @ColumnInfo(name = "clipboard_images_enabled")
+    val clipboardImagesEnabled: Int,
 )
 
 data class OtherSettingsUpdate(
@@ -670,7 +678,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 46,
+    version = 47,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -761,6 +769,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_43_44,
                             MIGRATION_44_45,
                             MIGRATION_45_46,
+                            MIGRATION_46_47,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

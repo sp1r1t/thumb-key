@@ -43,7 +43,9 @@ class ClipboardRepository(
         sourceKey: String?,
     ) {
         val settings = appSettingsDao.getSettingsSync()
-        if (settings?.clipboardHistoryEnabled?.toBool() != true) {
+        if (settings?.clipboardHistoryEnabled?.toBool() != true ||
+            settings.clipboardImagesEnabled.toBool() != true
+        ) {
             ClipboardImageStore.fileFor(appContext, fileName).delete()
             return
         }
@@ -129,6 +131,11 @@ class ClipboardRepository(
     fun shouldCaptureSystemClipboard(): Boolean {
         val settings = appSettingsDao.getSettingsSync() ?: return false
         return settings.clipboardHistoryEnabled.toBool() && settings.captureSystemClipboard.toBool()
+    }
+
+    fun clipboardImagesEnabled(): Boolean {
+        val settings = appSettingsDao.getSettingsSync() ?: return DEFAULT_CLIPBOARD_IMAGES_ENABLED.toBool()
+        return settings.clipboardImagesEnabled.toBool()
     }
 
     private suspend fun pruneImageFiles() {

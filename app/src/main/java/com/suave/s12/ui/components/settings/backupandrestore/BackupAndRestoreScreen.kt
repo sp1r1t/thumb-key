@@ -73,8 +73,9 @@ import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_CUT
 import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH
 import com.suave.s12.db.DEFAULT_THEME
 import com.suave.s12.db.DEFAULT_THEME_COLOR
-import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
 import com.suave.s12.db.DEFAULT_CAPTURE_SYSTEM_CLIPBOARD
+import com.suave.s12.db.DEFAULT_CLIPBOARD_IMAGES_ENABLED
+import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
@@ -266,6 +267,7 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             clipboardMaxSize = DEFAULT_CLIPBOARD_MAX_SIZE,
             usePrivateClipboard = DEFAULT_USE_PRIVATE_CLIPBOARD,
             captureSystemClipboard = DEFAULT_CAPTURE_SYSTEM_CLIPBOARD,
+            clipboardImagesEnabled = DEFAULT_CLIPBOARD_IMAGES_ENABLED,
             showOnScreenKeyboard = DEFAULT_SHOW_ON_SCREEN_KEYBOARD,
             showDebugBar = DEFAULT_SHOW_DEBUG_BAR,
             backdropEnabled = DEFAULT_BACKDROP_ENABLED,

@@ -95,13 +95,20 @@ fun ClipboardHistoryScreen(
     liveImage: LiveClipboardImage? = null,
     onLiveImageClick: () -> Unit = {},
     onLiveImagePaste: () -> Unit = {},
+    imagesEnabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val headerHeight = (keyHeight * 0.6f).dp
     val backdropColor = MaterialTheme.colorScheme.surfaceContainerLow
-    val currentClip = liveImage
+    val visibleItems =
+        if (imagesEnabled) {
+            clipboardItems
+        } else {
+            clipboardItems.filter { !it.isImage() }
+        }
+    val currentClip = liveImage.takeIf { imagesEnabled }
     val showLive =
-        currentClip != null && clipboardItems.none { it.sourceKey == currentClip.sourceKey }
+        currentClip != null && visibleItems.none { it.sourceKey == currentClip.sourceKey }
 
     Column(
         modifier =
@@ -118,7 +125,7 @@ fun ClipboardHistoryScreen(
             cornerRadius = cornerRadius,
         )
 
-        val historyEmpty = clipboardItems.isEmpty()
+        val historyEmpty = visibleItems.isEmpty()
         if (!isEnabled && !showLive) {
             ClipboardDisabledView(
                 onGoToClipboardSettings = onGoToClipboardSettings,
@@ -139,8 +146,8 @@ fun ClipboardHistoryScreen(
                 )
             }
         } else {
-            val pinnedItems = clipboardItems.filter { it.isPinned }
-            val unpinnedItems = clipboardItems.filter { !it.isPinned }
+            val pinnedItems = visibleItems.filter { it.isPinned }
+            val unpinnedItems = visibleItems.filter { !it.isPinned }
 
             LazyColumn(
                 modifier =

@@ -46,6 +46,7 @@ import com.suave.s12.db.DEFAULT_AUTO_SIZE_KEYS
 import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_CIRCULAR_DRAG_ENABLED
 import com.suave.s12.db.DEFAULT_CLIPBOARD_HISTORY_ENABLED
+import com.suave.s12.db.DEFAULT_CLIPBOARD_IMAGES_ENABLED
 import com.suave.s12.db.DEFAULT_CLOCKWISE_DRAG_ACTION
 import com.suave.s12.db.DEFAULT_COUNTERCLOCKWISE_DRAG_ACTION
 import com.suave.s12.db.DEFAULT_DRAG_RETURN_ENABLED
@@ -640,6 +641,8 @@ fun KeyboardScreen(
         val scope = CoroutineScope(Dispatchers.IO)
         val clipboardHistoryEnabled =
             (settings?.clipboardHistoryEnabled ?: DEFAULT_CLIPBOARD_HISTORY_ENABLED).toBool()
+        val clipboardImagesEnabled =
+            (settings?.clipboardImagesEnabled ?: DEFAULT_CLIPBOARD_IMAGES_ENABLED).toBool()
 
         // Calculate keyboard height based on number of rows
         val rowCount = keyboardDefinition.modes.main.arr.size
@@ -725,6 +728,7 @@ fun KeyboardScreen(
                     keyPadding = keyPadding,
                     cornerRadius = cornerRadius,
                     vibrateOnTap = vibrateOnTap,
+                    imagesEnabled = clipboardImagesEnabled,
                 )
             }
         }

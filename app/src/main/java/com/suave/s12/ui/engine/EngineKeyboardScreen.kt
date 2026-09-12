@@ -57,6 +57,7 @@ import com.suave.s12.db.DEFAULT_ANIMATION_PRESS_HIGHLIGHT
 import com.suave.s12.db.DEFAULT_ANIMATION_RELEASE_FLASH
 import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_CLIPBOARD_HISTORY_ENABLED
+import com.suave.s12.db.DEFAULT_CLIPBOARD_IMAGES_ENABLED
 import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_DISTINCT_LETTER_CONTROL_COLORS
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
@@ -317,11 +318,14 @@ fun EngineKeyboardScreen(
 
     val clipboardHistoryEnabled =
         (settings?.clipboardHistoryEnabled ?: DEFAULT_CLIPBOARD_HISTORY_ENABLED).toBool()
+    val clipboardImagesEnabled =
+        (settings?.clipboardImagesEnabled ?: DEFAULT_CLIPBOARD_IMAGES_ENABLED).toBool()
     val clipboardSession =
         ClipboardLayerSession(
             items = clipboardItems,
             enabled = clipboardHistoryEnabled && clipboardRepository != null,
             liveImage = liveClipboardImage,
+            imagesEnabled = clipboardImagesEnabled,
             onPasteAndLeave = { item ->
                 if (ClipboardPaste.pasteHistoryItem(ime, item)) {
                     layerSessionState.value = layerSessionState.value.leaveOverlay()
@@ -581,6 +585,7 @@ private data class ClipboardLayerSession(
     val items: List<ClipboardItem>,
     val enabled: Boolean,
     val liveImage: LiveClipboardImage?,
+    val imagesEnabled: Boolean,
     val onPasteAndLeave: (ClipboardItem) -> Unit,
     val onPasteAndStay: (ClipboardItem) -> Unit,
     val onPasteLiveAndLeave: () -> Unit,
@@ -730,6 +735,7 @@ private fun LayerContentSlot(
                 liveImage = clipboardSession.liveImage,
                 onLiveImageClick = clipboardSession.onPasteLiveAndLeave,
                 onLiveImagePaste = clipboardSession.onPasteLiveAndStay,
+                imagesEnabled = clipboardSession.imagesEnabled,
                 modifier = Modifier.fillMaxWidth().height(height),
             )
         }

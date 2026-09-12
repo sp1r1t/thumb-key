@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.DataArray
 import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.DiscFull
 import androidx.compose.material.icons.outlined.HourglassTop
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,6 +43,7 @@ import com.suave.s12.db.DEFAULT_CLIPBOARD_HISTORY_ENABLED
 import com.suave.s12.db.DEFAULT_CLIPBOARD_MAX_SIZE
 import com.suave.s12.db.DEFAULT_CLIPBOARD_SIZE_LIMIT_ENABLED
 import com.suave.s12.db.DEFAULT_CAPTURE_SYSTEM_CLIPBOARD
+import com.suave.s12.db.DEFAULT_CLIPBOARD_IMAGES_ENABLED
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
 import com.suave.s12.db.DEFAULT_VIBRATE_HOLD_REPEAT_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
@@ -110,6 +112,8 @@ fun ClipboardSettingsScreen(
         (settings?.usePrivateClipboard ?: DEFAULT_USE_PRIVATE_CLIPBOARD).toBool()
     var captureSystemClipboardState =
         (settings?.captureSystemClipboard ?: DEFAULT_CAPTURE_SYSTEM_CLIPBOARD).toBool()
+    var clipboardImagesEnabledState =
+        (settings?.clipboardImagesEnabled ?: DEFAULT_CLIPBOARD_IMAGES_ENABLED).toBool()
     val vibrateOnHoldRepeat = (settings?.vibrateOnHoldRepeat ?: DEFAULT_VIBRATE_ON_HOLD_REPEAT).toBool()
     val vibrateHoldRepeatType =
         hapticTypeFromDb(settings?.vibrateHoldRepeatType ?: DEFAULT_VIBRATE_HOLD_REPEAT_TYPE)
@@ -128,6 +132,7 @@ fun ClipboardSettingsScreen(
                 clipboardMaxSize = clipboardMaxSizeState,
                 usePrivateClipboard = usePrivateClipboardState.toInt(),
                 captureSystemClipboard = captureSystemClipboardState.toInt(),
+                clipboardImagesEnabled = clipboardImagesEnabledState.toInt(),
             ),
         )
         // Enforce size limit after updating settings
@@ -211,6 +216,36 @@ fun ClipboardSettingsScreen(
                         icon = {
                             Icon(
                                 imageVector = Icons.Outlined.Devices,
+                                contentDescription = null,
+                            )
+                        },
+                    )
+                    SwitchPreference(
+                        value = clipboardImagesEnabledState,
+                        onValueChange = {
+                            clipboardImagesEnabledState = it
+                            updateClipboardSettings()
+                        },
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.clipboard_images_enabled),
+                                infoText = stringResource(R.string.clipboard_images_enabled_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                stringResource(
+                                    if (clipboardImagesEnabledState) {
+                                        R.string.clipboard_images_enabled_on
+                                    } else {
+                                        R.string.clipboard_images_enabled_off
+                                    },
+                                ),
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Image,
                                 contentDescription = null,
                             )
                         },

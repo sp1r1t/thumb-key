@@ -666,3 +666,12 @@ val MIGRATION_45_46 =
             )
         }
     }
+
+val MIGRATION_46_47 =
+    object : Migration(46, 47) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN clipboard_images_enabled INTEGER NOT NULL DEFAULT $DEFAULT_CLIPBOARD_IMAGES_ENABLED",
+            )
+        }
+    }
