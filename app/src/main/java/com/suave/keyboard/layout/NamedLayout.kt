@@ -52,6 +52,8 @@ data class NamedLayout(
     val capsLockMappings: Map<String, String> = emptyMap(),
     val layerHeights: Map<LayoutLayer, Int> = emptyMap(),
     val layerContent: Map<LayoutLayer, LayerContent> = emptyMap(),
+    /** Optional spacebar multitap replacements after the first plain space; null uses engine default. */
+    val spaceMultitapCycle: List<String>? = null,
 ) {
     fun gridFor(layer: LayoutLayer): Layout =
         when (layer) {
@@ -78,12 +80,16 @@ data class NamedLayout(
     /**
      * Total keyboard height in key-height units. [overrideRows] of 0 or less means "use this
      * layout's default". Never shorter than the key grid, so keys are not clipped.
+     *
+     * The numeric layer always matches its key grid: there is no content panel above those
+     * keys, so a taller height would only add empty space.
      */
     fun heightRows(
         layer: LayoutLayer,
         overrideRows: Int = 0,
     ): Int {
         val gridRows = gridRowCount(layer)
+        if (layer == LayoutLayer.NUMERIC) return gridRows
         val requested = overrideRows.takeIf { it > 0 } ?: layerHeights[layer]
         return max(gridRows, requested ?: gridRows)
     }
@@ -98,7 +104,7 @@ object BuiltinLayouts {
     val S12 =
         NamedLayout(
             id = "s12",
-            title = "S12",
+            title = "Suave Layout",
             layout = S12_LAYOUT,
             numericLayout = S12_NUMERIC_LAYOUT,
             emojiBottomRow = S12_EMOJI_BOTTOM_ROW,

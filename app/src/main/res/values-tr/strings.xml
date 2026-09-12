@@ -91,7 +91,4 @@
     <string name="srcery">Srcery</string>
     <string name="dual">Çift</string>
     <string name="slide_cursor_acceleration_threshold_acceleration">Eşik hızlanma</string>
-    <string name="modify_keys">Tuşları değiştir</string>
-    <string name="key_modification_placeholder">YAML\'ı girin</string>
-    <string name="how_to_modify_keys">Tuşları nasıl değiştirilir</string>
 </resources>

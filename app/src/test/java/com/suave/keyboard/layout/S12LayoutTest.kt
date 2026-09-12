@@ -170,6 +170,12 @@ class S12LayoutTest {
         assertFalse(BuiltinLayouts.canSwitch(null))
         assertFalse(BuiltinLayouts.canSwitch("0"))
         assertFalse(BuiltinLayouts.canSwitch("0,0"))
+        assertEquals(BuiltinLayouts.S12, LayoutRegistry.byId("s12"))
+        assertEquals(listOf(BuiltinLayouts.S12), LayoutRegistry.enabledFromDb("s12"))
+        assertEquals(listOf(BuiltinLayouts.S12), LayoutRegistry.enabledFromDb(null))
+        assertFalse(LayoutRegistry.canSwitch(null))
+        assertFalse(LayoutRegistry.canSwitch("s12"))
+        assertFalse(LayoutRegistry.canSwitch("s12,s12"))
     }
 
     @Test

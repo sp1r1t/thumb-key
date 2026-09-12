@@ -14,17 +14,23 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -39,19 +45,26 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.suave.keyboard.R
+import dev.jeziellago.compose.markdowntext.MarkdownText
 
 /**
  * A labeled, collapsible group of preference rows, folded by default. Use this instead
  * of a plain divider when a screen has more than one cluster of related settings.
+ *
+ * Optional [infoText] puts a compact "i" in the section title (same pattern as
+ * [SettingTitle]) for arranging/editing help that would crowd the section body.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsSection(
     title: String,
     modifier: Modifier = Modifier,
     initiallyExpanded: Boolean = false,
+    infoText: String? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }
+    var showInfo by remember { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
@@ -71,6 +84,18 @@ fun SettingsSection(
                         .weight(1f)
                         .semantics { heading() },
             )
+            if (infoText != null) {
+                Icon(
+                    imageVector = Icons.Outlined.Info,
+                    contentDescription = stringResource(R.string.more_info),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier =
+                        Modifier
+                            .padding(end = 8.dp)
+                            .requiredSize(18.dp)
+                            .clickable(role = Role.Button) { showInfo = true },
+                )
+            }
             Icon(
                 imageVector = if (expanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
                 contentDescription =
@@ -82,6 +107,27 @@ fun SettingsSection(
         }
         AnimatedVisibility(visible = expanded) {
             Column(content = content)
+        }
+    }
+
+    if (infoText != null && showInfo) {
+        ModalBottomSheet(
+            sheetState = rememberModalBottomSheetState(),
+            onDismissRequest = { showInfo = false },
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(bottom = 24.dp),
+            ) {
+                MarkdownText(
+                    markdown = infoText,
+                    linkColor = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
 }

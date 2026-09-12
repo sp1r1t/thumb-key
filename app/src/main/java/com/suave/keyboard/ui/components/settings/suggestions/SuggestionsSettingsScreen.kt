@@ -132,43 +132,41 @@ fun SuggestionsSettingsScreen(
                             )
                         }
                         if (inlineSuggestionsState) {
-                            SettingRow(
+                            IntStepperPreference(
+                                value = inlineSuggestionHeightState,
+                                onValueChange = {
+                                    inlineSuggestionHeightState = it
+                                    updateSuggestions()
+                                },
+                                valueRange =
+                                    MIN_INLINE_SUGGESTION_HEIGHT..MAX_INLINE_SUGGESTION_HEIGHT,
+                                vibrateOnRepeat = vibrateOnHoldRepeat,
+                                repeatHapticType = vibrateHoldRepeatType,
+                                title = {
+                                    SettingTitle(
+                                        text = stringResource(R.string.inline_suggestion_height),
+                                    )
+                                },
+                                summary = {
+                                    Text(
+                                        stringResource(
+                                            R.string.inline_suggestion_height_summary,
+                                            inlineSuggestionHeightState,
+                                        ),
+                                    )
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Height,
+                                        contentDescription = null,
+                                    )
+                                },
                                 onReset = {
                                     inlineSuggestionHeightState = DEFAULT_INLINE_SUGGESTION_HEIGHT
                                     updateSuggestions()
                                 },
-                            ) {
-                                IntStepperPreference(
-                                    value = inlineSuggestionHeightState,
-                                    onValueChange = {
-                                        inlineSuggestionHeightState = it
-                                        updateSuggestions()
-                                    },
-                                    valueRange =
-                                        MIN_INLINE_SUGGESTION_HEIGHT..MAX_INLINE_SUGGESTION_HEIGHT,
-                                    vibrateOnRepeat = vibrateOnHoldRepeat,
-                                    repeatHapticType = vibrateHoldRepeatType,
-                                    title = {
-                                        SettingTitle(
-                                            text = stringResource(R.string.inline_suggestion_height),
-                                        )
-                                    },
-                                    summary = {
-                                        Text(
-                                            stringResource(
-                                                R.string.inline_suggestion_height_summary,
-                                                inlineSuggestionHeightState,
-                                            ),
-                                        )
-                                    },
-                                    icon = {
-                                        Icon(
-                                            imageVector = Icons.Outlined.Height,
-                                            contentDescription = null,
-                                        )
-                                    },
-                                )
-                            }
+                                resetTo = DEFAULT_INLINE_SUGGESTION_HEIGHT,
+                            )
                         }
                     }
                 }

@@ -12,9 +12,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,7 +31,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.suave.keyboard.db.DEFAULT_ANIMATION_HELPER_SPEED
 import com.suave.keyboard.db.DEFAULT_ANIMATION_SPEED
@@ -100,6 +97,7 @@ fun EngineKeyboardKey(
     distinctLetterControlColors: Boolean = true,
     spacebarMultitap: SpacebarMultitapTracker? = null,
     spacebarMultitapEnabled: Boolean = false,
+    spaceMultitapCycle: List<String>? = null,
     modifier: Modifier = Modifier,
 ) {
     val dispatcher =
@@ -120,6 +118,7 @@ fun EngineKeyboardKey(
     val currentIsPasswordField by rememberUpdatedState(isPasswordField)
     val currentSpacebarMultitap by rememberUpdatedState(spacebarMultitap)
     val currentSpacebarMultitapEnabled by rememberUpdatedState(spacebarMultitapEnabled)
+    val currentSpaceMultitapCycle by rememberUpdatedState(spaceMultitapCycle)
     // MutableState (not `by`) so press/release visuals are read only in draw / a child. Writing
     // them from the pointer loop used to recompose this key mid-gesture: the highlight swapped
     // Modifier.background, legends relaid out, and a slightly slow Shift+letter crossed the
@@ -230,6 +229,7 @@ fun EngineKeyboardKey(
                                                 action = action,
                                                 tracker = currentSpacebarMultitap,
                                                 enabled = currentSpacebarMultitapEnabled,
+                                                cycle = currentSpaceMultitapCycle,
                                             )
                                         executed = resolved
                                         if (currentAnimations.playsRelease &&
@@ -247,15 +247,20 @@ fun EngineKeyboardKey(
                             // was already on (e.g. multitap ". " then "? "). Prefer autocap's
                             // ONE_SHOT decision; otherwise trust the dispatcher (including when
                             // autocap clears ONE_SHOT after a comma).
+                            // Only reconcile after an executed action: a pure Shift tap never
+                            // runs onExecute, and reading the still-stale shared ONE_SHOT would
+                            // undo the user's intentional toggle-off of auto-caps.
                             var next = newState
-                            when (modifierState.value.active[ModifierId.SHIFT]?.mode) {
-                                ActivationMode.ONE_SHOT ->
-                                    next = next.activate(ModifierId.SHIFT, ActivationMode.ONE_SHOT)
-                                null ->
-                                    if (next.active[ModifierId.SHIFT]?.mode == ActivationMode.ONE_SHOT) {
-                                        next = next.deactivate(ModifierId.SHIFT)
-                                    }
-                                else -> Unit
+                            if (executed != null) {
+                                when (modifierState.value.active[ModifierId.SHIFT]?.mode) {
+                                    ActivationMode.ONE_SHOT ->
+                                        next = next.activate(ModifierId.SHIFT, ActivationMode.ONE_SHOT)
+                                    null ->
+                                        if (next.active[ModifierId.SHIFT]?.mode == ActivationMode.ONE_SHOT) {
+                                            next = next.deactivate(ModifierId.SHIFT)
+                                        }
+                                    else -> Unit
+                                }
                             }
                             localState = next
                             if (next != before || executed != null) {
@@ -328,13 +333,15 @@ fun EngineKeyboardKey(
                     .padding(2.dp),
         ) {
             for ((direction, alignment) in DIRECTIONAL_ALIGNMENTS) {
+                val zone = Zone.Directional(direction)
                 val legend =
                     keyLegend(
-                        mapping.intents[Zone.Directional(direction)],
+                        mapping.intents[zone],
                         legendVisibility,
                         legendModifierState,
                         shiftMappings,
                         capsLockMappings,
+                        displayLabel = mapping.displayLabels[zone],
                     )
                 if (legend != null) {
                     KeyLegendMark(
@@ -353,6 +360,7 @@ fun EngineKeyboardKey(
                     legendModifierState,
                     shiftMappings,
                     capsLockMappings,
+                    displayLabel = mapping.displayLabels[Zone.Center],
                 )
             if (centerLegend != null) {
                 val isUpperCase =
@@ -436,36 +444,6 @@ private fun KeyReleaseEffects(
     }
 }
 
-@Composable
-private fun KeyLegendMark(
-    legend: KeyLegend,
-    fontSize: TextUnit,
-    iconSize: Dp,
-    color: Color,
-    modifier: Modifier,
-) {
-    when (legend) {
-        is KeyLegend.Text -> {
-            Text(
-                legend.text,
-                modifier = modifier,
-                fontSize = fontSize,
-                fontWeight = FontWeight.Bold,
-                lineHeight = fontSize,
-                color = color,
-            )
-        }
-        is KeyLegend.Icon -> {
-            Icon(
-                imageVector = legend.icon,
-                contentDescription = legend.icon.name,
-                tint = color,
-                modifier = modifier.size(iconSize),
-            )
-        }
-    }
-}
-
 private val DIRECTIONAL_ALIGNMENTS =
     listOf(
         Direction.UP_LEFT to Alignment.TopStart,
@@ -487,6 +465,7 @@ private fun resolveSpacebarMultitap(
     action: SemanticAction,
     tracker: SpacebarMultitapTracker?,
     enabled: Boolean,
+    cycle: List<String>? = null,
 ): SemanticAction {
     if (tracker == null) return action
     when (gesture) {
@@ -496,7 +475,7 @@ private fun resolveSpacebarMultitap(
         }
         is Gesture.Tap -> {
             if (action.isPlainSpaceTap()) {
-                return tracker.onSpaceTap(enabled)
+                return tracker.onSpaceTap(enabled, cycle)
             }
             tracker.noteOtherAction(action)
             return action

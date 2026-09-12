@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -38,6 +39,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -48,6 +50,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.MutableLiveData
 import com.suave.keyboard.IMEService
 import com.suave.keyboard.MainActivity
+import com.suave.keyboard.R
+import com.suave.keyboard.SettingsSession
 import com.suave.keyboard.db.AppSettings
 import com.suave.keyboard.db.ClipboardItem
 import com.suave.keyboard.db.ClipboardRepository
@@ -123,11 +127,12 @@ import com.suave.keyboard.engine.output.ClipboardPaste
 import com.suave.keyboard.engine.output.LiveClipboardImage
 import com.suave.keyboard.engine.output.OutputExecutor
 import com.suave.keyboard.ime.formatAutofillDebug
-import com.suave.keyboard.layout.BuiltinLayouts
 import com.suave.keyboard.layout.DEFAULT_LAYER_HEIGHTS
 import com.suave.keyboard.layout.LayerContent
 import com.suave.keyboard.layout.LayerSession
 import com.suave.keyboard.layout.LayoutLayer
+import com.suave.keyboard.layout.LayoutPreviewSession
+import com.suave.keyboard.layout.LayoutRegistry
 import com.suave.keyboard.layout.NamedLayout
 import com.suave.keyboard.layout.canCycleKeyboardPosition
 import com.suave.keyboard.layout.coerceDisplayedPosition
@@ -157,7 +162,7 @@ import java.util.Locale
  * second copy of the grid, so Ctrl held on the left half still applies on the right.
  *
  * The grid is derived from the layout data ([layoutRows]), not a hardcoded 4x5. Suave is one
- * [BuiltinLayouts] entry; switching [AppSettings.keyboardLayout] selects another.
+ * [LayoutRegistry] entry; switching [AppSettings.keyboardLayout] selects another.
  * [AppSettings.position] Dual draws two full copies that share modifier and layer state. Split
  * keeps one content slot and cuts the key grid in half, duplicating the middle column when the
  * count is odd. Left, Right, and Center are all full width until the layout has a real (narrower)
@@ -185,8 +190,13 @@ fun EngineKeyboardScreen(
         (clipboardRepository?.allClipboardItems ?: emptyClipboardItems).observeAsState(emptyList())
     val liveClipboardImage by ime.clipboardLiveImage().collectAsState()
 
-    val canSwitchLayout = BuiltinLayouts.canSwitch(settings?.keyboardLayouts)
-    val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
+    val canSwitchLayout = LayoutRegistry.canSwitch(ctx, settings?.keyboardLayouts)
+    val previewLayout by LayoutPreviewSession.layout.collectAsState()
+    val useEditedLayout by LayoutPreviewSession.useEdited.collectAsState()
+    val settingsOpen by SettingsSession.open.collectAsState()
+    val selectedLayout =
+        LayoutRegistry.byId(ctx, settings?.keyboardLayout ?: LayoutRegistry.DEFAULT_ID)
+    val namedLayout = LayoutPreviewSession.resolve(selectedLayout)
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp
     val screenHeightDp = configuration.screenHeightDp
@@ -483,6 +493,14 @@ fun EngineKeyboardScreen(
         }
 
     Column(modifier = Modifier.fillMaxWidth()) {
+        if (settingsOpen) {
+            SettingsGarageBar(
+                showingTitle = namedLayout.title,
+                canToggle = previewLayout != null,
+                useEdited = useEditedLayout,
+                onUseEditedChange = { LayoutPreviewSession.setUseEdited(it) },
+            )
+        }
         if (showDebugBar) {
             // Install timestamp comes from PackageManager at runtime (Gradle config-time
             // Date() went stale whenever the configuration cache reused a previous run).
@@ -930,6 +948,7 @@ private fun RowScope.LayoutRowKeys(
                 distinctLetterControlColors = distinctLetterControlColors,
                 spacebarMultitap = spacebarMultitap,
                 spacebarMultitapEnabled = spacebarMultitapEnabled,
+                spaceMultitapCycle = namedLayout.spaceMultitapCycle,
                 modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
             )
         }
@@ -944,6 +963,61 @@ private fun shouldApplyAutoCapitalizeAfter(action: SemanticAction): Boolean =
         is SemanticAction.TypeCommand -> action.id == CommandId.SPACE
         else -> false
     }
+
+@Composable
+private fun SettingsGarageBar(
+    showingTitle: String,
+    canToggle: Boolean,
+    useEdited: Boolean,
+    onUseEditedChange: (Boolean) -> Unit,
+) {
+    val container = MaterialTheme.colorScheme.secondaryContainer
+    val onContainer = MaterialTheme.colorScheme.onSecondaryContainer
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(container)
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(
+            text = showingTitle,
+            color = onContainer,
+            style = MaterialTheme.typography.titleSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        if (canToggle) {
+            Text(
+                text =
+                    stringResource(
+                        if (useEdited) {
+                            R.string.settings_keyboard_bar_edited
+                        } else {
+                            R.string.settings_keyboard_bar_active
+                        },
+                    ),
+                color = onContainer.copy(alpha = 0.85f),
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+            )
+            Switch(
+                checked = useEdited,
+                onCheckedChange = onUseEditedChange,
+            )
+        } else {
+            Text(
+                text = stringResource(R.string.settings_keyboard_bar_badge),
+                color = onContainer.copy(alpha = 0.85f),
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+            )
+        }
+    }
+}
 
 @Composable
 private fun EditorDebugBar(

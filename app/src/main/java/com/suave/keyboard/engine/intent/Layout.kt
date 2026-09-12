@@ -18,6 +18,18 @@ data class KeyPosition(
  */
 enum class SlideBehavior { MOVE_CURSOR, SELECT_AND_DELETE }
 
+/** How a key's resting fill is chosen when letter/control colors are split. */
+enum class KeyFillRole {
+    /** Infer from the center intent (blank / command / modifier => control). */
+    AUTO,
+
+    /** Force letter (surface) fill. */
+    LETTER,
+
+    /** Force control (surfaceVariant) fill. */
+    CONTROL,
+}
+
 /**
  * One physical key: its gesture shape, and what each zone means. [Gesture.Tap], [Gesture.Hold]
  * and [Gesture.HoldRepeat] for the same [Zone] all resolve through the same [intents] entry -
@@ -29,12 +41,18 @@ enum class SlideBehavior { MOVE_CURSOR, SELECT_AND_DELETE }
  * [columnSpan] is how many grid columns this key occupies in its row (Enter is 2 on Suave so
  * the 4-key bottom row still fills the same width as the 5-key letter rows). The renderer
  * weights keys by this value; it is layout data, not a special-case in the screen.
+ *
+ * [fillRole] is optional look metadata from layout JSON; [displayLabels] maps a zone to a
+ * legend string that differs from the commit text (e.g. combining marks).
  */
 data class KeyMapping(
     val gestureConfig: GestureConfig,
     val intents: Map<Zone, KeyIntent>,
     val slideBehavior: SlideBehavior? = null,
     val columnSpan: Int = 1,
+    val fillRole: KeyFillRole = KeyFillRole.AUTO,
+    val displayLabels: Map<Zone, String> = emptyMap(),
+    val repeatOverrides: Map<Zone, Boolean> = emptyMap(),
 ) {
     init {
         require(columnSpan >= 1) { "columnSpan must be at least 1, got $columnSpan" }

@@ -91,7 +91,4 @@
     <string name="database_restored">Gendannede database.</string>
     <string name="database_backed_up">Sikkerhedskopierede database.</string>
     <string name="backup_and_restore">Sikkerhedskopiering og gendannelse</string>
-    <string name="modify_keys">Tilpas taster</string>
-    <string name="key_modification_placeholder">Indsæt YAML</string>
-    <string name="how_to_modify_keys">Sådan tilpasses taster</string>
 </resources>

@@ -7,6 +7,7 @@ import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.InstallMobile
+import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.TouchApp
@@ -85,6 +86,16 @@ fun SettingsScreen(
                             )
                         },
                         onClick = { navController.navigate("behavior") },
+                    )
+                    Preference(
+                        title = { Text(stringResource(R.string.layouts)) },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Keyboard,
+                                contentDescription = null,
+                            )
+                        },
+                        onClick = { navController.navigate("layouts") },
                     )
                     Preference(
                         title = { Text(stringResource(R.string.settings_section_suggestions)) },

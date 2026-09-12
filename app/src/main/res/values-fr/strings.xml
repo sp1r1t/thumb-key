@@ -90,12 +90,9 @@
     <string name="database_restored">La base de données a été restaurée.</string>
     <string name="database_backed_up">La base de données a été sauvegardée.</string>
     <string name="backup_and_restore">Sauvegarde et restauration</string>
-    <string name="modify_keys">Modifications des touches</string>
     <string name="dual">Double</string>
     <string name="auto_size_keys">Étendre pour remplir la largeur de l\'écran</string>
-    <string name="how_to_modify_keys">Comment modifier les touches</string>
     <string name="ignore_bottom_padding">Ignorer l\'espacement inférieur</string>
-    <string name="key_modification_placeholder">Insérer du YAML</string>
     <string name="warning_invalid_mode">Le mode \"%s\" n\'est pas défini pour la disposition \"%s\".</string>
     <string name="clipboard_history">Historique du presse-papier</string>
     <string name="clipboard_history_enabled">Activer l\'historique du presse-papier</string>

@@ -85,9 +85,6 @@
     <string name="ghost_keys_enable">Скрытые клавиши</string>
     <string name="dual">Диада</string>
     <string name="ghost_keys_description">Ввод скрытых символов, не переключаясь на раскладку с цифрами</string>
-    <string name="modify_keys">Модификация клавиш</string>
-    <string name="key_modification_placeholder">Введите или вставьте текст в формате YAML</string>
-    <string name="how_to_modify_keys">Как модифицировать клавиши</string>
     <string name="backup_database">Создать резервную копию</string>
     <string name="restore_database">Восстановить из резервной копии</string>
     <string name="database_restored">Восстановление завершено.</string>

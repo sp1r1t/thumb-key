@@ -40,6 +40,7 @@ fun SettingsCard(
 
 /**
  * Title, live summary, named chips, and optional extra rows on a [SettingsCard].
+ * Reset sits in the header trailing cluster (right-aligned secondary action).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -53,30 +54,33 @@ fun ChipSelectCard(
     chips: @Composable () -> Unit,
 ) {
     SettingsCard {
-        SettingRow(onReset = onReset) {
-            Row(
-                modifier =
-                    Modifier.padding(
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(
                         start = 16.dp,
                         top = 12.dp,
                         bottom = 8.dp,
                         end = 4.dp,
                     ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    modifier = Modifier.padding(end = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.padding(end = 16.dp),
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                SettingTitle(text = title, infoText = infoText)
+                Text(
+                    text = summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Column(modifier = Modifier.weight(1f)) {
-                    SettingTitle(text = title, infoText = infoText)
-                    Text(
-                        text = summary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
+            }
+            PreferenceControlCluster {
+                PreferenceResetButton(onClick = onReset)
             }
         }
         FlowRow(

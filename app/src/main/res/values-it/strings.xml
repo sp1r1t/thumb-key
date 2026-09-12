@@ -83,9 +83,6 @@
     <string name="database_restored">Database ripristinato.</string>
     <string name="database_backed_up">Database salvato.</string>
     <string name="backup_and_restore">Backup e ripristino</string>
-    <string name="modify_keys">Modifica tasti</string>
-    <string name="key_modification_placeholder">Inserisci YAML</string>
-    <string name="how_to_modify_keys">Come modificare i tasti</string>
     <string name="duration_1_day">1 giorno</string>
     <string name="duration_2_days">2 giorni</string>
     <string name="duration_4_days">4 giorni</string>

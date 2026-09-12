@@ -301,7 +301,7 @@ fun ClipboardSettingsScreen(
                         SettingRow(
                             onReset = {
                                 clipboardCleanupDuration =
-                                    CleanupDuration.fromMinutes(DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES)
+                                CleanupDuration.fromMinutes(DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES)
                                 updateClipboardSettings()
                             },
                         ) {
@@ -367,36 +367,34 @@ fun ClipboardSettingsScreen(
                             },
                         )
                     }
-                    SettingRow(
+                    IntStepperPreference(
+                        value = clipboardMaxSizeState,
+                        onValueChange = {
+                            clipboardMaxSizeState = it
+                            updateClipboardSettings()
+                        },
+                        valueRange = MIN_CLIPBOARD_MAX_SIZE..MAX_CLIPBOARD_MAX_SIZE,
+                        vibrateOnRepeat = vibrateOnHoldRepeat,
+                        repeatHapticType = vibrateHoldRepeatType,
+                        enabled = clipboardHistoryEnabledState && clipboardSizeLimitEnabledState,
+                        title = {
+                            Text(stringResource(R.string.clipboard_max_size))
+                        },
+                        summary = {
+                            Text(stringResource(R.string.clipboard_max_size_summary, clipboardMaxSizeState))
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.DataArray,
+                                contentDescription = null,
+                            )
+                        },
                         onReset = {
                             clipboardMaxSizeState = DEFAULT_CLIPBOARD_MAX_SIZE
                             updateClipboardSettings()
                         },
-                    ) {
-                        IntStepperPreference(
-                            value = clipboardMaxSizeState,
-                            onValueChange = {
-                                clipboardMaxSizeState = it
-                                updateClipboardSettings()
-                            },
-                            valueRange = MIN_CLIPBOARD_MAX_SIZE..MAX_CLIPBOARD_MAX_SIZE,
-                            vibrateOnRepeat = vibrateOnHoldRepeat,
-                            repeatHapticType = vibrateHoldRepeatType,
-                            enabled = clipboardHistoryEnabledState && clipboardSizeLimitEnabledState,
-                            title = {
-                                Text(stringResource(R.string.clipboard_max_size))
-                            },
-                            summary = {
-                                Text(stringResource(R.string.clipboard_max_size_summary, clipboardMaxSizeState))
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.DataArray,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
+                        resetTo = DEFAULT_CLIPBOARD_MAX_SIZE,
+                    )
                     }
                 }
             }

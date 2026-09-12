@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.lifecycleScope
 import com.suave.keyboard.db.AppSettingsRepository
 import com.suave.keyboard.db.isCredentialStorageUnlocked
-import com.suave.keyboard.layout.BuiltinLayouts
+import com.suave.keyboard.layout.LayoutRegistry
 import com.suave.keyboard.ui.engine.EngineKeyboardScreen
 import com.suave.keyboard.ui.engine.toggleHideLabels
 import com.suave.keyboard.ui.theme.SuaveTheme
@@ -47,13 +47,12 @@ class ComposeKeyboardView(
                         ctx.lifecycleScope.launch {
                             val state = settingsState.value
                             state?.let { s ->
-                                val layouts = BuiltinLayouts.enabledFromDb(s.keyboardLayouts)
+                                val layouts = LayoutRegistry.enabledFromDb(ctx, s.keyboardLayouts)
                                 if (layouts.size < 2) return@let
-                                val current = BuiltinLayouts.byIndex(s.keyboardLayout)
+                                val current = LayoutRegistry.byId(ctx, s.keyboardLayout)
                                 val index = layouts.indexOfFirst { it.id == current.id }.let { if (it < 0) 0 else it }
                                 val next = layouts[(index + 1).mod(layouts.size)]
-                                val nextIndex = BuiltinLayouts.ALL.indexOfFirst { it.id == next.id }.coerceAtLeast(0)
-                                val s2 = s.copy(keyboardLayout = nextIndex)
+                                val s2 = s.copy(keyboardLayout = next.id)
                                 settingsRepo.update(s2)
                                 if (s.showToastOnLayoutSwitch.toBool()) {
                                     ctx.showNotice(next.title)

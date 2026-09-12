@@ -88,9 +88,6 @@
     <string name="database_restored">Configuracion restaurada.</string>
     <string name="database_backed_up">Configuracion guardada.</string>
     <string name="backup_and_restore">Guardar y restablecer</string>
-    <string name="modify_keys">Modificar las teclas</string>
-    <string name="key_modification_placeholder">Ingresa YAML</string>
-    <string name="how_to_modify_keys">¿Como modificar las teclas?</string>
     <string name="key_height">Altura de tecla: %1$s</string>
     <string name="key_width">Anchura de tecla: %1$s</string>
     <string name="drag_return_enable">Arrastra-y-regresa</string>

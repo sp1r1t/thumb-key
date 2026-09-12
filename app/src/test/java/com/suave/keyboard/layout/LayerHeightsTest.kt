@@ -53,7 +53,7 @@ class LayerHeightsTest {
 
         assertEquals(1, s12.gridRowCount(LayoutLayer.CLIPBOARD))
         assertEquals(S12_CLIPBOARD_LAYER_HEIGHT_ROWS, s12.heightRows(LayoutLayer.CLIPBOARD))
-        assertEquals(3, s12.contentRows(LayoutLayer.CLIPBOARD))
+        assertEquals(5, s12.contentRows(LayoutLayer.CLIPBOARD))
         assertEquals(LayerContent.ClipboardHistory, s12.contentFor(LayoutLayer.CLIPBOARD))
     }
 
@@ -68,6 +68,9 @@ class LayerHeightsTest {
         assertEquals(1, s12.heightRows(LayoutLayer.CLIPBOARD, overrideRows = 1))
         assertEquals(6, s12.heightRows(LayoutLayer.CLIPBOARD, overrideRows = 6))
         assertEquals(5, s12.contentRows(LayoutLayer.CLIPBOARD, overrideRows = 6))
+        // Numbers has no content panel; height always matches the key grid.
+        assertEquals(4, s12.heightRows(LayoutLayer.NUMERIC, overrideRows = 8))
+        assertEquals(0, s12.contentRows(LayoutLayer.NUMERIC, overrideRows = 8))
     }
 
     @Test

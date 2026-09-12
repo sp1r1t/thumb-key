@@ -83,9 +83,6 @@
     <string name="high_contrast">Висок контраст</string>
     <string name="ancom">Анархо-комунистически цветове</string>
     <string name="ghost_keys_description">Достъп до скрити клавиши със символи, без да превключвате на цифров изглед</string>
-    <string name="modify_keys">Промяна на клавиши</string>
-    <string name="how_to_modify_keys">Как се променят клавиши</string>
-    <string name="key_modification_placeholder">Въведете YAML</string>
     <string name="dual">Двойна</string>
     <string name="position_padding">Отстъп на позицията: %1$s</string>
     <string name="vibrate_warning">Изисква включване на обратната връзка при докосване в системните настройки</string>

@@ -89,7 +89,4 @@
     <string name="database_restored">پایگاه‌داده بازگردانی شد.</string>
     <string name="send_oppsite_case">حرف با حالت وارونه (بزرگ یا کوچک)</string>
     <string name="slide_spacebar_deadzone_enable">کلید فاصله: امکان استفاده از کشیدن انگشت معمولی برای حرکات کشیدنی</string>
-    <string name="modify_keys">سفارشی‌سازی کلیدها</string>
-    <string name="key_modification_placeholder">وارد کردن YAML</string>
-    <string name="how_to_modify_keys">آموزش سفارشی سازی</string>
 </resources>

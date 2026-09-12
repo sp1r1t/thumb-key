@@ -91,9 +91,6 @@
     <string name="database_restored">Obnovitev je končana.</string>
     <string name="database_backed_up">Varnostna kopija je shranjena.</string>
     <string name="backup_and_restore">Varnostna kopija in obnovitev</string>
-    <string name="modify_keys">Uredi tipke</string>
-    <string name="key_modification_placeholder">Vnesi YAML</string>
-    <string name="how_to_modify_keys">Navodila za urejanje tipk</string>
     <string name="ignore_bottom_padding">Ne upoštevaj spodnjega odmika</string>
     <string name="show_toast_on_layout_switch">Prikaži sporočilo ob spremembi tipkovnice</string>
     <string name="disable_fullscreen_editor">Onemogoči celozaslonski urejevalnik</string>

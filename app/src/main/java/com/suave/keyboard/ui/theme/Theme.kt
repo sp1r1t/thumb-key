@@ -8,7 +8,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import com.suave.keyboard.db.AppSettings
-import com.suave.keyboard.utils.ThemeColor
+import com.suave.keyboard.db.DEFAULT_THEME_COLOR
 import com.suave.keyboard.utils.ThemeMode
 
 @Composable
@@ -17,9 +17,12 @@ fun SuaveTheme(
     content: @Composable () -> Unit,
 ) {
     val themeMode = ThemeMode.entries[settings?.theme ?: 0]
-    val themeColor = ThemeColor.entries[settings?.themeColor ?: 0]
+    val themeId = settings?.themeColor ?: DEFAULT_THEME_COLOR
 
     val ctx = LocalContext.current
+    ThemeRegistry.ensureLoaded(ctx)
+    ThemeStore.get(ctx).loadIntoRegistry()
+
     val android12OrLater = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
     // Dynamic schemes crash on lower than android 12
@@ -27,24 +30,14 @@ fun SuaveTheme(
         if (android12OrLater) {
             Pair(dynamicLightColorScheme(ctx), dynamicDarkColorScheme(ctx))
         } else {
-            pink()
+            ThemeRegistry.byId(NamedTheme.DEFAULT_ID).schemes
         }
 
     val colorPair =
-        when (themeColor) {
-            ThemeColor.Dynamic -> dynamicPair
-            ThemeColor.Green -> green()
-            ThemeColor.Pink -> pink()
-            ThemeColor.Matrix -> matrix()
-            ThemeColor.Srcery -> srcery()
-            ThemeColor.Blue -> blue()
-            ThemeColor.Dracula -> dracula()
-            ThemeColor.Twilight -> twilight()
-            ThemeColor.HighContrast -> highContrast()
-            ThemeColor.HighContrastColorful -> highContrastColorful()
-            ThemeColor.Ancom -> ancom()
-            ThemeColor.Neon -> neon()
-            ThemeColor.Suave -> suave()
+        if (ThemeRegistry.isDynamic(themeId)) {
+            dynamicPair
+        } else {
+            ThemeRegistry.colorSchemes(ctx, themeId)
         }
 
     val systemTheme =

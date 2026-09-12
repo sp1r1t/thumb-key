@@ -50,6 +50,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -96,9 +97,9 @@ import com.suave.keyboard.db.DEFAULT_VIBRATE_TAP_TYPE
 import com.suave.keyboard.db.AppearanceUpdate
 import com.suave.keyboard.engine.feedback.HapticType
 import com.suave.keyboard.engine.feedback.hapticTypeFromDb
-import com.suave.keyboard.layout.BuiltinLayouts
 import com.suave.keyboard.layout.DEFAULT_LAYER_HEIGHTS
 import com.suave.keyboard.layout.LayoutLayer
+import com.suave.keyboard.layout.LayoutRegistry
 import com.suave.keyboard.layout.MAX_LAYER_HEIGHT_ROWS
 import com.suave.keyboard.layout.MIN_DUAL_CELL_WIDTH_DP
 import com.suave.keyboard.layout.NamedLayout
@@ -119,15 +120,16 @@ import com.suave.keyboard.ui.engine.LegendCategory
 import com.suave.keyboard.ui.engine.formatHideKeyCategories
 import com.suave.keyboard.ui.engine.parseHideKeyCategories
 import com.suave.keyboard.ui.engine.toggleHideKeyGroupSelection
+import com.suave.keyboard.ui.theme.ThemeRegistry
 import com.suave.keyboard.utils.KeyboardPosition
 import com.suave.keyboard.utils.SimpleTopAppBar
 import com.suave.keyboard.utils.TAG
-import com.suave.keyboard.utils.ThemeColor
 import com.suave.keyboard.utils.ThemeMode
 import com.suave.keyboard.utils.toBool
 import com.suave.keyboard.utils.toInt
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ListPreferenceType
+import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
 import me.zhanghai.compose.preference.SwitchPreference
 
@@ -140,9 +142,11 @@ fun AppearanceScreen(
     Log.d(TAG, "Got to appearance activity")
 
     val resources = LocalResources.current
+    val context = LocalContext.current
     val settings by appSettingsViewModel.appSettings.observeAsState()
     var themeState = ThemeMode.entries[settings?.theme ?: DEFAULT_THEME]
-    var themeColorState = ThemeColor.entries[settings?.themeColor ?: DEFAULT_THEME_COLOR]
+    var themeColorState = settings?.themeColor ?: DEFAULT_THEME_COLOR
+    ThemeRegistry.ensureLoaded(context)
     var keyHeightState = settings?.keyHeight ?: DEFAULT_KEY_HEIGHT
     var distinctLetterControlColorsState =
         (settings?.distinctLetterControlColors ?: DEFAULT_DISTINCT_LETTER_CONTROL_COLORS).toBool()
@@ -189,7 +193,7 @@ fun AppearanceScreen(
         (settings?.preventCrampedDual ?: DEFAULT_PREVENT_CRAMPED_DUAL).toBool()
     var preventNeedlessSplitState =
         (settings?.preventNeedlessSplit ?: DEFAULT_PREVENT_NEEDLESS_SPLIT).toBool()
-    val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
+    val namedLayout = LayoutRegistry.byId(context, settings?.keyboardLayout ?: LayoutRegistry.DEFAULT_ID)
     val layerHeightOverrides = parseLayerHeightOverrides(layerHeightsState)
 
     fun updateAppearance() {
@@ -217,7 +221,7 @@ fun AppearanceScreen(
                 hideKeyCategories = hideKeyCategoriesState,
                 ignoreBottomPadding = ignoreBottomPaddingState.toInt(),
                 theme = themeState.ordinal,
-                themeColor = themeColorState.ordinal,
+                themeColor = themeColorState,
                 keyHeight = keyHeightState,
                 layerHeights = layerHeightsState,
                 disableFullscreenEditor = disableFullscreenEditorState.toInt(),
@@ -280,7 +284,7 @@ fun AppearanceScreen(
                     }
 
                     SettingRow(onReset = {
-                        themeColorState = ThemeColor.entries[DEFAULT_THEME_COLOR]
+                        themeColorState = DEFAULT_THEME_COLOR
                         updateAppearance()
                     }) {
                         ListPreference(
@@ -290,17 +294,23 @@ fun AppearanceScreen(
                                 themeColorState = it
                                 updateAppearance()
                             },
-                            values =
-                                listOf(ThemeColor.Suave) +
-                                    ThemeColor.entries.filter { it != ThemeColor.Suave },
+                            values = ThemeRegistry.selectableIds(context),
                             valueToText = {
-                                AnnotatedString(resources.getString(it.resId))
+                                AnnotatedString(ThemeRegistry.title(context, it))
                             },
                             title = {
-                                Text(stringResource(R.string.theme_color))
+                                SettingTitle(
+                                    text = stringResource(R.string.theme_color),
+                                    infoText = stringResource(R.string.theme_color_info),
+                                )
                             },
                             summary = {
-                                Text(stringResource(themeColorState.resId))
+                                Text(
+                                    stringResource(
+                                        R.string.theme_color_summary,
+                                        ThemeRegistry.title(context, themeColorState),
+                                    ),
+                                )
                             },
                             icon = {
                                 Icon(
@@ -310,6 +320,19 @@ fun AppearanceScreen(
                             },
                         )
                     }
+                    Preference(
+                        title = { Text(stringResource(R.string.edit_themes)) },
+                        summary = {
+                            Text(stringResource(R.string.edit_themes_summary))
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.FormatColorFill,
+                                contentDescription = null,
+                            )
+                        },
+                        onClick = { navController.navigate("themes") },
+                    )
                     }
 
                     SettingsSection(
@@ -466,44 +489,42 @@ fun AppearanceScreen(
                         )
                     }
 
-                    SettingRow(
+                    IntStepperPreference(
+                        value = pushupSizeState,
+                        onValueChange = {
+                            pushupSizeState = it
+                            updateAppearance()
+                        },
+                        valueRange = 0..250,
+                        vibrateOnRepeat = vibrateOnHoldRepeatState,
+                        repeatHapticType = vibrateHoldRepeatTypeState,
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.raise_from_bottom),
+                                infoText = stringResource(R.string.raise_from_bottom_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                if (pushupSizeState == 0) {
+                                    stringResource(R.string.raise_from_bottom_summary_none)
+                                } else {
+                                    stringResource(R.string.raise_from_bottom_summary, pushupSizeState.toString())
+                                },
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.VerticalAlignTop,
+                                contentDescription = null,
+                            )
+                        },
                         onReset = {
                             pushupSizeState = DEFAULT_PUSHUP_SIZE
                             updateAppearance()
                         },
-                    ) {
-                        IntStepperPreference(
-                            value = pushupSizeState,
-                            onValueChange = {
-                                pushupSizeState = it
-                                updateAppearance()
-                            },
-                            valueRange = 0..250,
-                            vibrateOnRepeat = vibrateOnHoldRepeatState,
-                            repeatHapticType = vibrateHoldRepeatTypeState,
-                            title = {
-                                SettingTitle(
-                                    text = stringResource(R.string.raise_from_bottom),
-                                    infoText = stringResource(R.string.raise_from_bottom_info),
-                                )
-                            },
-                            summary = {
-                                Text(
-                                    if (pushupSizeState == 0) {
-                                        stringResource(R.string.raise_from_bottom_summary_none)
-                                    } else {
-                                        stringResource(R.string.raise_from_bottom_summary, pushupSizeState.toString())
-                                    },
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.VerticalAlignTop,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
+                        resetTo = DEFAULT_PUSHUP_SIZE,
+                    )
 
                     SwitchPreference(
                         value = disableFullscreenEditorState,
@@ -591,217 +612,211 @@ fun AppearanceScreen(
                         )
                     }
 
-                    SettingRow(
+                    IntStepperPreference(
+                        value = keyHeightState,
+                        onValueChange = {
+                            keyHeightState = it
+                            updateAppearance()
+                        },
+                        valueRange = 10..200,
+                        vibrateOnRepeat = vibrateOnHoldRepeatState,
+                        repeatHapticType = vibrateHoldRepeatTypeState,
+                        title = {
+                            Text(stringResource(R.string.key_height))
+                        },
+                        summary = {
+                            Text(stringResource(R.string.key_height_summary, keyHeightState.toString()))
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Crop75,
+                                contentDescription = null,
+                            )
+                        },
                         onReset = {
                             keyHeightState = DEFAULT_KEY_HEIGHT
                             updateAppearance()
                         },
-                    ) {
-                        IntStepperPreference(
-                            value = keyHeightState,
-                            onValueChange = {
-                                keyHeightState = it
-                                updateAppearance()
-                            },
-                            valueRange = 10..200,
-                            vibrateOnRepeat = vibrateOnHoldRepeatState,
-                            repeatHapticType = vibrateHoldRepeatTypeState,
-                            title = {
-                                Text(stringResource(R.string.key_height))
-                            },
-                            summary = {
-                                Text(stringResource(R.string.key_height_summary, keyHeightState.toString()))
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Crop75,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
+                        resetTo = DEFAULT_KEY_HEIGHT,
+                    )
 
-                    SettingRow(
+                    IntStepperPreference(
+                        value = keyPaddingState,
+                        onValueChange = {
+                            keyPaddingState = it
+                            updateAppearance()
+                        },
+                        valueRange = 0..10,
+                        vibrateOnRepeat = vibrateOnHoldRepeatState,
+                        repeatHapticType = vibrateHoldRepeatTypeState,
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.key_spacing_horizontal),
+                                infoText = stringResource(R.string.key_spacing_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                if (keyPaddingState == 0) {
+                                    stringResource(R.string.key_spacing_horizontal_summary_none)
+                                } else {
+                                    stringResource(
+                                        R.string.key_spacing_horizontal_summary,
+                                        keyPaddingState.toString(),
+                                    )
+                                },
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Padding,
+                                contentDescription = null,
+                            )
+                        },
                         onReset = {
                             keyPaddingState = DEFAULT_KEY_PADDING
                             updateAppearance()
                         },
-                    ) {
-                        IntStepperPreference(
-                            value = keyPaddingState,
-                            onValueChange = {
-                                keyPaddingState = it
-                                updateAppearance()
-                            },
-                            valueRange = 0..10,
-                            vibrateOnRepeat = vibrateOnHoldRepeatState,
-                            repeatHapticType = vibrateHoldRepeatTypeState,
-                            title = {
-                                SettingTitle(
-                                    text = stringResource(R.string.key_spacing_horizontal),
-                                    infoText = stringResource(R.string.key_spacing_info),
-                                )
-                            },
-                            summary = {
-                                Text(
-                                    if (keyPaddingState == 0) {
-                                        stringResource(R.string.key_spacing_horizontal_summary_none)
-                                    } else {
-                                        stringResource(
-                                            R.string.key_spacing_horizontal_summary,
-                                            keyPaddingState.toString(),
-                                        )
-                                    },
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Padding,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
+                        resetTo = DEFAULT_KEY_PADDING,
+                    )
 
-                    SettingRow(
+                    IntStepperPreference(
+                        value = keyPaddingVerticalState,
+                        onValueChange = {
+                            keyPaddingVerticalState = it
+                            updateAppearance()
+                        },
+                        valueRange = 0..10,
+                        vibrateOnRepeat = vibrateOnHoldRepeatState,
+                        repeatHapticType = vibrateHoldRepeatTypeState,
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.key_spacing_vertical),
+                                infoText = stringResource(R.string.key_spacing_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                if (keyPaddingVerticalState == 0) {
+                                    stringResource(R.string.key_spacing_vertical_summary_none)
+                                } else {
+                                    stringResource(
+                                        R.string.key_spacing_vertical_summary,
+                                        keyPaddingVerticalState.toString(),
+                                    )
+                                },
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Height,
+                                contentDescription = null,
+                            )
+                        },
                         onReset = {
                             keyPaddingVerticalState = DEFAULT_KEY_PADDING_VERTICAL
                             updateAppearance()
                         },
-                    ) {
-                        IntStepperPreference(
-                            value = keyPaddingVerticalState,
-                            onValueChange = {
-                                keyPaddingVerticalState = it
-                                updateAppearance()
-                            },
-                            valueRange = 0..10,
-                            vibrateOnRepeat = vibrateOnHoldRepeatState,
-                            repeatHapticType = vibrateHoldRepeatTypeState,
-                            title = {
-                                SettingTitle(
-                                    text = stringResource(R.string.key_spacing_vertical),
-                                    infoText = stringResource(R.string.key_spacing_info),
-                                )
-                            },
-                            summary = {
-                                Text(
-                                    if (keyPaddingVerticalState == 0) {
-                                        stringResource(R.string.key_spacing_vertical_summary_none)
-                                    } else {
-                                        stringResource(
-                                            R.string.key_spacing_vertical_summary,
-                                            keyPaddingVerticalState.toString(),
-                                        )
-                                    },
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Height,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
+                        resetTo = DEFAULT_KEY_PADDING_VERTICAL,
+                    )
 
-                    SettingRow(
+                    IntStepperPreference(
+                        value = keyBorderWidthState,
+                        onValueChange = {
+                            keyBorderWidthState = it
+                            updateAppearance()
+                        },
+                        valueRange = 0..50,
+                        vibrateOnRepeat = vibrateOnHoldRepeatState,
+                        repeatHapticType = vibrateHoldRepeatTypeState,
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.border_thickness),
+                                infoText = stringResource(R.string.border_thickness_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                if (keyBorderWidthState == 0) {
+                                    stringResource(R.string.border_thickness_summary_none)
+                                } else {
+                                    stringResource(
+                                        R.string.border_thickness_summary,
+                                        tenthsOfDpLabel(keyBorderWidthState),
+                                    )
+                                },
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.BorderOuter,
+                                contentDescription = null,
+                            )
+                        },
                         onReset = {
                             keyBorderWidthState = DEFAULT_KEY_BORDER_WIDTH
                             updateAppearance()
                         },
-                    ) {
-                        IntStepperPreference(
-                            value = keyBorderWidthState,
-                            onValueChange = {
-                                keyBorderWidthState = it
-                                updateAppearance()
-                            },
-                            valueRange = 0..50,
-                            vibrateOnRepeat = vibrateOnHoldRepeatState,
-                            repeatHapticType = vibrateHoldRepeatTypeState,
-                            title = {
-                                SettingTitle(
-                                    text = stringResource(R.string.border_thickness),
-                                    infoText = stringResource(R.string.border_thickness_info),
-                                )
-                            },
-                            summary = {
-                                Text(
-                                    if (keyBorderWidthState == 0) {
-                                        stringResource(R.string.border_thickness_summary_none)
-                                    } else {
-                                        stringResource(
-                                            R.string.border_thickness_summary,
-                                            tenthsOfDpLabel(keyBorderWidthState),
-                                        )
-                                    },
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.BorderOuter,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
+                        resetTo = DEFAULT_KEY_BORDER_WIDTH,
+                    )
 
-                    SettingRow(
+                    IntStepperPreference(
+                        value = keyRadiusState,
+                        onValueChange = {
+                            keyRadiusState = it
+                            updateAppearance()
+                        },
+                        valueRange = 0..100,
+                        vibrateOnRepeat = vibrateOnHoldRepeatState,
+                        repeatHapticType = vibrateHoldRepeatTypeState,
+                        title = {
+                            Text(stringResource(R.string.corner_roundness))
+                        },
+                        summary = {
+                            Text(
+                                if (keyRadiusState == 0) {
+                                    stringResource(R.string.corner_roundness_summary_none)
+                                } else {
+                                    stringResource(R.string.corner_roundness_summary, keyRadiusState.toString())
+                                },
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.RoundedCorner,
+                                contentDescription = null,
+                            )
+                        },
                         onReset = {
                             keyRadiusState = DEFAULT_KEY_RADIUS
                             updateAppearance()
                         },
-                    ) {
-                        IntStepperPreference(
-                            value = keyRadiusState,
-                            onValueChange = {
-                                keyRadiusState = it
-                                updateAppearance()
-                            },
-                            valueRange = 0..100,
-                            vibrateOnRepeat = vibrateOnHoldRepeatState,
-                            repeatHapticType = vibrateHoldRepeatTypeState,
-                            title = {
-                                Text(stringResource(R.string.corner_roundness))
-                            },
-                            summary = {
-                                Text(
-                                    if (keyRadiusState == 0) {
-                                        stringResource(R.string.corner_roundness_summary_none)
-                                    } else {
-                                        stringResource(R.string.corner_roundness_summary, keyRadiusState.toString())
-                                    },
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.RoundedCorner,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
+                        resetTo = DEFAULT_KEY_RADIUS,
+                    )
                     }
 
                     SettingsSection(
-                        title = stringResource(R.string.settings_section_layers)                    ) {
-                        namedLayout.availableLayers().forEachIndexed { index, layer ->
-                            key(layer) {
-                                LayerHeightRow(
-                                    layer = layer,
-                                    namedLayout = namedLayout,
-                                    overrides = layerHeightOverrides,
-                                    showInfo = index == 0,
-                                    vibrateOnRepeat = vibrateOnHoldRepeatState,
-                                    repeatHapticType = vibrateHoldRepeatTypeState,
-                                    onOverridesChange = { next ->
-                                        layerHeightsState = formatLayerHeightOverrides(next)
-                                        updateAppearance()
-                                    },
-                                )
+                        title = stringResource(R.string.settings_section_layers),
+                    ) {
+                        namedLayout
+                            .availableLayers()
+                            .filter { it != LayoutLayer.NUMERIC }
+                            .forEachIndexed { index, layer ->
+                                key(layer) {
+                                    LayerHeightRow(
+                                        layer = layer,
+                                        namedLayout = namedLayout,
+                                        overrides = layerHeightOverrides,
+                                        showInfo = index == 0,
+                                        vibrateOnRepeat = vibrateOnHoldRepeatState,
+                                        repeatHapticType = vibrateHoldRepeatTypeState,
+                                        onOverridesChange = { next ->
+                                            layerHeightsState = formatLayerHeightOverrides(next)
+                                            updateAppearance()
+                                        },
+                                    )
+                                }
                             }
-                        }
                     }
 
                     SettingsSection(title = stringResource(R.string.settings_section_feedback)) {
@@ -1226,46 +1241,44 @@ private fun LayerHeightRow(
     val currentRows = namedLayout.heightRows(layer, overrides[layer] ?: 0)
     val extraRows = currentRows - gridRows
 
-    SettingRow(
+    IntStepperPreference(
+        value = currentRows,
+        onValueChange = { rows ->
+            onOverridesChange(overrides + (layer to rows))
+        },
+        valueRange = gridRows..MAX_LAYER_HEIGHT_ROWS,
+        vibrateOnRepeat = vibrateOnRepeat,
+        repeatHapticType = repeatHapticType,
+        title = {
+            SettingTitle(
+                text = stringResource(layer.heightTitleRes()),
+                infoText = if (showInfo) stringResource(R.string.layer_height_info) else null,
+            )
+        },
+        summary = {
+            Text(
+                if (extraRows == 0) {
+                    stringResource(R.string.layer_height_summary_flush, currentRows.toString())
+                } else {
+                    stringResource(
+                        R.string.layer_height_summary_extra,
+                        currentRows.toString(),
+                        extraRows.toString(),
+                    )
+                },
+            )
+        },
+        icon = {
+            Icon(
+                imageVector = layer.heightIcon(),
+                contentDescription = null,
+            )
+        },
         onReset = {
             onOverridesChange(overrides - layer)
         },
-    ) {
-        IntStepperPreference(
-            value = currentRows,
-            onValueChange = { rows ->
-                onOverridesChange(overrides + (layer to rows))
-            },
-            valueRange = gridRows..MAX_LAYER_HEIGHT_ROWS,
-            vibrateOnRepeat = vibrateOnRepeat,
-            repeatHapticType = repeatHapticType,
-            title = {
-                SettingTitle(
-                    text = stringResource(layer.heightTitleRes()),
-                    infoText = if (showInfo) stringResource(R.string.layer_height_info) else null,
-                )
-            },
-            summary = {
-                Text(
-                    if (extraRows == 0) {
-                        stringResource(R.string.layer_height_summary_flush, currentRows.toString())
-                    } else {
-                        stringResource(
-                            R.string.layer_height_summary_extra,
-                            currentRows.toString(),
-                            extraRows.toString(),
-                        )
-                    },
-                )
-            },
-            icon = {
-                Icon(
-                    imageVector = layer.heightIcon(),
-                    contentDescription = null,
-                )
-            },
-        )
-    }
+        resetTo = gridRows,
+    )
 }
 
 private fun LayoutLayer.heightTitleRes(): Int =

@@ -12,6 +12,7 @@ import com.suave.keyboard.engine.intent.KeyIntent
 import com.suave.keyboard.engine.intent.KeyMapping
 import com.suave.keyboard.engine.intent.ModifierId
 import com.suave.keyboard.engine.intent.SlideBehavior
+import com.suave.keyboard.engine.intent.repeatsOnHold
 import com.suave.keyboard.engine.modifier.ActivationMode
 import com.suave.keyboard.engine.modifier.DEFAULT_MODIFIER_BEHAVIORS
 import com.suave.keyboard.engine.modifier.ModifierBehavior
@@ -211,7 +212,7 @@ class KeyDispatcher(
             }
 
             is KeyIntent.Text, is KeyIntent.Command, KeyIntent.Noop -> {
-                if (gesture is Gesture.HoldRepeat && !intent.repeatsOnHold()) return modifierState
+                if (gesture is Gesture.HoldRepeat && !mapping.repeatsOnHold(zone, intent)) return modifierState
                 val resolved = ModifierEngine.resolve(modifierState, intent, shiftMappings, capsLockMappings)
                 onExecute(IntentCompiler.compile(resolved))
                 // Feedback for the press/swipe itself already happened on Gesture.Pressed/

@@ -1,5 +1,6 @@
 package com.suave.keyboard.ui.engine
 
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
@@ -28,11 +29,19 @@ import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.ViewColumn
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import com.suave.keyboard.engine.gesture.Zone
 import com.suave.keyboard.engine.intent.CommandId
 import com.suave.keyboard.engine.intent.KeyIntent
+import com.suave.keyboard.engine.intent.KeyFillRole
 import com.suave.keyboard.engine.intent.KeyMapping
 import com.suave.keyboard.engine.intent.ModifierId
 import com.suave.keyboard.engine.modifier.ActivationMode
@@ -104,12 +113,14 @@ fun keyLegend(
     modifierState: ModifierState,
     shiftMappings: Map<String, String>,
     capsLockMappings: Map<String, String> = emptyMap(),
+    displayLabel: String? = null,
 ): KeyLegend? =
     when (intent) {
         null, KeyIntent.Noop -> null
 
         is KeyIntent.Text -> {
-            val shown = ModifierEngine.applyCase(intent.text, modifierState, shiftMappings, capsLockMappings)
+            val source = displayLabel ?: intent.text
+            val shown = ModifierEngine.applyCase(source, modifierState, shiftMappings, capsLockMappings)
             when {
                 shown.isBlank() -> null
                 visibility.hides(classifyText(shown)) -> null
@@ -254,6 +265,11 @@ private fun modifierLegend(
  * a letter key.
  */
 fun KeyMapping.usesControlKeyFill(): Boolean {
+    when (fillRole) {
+        KeyFillRole.LETTER -> return false
+        KeyFillRole.CONTROL -> return true
+        KeyFillRole.AUTO -> Unit
+    }
     val center = intents[Zone.Center]
     return when (center) {
         is KeyIntent.Text -> center.text.isBlank()
@@ -274,3 +290,34 @@ private fun shiftIcon(modifierState: ModifierState): ImageVector =
         ActivationMode.HELD, ActivationMode.ONE_SHOT -> Icons.Outlined.KeyboardArrowUp
         null -> Icons.Outlined.ArrowDropUp
     }
+
+/** Shared text/icon mark for a resolved [KeyLegend] (live keyboard and layout preview). */
+@Composable
+fun KeyLegendMark(
+    legend: KeyLegend,
+    fontSize: TextUnit,
+    iconSize: Dp,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    when (legend) {
+        is KeyLegend.Text -> {
+            Text(
+                legend.text,
+                modifier = modifier,
+                fontSize = fontSize,
+                fontWeight = FontWeight.Bold,
+                lineHeight = fontSize,
+                color = color,
+            )
+        }
+        is KeyLegend.Icon -> {
+            Icon(
+                imageVector = legend.icon,
+                contentDescription = legend.icon.name,
+                tint = color,
+                modifier = modifier.size(iconSize),
+            )
+        }
+    }
+}

@@ -1,5 +1,7 @@
 package com.suave.keyboard.engine.intent
 
+import com.suave.keyboard.engine.gesture.Zone
+
 /**
  * What a position+gesture on the layout means, before modifier transformation. A layout is pure
  * data mapping position and gesture to one of these - it never encodes what Ctrl+X or Alt+X
@@ -35,3 +37,12 @@ sealed class KeyIntent {
             is ModifierPress, Noop -> false
         }
 }
+
+/** Prefer a per-zone layout override when present, else [resolvedIntent] (or the mapping's intent). */
+fun KeyMapping.repeatsOnHold(
+    zone: Zone,
+    resolvedIntent: KeyIntent? = null,
+): Boolean =
+    repeatOverrides[zone]
+        ?: (resolvedIntent ?: intents[zone] ?: intents[Zone.Center])?.repeatsOnHold()
+        ?: false

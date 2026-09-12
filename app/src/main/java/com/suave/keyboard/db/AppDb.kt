@@ -40,10 +40,10 @@ const val DEFAULT_KEYBOARD_POSITIONS = "Center,Dual,Split"
 const val DEFAULT_PREVENT_CRAMPED_DUAL = 1
 const val DEFAULT_PREVENT_NEEDLESS_SPLIT = 1
 const val DEFAULT_AUTO_CAPITALIZE = 1
-const val DEFAULT_KEYBOARD_LAYOUT = 0
+const val DEFAULT_KEYBOARD_LAYOUT = "s12"
 const val DEFAULT_THEME = 0
-/** Must match [com.suave.keyboard.utils.ThemeColor.Suave] ordinal. */
-const val DEFAULT_THEME_COLOR = 12
+/** ThemeRegistry / NamedTheme id (not an enum ordinal). */
+const val DEFAULT_THEME_COLOR = "suave"
 const val DEFAULT_VIBRATE_ON_TAP = 1
 const val DEFAULT_VIBRATE_ON_SLIDE = 1
 const val DEFAULT_VIBRATE_ON_HOLD_REPEAT = 1
@@ -85,7 +85,6 @@ const val DEFAULT_CLOCKWISE_DRAG_ACTION = 0
 const val DEFAULT_COUNTERCLOCKWISE_DRAG_ACTION = 1
 const val DEFAULT_GHOST_KEYS_ENABLED = 0
 const val DEFAULT_SLIDE_HOLD_ENABLED = 0
-const val DEFAULT_KEY_MODIFICATIONS = ""
 const val DEFAULT_IGNORE_BOTTOM_PADDING = 0
 const val DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH = 1
 const val DEFAULT_SHOW_TOAST_ON_COPY = 1
@@ -131,9 +130,9 @@ data class AppSettings(
     val theme: Int,
     @ColumnInfo(
         name = "theme_color",
-        defaultValue = DEFAULT_THEME_COLOR.toString(),
+        defaultValue = DEFAULT_THEME_COLOR,
     )
-    val themeColor: Int,
+    val themeColor: String,
     @ColumnInfo(
         name = "hide_letters",
         defaultValue = DEFAULT_HIDE_LETTERS.toString(),
@@ -251,12 +250,12 @@ data class AppSettings(
     val spacebarMultitaps: Int = DEFAULT_SPACEBAR_MULTITAPS,
     @ColumnInfo(
         name = "keyboard_layout",
-        defaultValue = DEFAULT_KEYBOARD_LAYOUT.toString(),
+        defaultValue = DEFAULT_KEYBOARD_LAYOUT,
     )
-    val keyboardLayout: Int,
+    val keyboardLayout: String,
     @ColumnInfo(
         name = "keyboard_layouts",
-        defaultValue = "$DEFAULT_KEYBOARD_LAYOUT",
+        defaultValue = DEFAULT_KEYBOARD_LAYOUT,
     )
     val keyboardLayouts: String,
     @ColumnInfo(
@@ -451,7 +450,7 @@ data class LayoutsUpdate(
     @ColumnInfo(
         name = "keyboard_layout",
     )
-    val keyboardLayout: Int,
+    val keyboardLayout: String,
     @ColumnInfo(
         name = "keyboard_layouts",
     )
@@ -463,7 +462,7 @@ data class AppearanceUpdate(
     @ColumnInfo(name = "theme")
     val theme: Int,
     @ColumnInfo(name = "theme_color")
-    val themeColor: Int,
+    val themeColor: String,
     @ColumnInfo(name = "hide_letters")
     val hideLetters: Int,
     @ColumnInfo(name = "hide_symbols")
@@ -705,12 +704,20 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 1,
-    entities = [AppSettings::class],
+    version = 4,
+    entities = [
+        AppSettings::class,
+        com.suave.keyboard.ui.theme.UserThemeIndex::class,
+        com.suave.keyboard.layout.UserLayoutIndex::class,
+    ],
     exportSchema = true,
 )
 abstract class AppDB : RoomDatabase() {
     abstract fun appSettingsDao(): AppSettingsDao
+
+    abstract fun userThemeDao(): com.suave.keyboard.ui.theme.UserThemeDao
+
+    abstract fun userLayoutIndexDao(): com.suave.keyboard.layout.UserLayoutIndexDao
 
     companion object {
         @Volatile
@@ -740,7 +747,7 @@ abstract class AppDB : RoomDatabase() {
                             AppDB::class.java,
                             APP_SETTINGS_DB_NAME,
                         ).allowMainThreadQueries()
-                        // Fresh Suave schema (v1). Wipe any older settings DB from the rewrite era.
+                        // Fresh Suave schema (v4: user layout index). Wipe older DBs.
                         .fallbackToDestructiveMigration(dropAllTables = true)
                         .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
                         // Necessary because it can't insert data on creation

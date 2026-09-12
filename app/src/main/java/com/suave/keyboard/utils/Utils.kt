@@ -11,6 +11,7 @@ import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.activity.compose.LocalActivity
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -145,6 +146,8 @@ fun SimpleTopAppBar(
     navController: NavController,
     scrollBehavior: TopAppBarScrollBehavior? = null,
     showBack: Boolean = true,
+    onNavigateBack: (() -> Unit)? = null,
+    actions: @Composable RowScope.() -> Unit = {},
 ) {
     val activity = LocalActivity.current
     TopAppBar(
@@ -157,6 +160,10 @@ fun SimpleTopAppBar(
         navigationIcon = {
             if (showBack) {
                 IconButton(onClick = {
+                    if (onNavigateBack != null) {
+                        onNavigateBack()
+                        return@IconButton
+                    }
                     // If there's no previous destination, finish the activity
                     // This handles the case when navigating directly to a screen via intent
                     if (navController.previousBackStackEntry == null) {
@@ -172,6 +179,7 @@ fun SimpleTopAppBar(
                 }
             }
         },
+        actions = actions,
     )
 }
 
@@ -188,20 +196,19 @@ fun Int.toBool() = this == 1
 fun Boolean.toInt() = this.compareTo(false)
 
 /**
- * Layout indices stored in the DB as a comma-separated string. Empty or invalid
- * falls back to [DEFAULT_KEYBOARD_LAYOUT].
+ * Layout ids stored in the DB as a comma-separated string. Empty falls back to
+ * [DEFAULT_KEYBOARD_LAYOUT].
  */
-fun keyboardLayoutIndicesFromDb(layouts: String?): Set<Int> {
+fun keyboardLayoutIdsFromDb(layouts: String?): Set<String> {
     val parsed =
         layouts
             ?.split(",")
-            ?.mapNotNull { it.trim().toIntOrNull() }
+            ?.map { it.trim() }
+            ?.filter { it.isNotEmpty() }
             ?.toSet()
             .orEmpty()
     return parsed.ifEmpty { setOf(DEFAULT_KEYBOARD_LAYOUT) }
 }
-
-fun keyboardLayoutsSetFromDbIndexString(layouts: String?): Set<Int> = keyboardLayoutIndicesFromDb(layouts)
 
 fun Context.getPackageInfo(): PackageInfo =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -229,9 +236,9 @@ fun Context.getImeNames(): List<String> =
 
 fun updateLayouts(
     appSettingsViewModel: AppSettingsViewModel,
-    layoutIndices: Set<Int>,
+    layoutIds: Set<String>,
 ) {
-    val ordered = layoutIndices.ifEmpty { setOf(DEFAULT_KEYBOARD_LAYOUT) }
+    val ordered = layoutIds.ifEmpty { setOf(DEFAULT_KEYBOARD_LAYOUT) }
     appSettingsViewModel.updateLayouts(
         LayoutsUpdate(
             id = 1,

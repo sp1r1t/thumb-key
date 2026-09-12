@@ -89,9 +89,6 @@
     <string name="restore_database_warning">تحذير: سيؤدي هذا إلى مسح قاعدة البيانات الحالية الخاصة بك</string>
     <string name="enable_suave">تمكين Suave</string>
     <string name="select_suave">تحديد Suave</string>
-    <string name="modify_keys">تعديل المفاتيح</string>
-    <string name="key_modification_placeholder">أدخل YAML</string>
-    <string name="how_to_modify_keys">كيفية تعديل المفاتيح</string>
     <string name="dual">ثنائي</string>
     <string name="auto_size_keys">كبّر لملء عرض الشاشة</string>
     <string name="ignore_bottom_padding">تجاهل الحشوة السفلية</string>

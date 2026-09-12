@@ -53,7 +53,7 @@ import com.suave.keyboard.db.DEFAULT_USE_PRIVATE_CLIPBOARD
 import com.suave.keyboard.db.DEFAULT_VIBRATE_HOLD_REPEAT_TYPE
 import com.suave.keyboard.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
 import com.suave.keyboard.engine.feedback.hapticTypeFromDb
-import com.suave.keyboard.layout.BuiltinLayouts
+import com.suave.keyboard.layout.LayoutRegistry
 import com.suave.keyboard.ui.components.common.IntStepperPreference
 import com.suave.keyboard.ui.components.common.SettingRow
 import com.suave.keyboard.ui.components.common.SettingTitle
@@ -102,7 +102,8 @@ fun BehaviorScreen(
     val vibrateOnHoldRepeat = (settings?.vibrateOnHoldRepeat ?: DEFAULT_VIBRATE_ON_HOLD_REPEAT).toBool()
     val vibrateHoldRepeatType =
         hapticTypeFromDb(settings?.vibrateHoldRepeatType ?: DEFAULT_VIBRATE_HOLD_REPEAT_TYPE)
-    val layoutSampleText = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0).title
+    val layoutSampleText =
+        LayoutRegistry.byId(context, settings?.keyboardLayout ?: LayoutRegistry.DEFAULT_ID).title
     val privateBadge =
         if (usePrivateClipboard) {
             context.getString(R.string.clipboard_private_badge)
@@ -160,40 +161,38 @@ fun BehaviorScreen(
             SettingsScreenBody(padding = padding) {
                 ProvidePreferenceTheme {
                     SettingsSection(title = stringResource(R.string.settings_section_gestures)) {
-                        SettingRow(
+                        IntStepperPreference(
+                            value = minSwipeLengthState,
+                            onValueChange = {
+                                minSwipeLengthState = it
+                                updateBehavior()
+                            },
+                            valueRange = 0..200,
+                            vibrateOnRepeat = vibrateOnHoldRepeat,
+                            repeatHapticType = vibrateHoldRepeatType,
+                            title = {
+                                Text(stringResource(R.string.min_swipe_length))
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        R.string.min_swipe_length_summary,
+                                        minSwipeLengthState.toString(),
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Swipe,
+                                    contentDescription = null,
+                                )
+                            },
                             onReset = {
                                 minSwipeLengthState = DEFAULT_MIN_SWIPE_LENGTH
                                 updateBehavior()
                             },
-                        ) {
-                            IntStepperPreference(
-                                value = minSwipeLengthState,
-                                onValueChange = {
-                                    minSwipeLengthState = it
-                                    updateBehavior()
-                                },
-                                valueRange = 0..200,
-                                vibrateOnRepeat = vibrateOnHoldRepeat,
-                                repeatHapticType = vibrateHoldRepeatType,
-                                title = {
-                                    Text(stringResource(R.string.min_swipe_length))
-                                },
-                                summary = {
-                                    Text(
-                                        stringResource(
-                                            R.string.min_swipe_length_summary,
-                                            minSwipeLengthState.toString(),
-                                        ),
-                                    )
-                                },
-                                icon = {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Swipe,
-                                        contentDescription = null,
-                                    )
-                                },
-                            )
-                        }
+                            resetTo = DEFAULT_MIN_SWIPE_LENGTH,
+                        )
                     }
                     SettingsSection(title = stringResource(R.string.settings_section_typing)) {
                         BehaviorSwitchPreference(

@@ -179,7 +179,7 @@ internal fun shouldCollapseTestField(
 ): Boolean = showField && imeHadShown && !imeVisible
 
 /** Wait until the IME inset has reached its animation target, not just the first non-zero frame. */
-private suspend fun awaitImeSpawned(
+internal suspend fun awaitImeSpawned(
     density: Density,
     ime: WindowInsets,
     imeTarget: WindowInsets,

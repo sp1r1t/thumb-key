@@ -1,0 +1,1161 @@
+{
+    "schemaVersion": 1,
+    "id": "s12",
+    "title": "Suave Layout",
+    "rows": [
+        [
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "o"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "1"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "ö"
+                    },
+                    "right": {
+                        "type": "text",
+                        "value": "2"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "r"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "4"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "w"
+                    },
+                    "left": {
+                        "type": "text",
+                        "value": "3"
+                    },
+                    "right": {
+                        "type": "text",
+                        "value": "5"
+                    },
+                    "downLeft": {
+                        "type": "text",
+                        "value": "?"
+                    },
+                    "downRight": {
+                        "type": "text",
+                        "value": ","
+                    }
+                }
+            },
+            {
+                "slide": {
+                    "axis": "HORIZONTAL",
+                    "behavior": "SELECT_AND_DELETE"
+                },
+                "zones": {
+                    "center": {
+                        "type": "command",
+                        "id": "BACKSPACE"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "'"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "\""
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "t"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "7"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "p"
+                    },
+                    "left": {
+                        "type": "text",
+                        "value": "6"
+                    },
+                    "right": {
+                        "type": "text",
+                        "value": "8"
+                    },
+                    "downLeft": {
+                        "type": "text",
+                        "value": "."
+                    },
+                    "downRight": {
+                        "type": "text",
+                        "value": "!"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "h"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "0"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "q"
+                    },
+                    "left": {
+                        "type": "text",
+                        "value": "9"
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "a"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "+"
+                    },
+                    "right": {
+                        "type": "text",
+                        "value": "ä"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "e"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "v"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "f"
+                    },
+                    "left": {
+                        "type": "text",
+                        "value": "z"
+                    },
+                    "right": {
+                        "type": "text",
+                        "value": "c"
+                    },
+                    "upRight": {
+                        "type": "text",
+                        "value": "€"
+                    },
+                    "downRight": {
+                        "type": "text",
+                        "value": "ch"
+                    }
+                }
+            },
+            {
+                "slide": {
+                    "axis": "BOTH",
+                    "behavior": "MOVE_CURSOR"
+                },
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": " "
+                    },
+                    "up": {
+                        "type": "command",
+                        "id": "ARROW_UP"
+                    },
+                    "down": {
+                        "type": "command",
+                        "id": "ARROW_DOWN"
+                    },
+                    "left": {
+                        "type": "command",
+                        "id": "ARROW_LEFT"
+                    },
+                    "right": {
+                        "type": "command",
+                        "id": "ARROW_RIGHT"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "n"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "b"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "m"
+                    },
+                    "left": {
+                        "type": "text",
+                        "value": "g"
+                    },
+                    "right": {
+                        "type": "text",
+                        "value": "k"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "s"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "~"
+                    },
+                    "left": {
+                        "type": "text",
+                        "value": "ß"
+                    },
+                    "upLeft": {
+                        "type": "text",
+                        "value": "$"
+                    },
+                    "downLeft": {
+                        "type": "text",
+                        "value": "sch"
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "u"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "ü"
+                    },
+                    "right": {
+                        "type": "text",
+                        "value": "["
+                    },
+                    "upRight": {
+                        "type": "text",
+                        "value": "("
+                    },
+                    "downRight": {
+                        "type": "text",
+                        "value": "{"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "i"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "#"
+                    },
+                    "right": {
+                        "type": "text",
+                        "value": "x"
+                    },
+                    "upLeft": {
+                        "type": "text",
+                        "value": "<"
+                    },
+                    "downLeft": {
+                        "type": "text",
+                        "value": "@"
+                    },
+                    "downRight": {
+                        "type": "text",
+                        "value": "$"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "modifier",
+                        "id": "SHIFT"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "-"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "^"
+                    },
+                    "left": {
+                        "type": "text",
+                        "value": "—"
+                    },
+                    "right": {
+                        "type": "text",
+                        "value": "_"
+                    },
+                    "upLeft": {
+                        "type": "text",
+                        "value": ";"
+                    },
+                    "upRight": {
+                        "type": "text",
+                        "value": ":"
+                    },
+                    "downLeft": {
+                        "type": "text",
+                        "value": "%"
+                    },
+                    "downRight": {
+                        "type": "text",
+                        "value": "&"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "d"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "j"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "="
+                    },
+                    "left": {
+                        "type": "text",
+                        "value": "y"
+                    },
+                    "upRight": {
+                        "type": "text",
+                        "value": ">"
+                    },
+                    "downLeft": {
+                        "type": "text",
+                        "value": "*"
+                    },
+                    "downRight": {
+                        "type": "text",
+                        "value": "/"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "l"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "|"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "\\"
+                    },
+                    "left": {
+                        "type": "text",
+                        "value": "]"
+                    },
+                    "upLeft": {
+                        "type": "text",
+                        "value": ")"
+                    },
+                    "downLeft": {
+                        "type": "text",
+                        "value": "}"
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "zones": {
+                    "center": {
+                        "type": "modifier",
+                        "id": "CTRL"
+                    },
+                    "up": {
+                        "type": "modifier",
+                        "id": "ESC"
+                    },
+                    "right": {
+                        "type": "modifier",
+                        "id": "ALT"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "command",
+                        "id": "TOGGLE_EMOJI_MODE"
+                    },
+                    "up": {
+                        "type": "command",
+                        "id": "GOTO_SETTINGS"
+                    },
+                    "down": {
+                        "type": "command",
+                        "id": "SWITCH_IME"
+                    },
+                    "left": {
+                        "type": "command",
+                        "id": "SWITCH_LANGUAGE"
+                    },
+                    "right": {
+                        "type": "command",
+                        "id": "MOVE_KEYBOARD"
+                    },
+                    "upLeft": {
+                        "type": "command",
+                        "id": "TOGGLE_HIDE_LETTERS"
+                    },
+                    "downLeft": {
+                        "type": "command",
+                        "id": "SWITCH_IME_VOICE"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "command",
+                        "id": "TOGGLE_NUMERIC_MODE"
+                    },
+                    "up": {
+                        "type": "command",
+                        "id": "COPY"
+                    },
+                    "down": {
+                        "type": "command",
+                        "id": "PASTE"
+                    },
+                    "left": {
+                        "type": "command",
+                        "id": "TOGGLE_CLIPBOARD_HISTORY"
+                    },
+                    "upLeft": {
+                        "type": "command",
+                        "id": "SELECT_ALL"
+                    },
+                    "upRight": {
+                        "type": "command",
+                        "id": "CUT"
+                    },
+                    "downLeft": {
+                        "type": "command",
+                        "id": "UNDO"
+                    },
+                    "downRight": {
+                        "type": "command",
+                        "id": "REDO"
+                    }
+                }
+            },
+            {
+                "columnSpan": 2,
+                "zones": {
+                    "center": {
+                        "type": "command",
+                        "id": "ENTER"
+                    },
+                    "up": {
+                        "type": "command",
+                        "id": "TAB"
+                    }
+                }
+            }
+        ]
+    ],
+    "numeric": [
+        [
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "1"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "¹"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "₁"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "2"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "²"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "₂"
+                    }
+                }
+            },
+            {
+                "slide": {
+                    "axis": "HORIZONTAL",
+                    "behavior": "SELECT_AND_DELETE"
+                },
+                "zones": {
+                    "center": {
+                        "type": "command",
+                        "id": "BACKSPACE"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "'"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "\""
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "3"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "³"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "₃"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "4"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "⁴"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "₄"
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "5"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "⁵"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "₅"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "6"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "⁶"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "₆"
+                    },
+                    "upRight": {
+                        "type": "text",
+                        "value": "€"
+                    }
+                }
+            },
+            {
+                "slide": {
+                    "axis": "BOTH",
+                    "behavior": "MOVE_CURSOR"
+                },
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": " "
+                    },
+                    "up": {
+                        "type": "command",
+                        "id": "ARROW_UP"
+                    },
+                    "down": {
+                        "type": "command",
+                        "id": "ARROW_DOWN"
+                    },
+                    "left": {
+                        "type": "command",
+                        "id": "ARROW_LEFT"
+                    },
+                    "right": {
+                        "type": "command",
+                        "id": "ARROW_RIGHT"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "7"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "⁷"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "₇"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "8"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "⁸"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "₈"
+                    },
+                    "upLeft": {
+                        "type": "text",
+                        "value": "$"
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "9"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "⁹"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "₉"
+                    },
+                    "right": {
+                        "type": "text",
+                        "value": "["
+                    },
+                    "upRight": {
+                        "type": "text",
+                        "value": "("
+                    },
+                    "downRight": {
+                        "type": "text",
+                        "value": "{"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": ","
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": ";"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "#"
+                    },
+                    "upLeft": {
+                        "type": "text",
+                        "value": "<"
+                    },
+                    "downLeft": {
+                        "type": "text",
+                        "value": "@"
+                    },
+                    "downRight": {
+                        "type": "text",
+                        "value": "$"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "+"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "-"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "^"
+                    },
+                    "right": {
+                        "type": "text",
+                        "value": "_"
+                    },
+                    "upLeft": {
+                        "type": "text",
+                        "value": ";"
+                    },
+                    "upRight": {
+                        "type": "text",
+                        "value": ":"
+                    },
+                    "downLeft": {
+                        "type": "text",
+                        "value": "%"
+                    },
+                    "downRight": {
+                        "type": "text",
+                        "value": "&"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "."
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": ":"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "="
+                    },
+                    "upRight": {
+                        "type": "text",
+                        "value": ">"
+                    },
+                    "downLeft": {
+                        "type": "text",
+                        "value": "*"
+                    },
+                    "downRight": {
+                        "type": "text",
+                        "value": "/"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "text",
+                        "value": "0"
+                    },
+                    "up": {
+                        "type": "text",
+                        "value": "⁰"
+                    },
+                    "down": {
+                        "type": "text",
+                        "value": "₀"
+                    },
+                    "left": {
+                        "type": "text",
+                        "value": "]"
+                    },
+                    "upLeft": {
+                        "type": "text",
+                        "value": ")"
+                    },
+                    "downLeft": {
+                        "type": "text",
+                        "value": "}"
+                    }
+                }
+            }
+        ],
+        [
+            {
+                "zones": {
+                    "center": {
+                        "type": "modifier",
+                        "id": "CTRL"
+                    },
+                    "up": {
+                        "type": "modifier",
+                        "id": "ESC"
+                    },
+                    "right": {
+                        "type": "modifier",
+                        "id": "ALT"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "command",
+                        "id": "TOGGLE_EMOJI_MODE"
+                    },
+                    "up": {
+                        "type": "command",
+                        "id": "GOTO_SETTINGS"
+                    },
+                    "down": {
+                        "type": "command",
+                        "id": "SWITCH_IME"
+                    },
+                    "left": {
+                        "type": "command",
+                        "id": "SWITCH_LANGUAGE"
+                    },
+                    "right": {
+                        "type": "command",
+                        "id": "MOVE_KEYBOARD"
+                    },
+                    "upLeft": {
+                        "type": "command",
+                        "id": "TOGGLE_HIDE_LETTERS"
+                    },
+                    "downLeft": {
+                        "type": "command",
+                        "id": "SWITCH_IME_VOICE"
+                    }
+                }
+            },
+            {
+                "zones": {
+                    "center": {
+                        "type": "command",
+                        "id": "TOGGLE_ABC_MODE"
+                    },
+                    "up": {
+                        "type": "command",
+                        "id": "COPY"
+                    },
+                    "down": {
+                        "type": "command",
+                        "id": "PASTE"
+                    },
+                    "left": {
+                        "type": "command",
+                        "id": "TOGGLE_CLIPBOARD_HISTORY"
+                    },
+                    "upLeft": {
+                        "type": "command",
+                        "id": "SELECT_ALL"
+                    },
+                    "upRight": {
+                        "type": "command",
+                        "id": "CUT"
+                    },
+                    "downLeft": {
+                        "type": "command",
+                        "id": "UNDO"
+                    },
+                    "downRight": {
+                        "type": "command",
+                        "id": "REDO"
+                    }
+                }
+            },
+            {
+                "columnSpan": 2,
+                "zones": {
+                    "center": {
+                        "type": "command",
+                        "id": "ENTER"
+                    },
+                    "up": {
+                        "type": "command",
+                        "id": "TAB"
+                    }
+                }
+            }
+        ]
+    ],
+    "emojiBottomRow": [
+        {
+            "slide": {
+                "axis": "HORIZONTAL",
+                "behavior": "SELECT_AND_DELETE"
+            },
+            "zones": {
+                "center": {
+                    "type": "command",
+                    "id": "BACKSPACE"
+                },
+                "up": {
+                    "type": "text",
+                    "value": "'"
+                },
+                "down": {
+                    "type": "text",
+                    "value": "\""
+                }
+            }
+        },
+        {
+            "zones": {
+                "center": {
+                    "type": "command",
+                    "id": "TOGGLE_EMOJI_MODE"
+                },
+                "up": {
+                    "type": "command",
+                    "id": "GOTO_SETTINGS"
+                },
+                "down": {
+                    "type": "command",
+                    "id": "SWITCH_IME"
+                },
+                "left": {
+                    "type": "command",
+                    "id": "SWITCH_LANGUAGE"
+                },
+                "right": {
+                    "type": "command",
+                    "id": "MOVE_KEYBOARD"
+                },
+                "upLeft": {
+                    "type": "command",
+                    "id": "TOGGLE_HIDE_LETTERS"
+                },
+                "downLeft": {
+                    "type": "command",
+                    "id": "SWITCH_IME_VOICE"
+                }
+            }
+        },
+        {
+            "slide": {
+                "axis": "BOTH",
+                "behavior": "MOVE_CURSOR"
+            },
+            "zones": {
+                "center": {
+                    "type": "text",
+                    "value": " "
+                },
+                "up": {
+                    "type": "command",
+                    "id": "ARROW_UP"
+                },
+                "down": {
+                    "type": "command",
+                    "id": "ARROW_DOWN"
+                },
+                "left": {
+                    "type": "command",
+                    "id": "ARROW_LEFT"
+                },
+                "right": {
+                    "type": "command",
+                    "id": "ARROW_RIGHT"
+                }
+            }
+        },
+        {
+            "columnSpan": 2,
+            "zones": {
+                "center": {
+                    "type": "command",
+                    "id": "ENTER"
+                },
+                "up": {
+                    "type": "command",
+                    "id": "TAB"
+                }
+            }
+        }
+    ],
+    "clipboardBottomRow": [
+        {
+            "slide": {
+                "axis": "HORIZONTAL",
+                "behavior": "SELECT_AND_DELETE"
+            },
+            "zones": {
+                "center": {
+                    "type": "command",
+                    "id": "BACKSPACE"
+                },
+                "up": {
+                    "type": "text",
+                    "value": "'"
+                },
+                "down": {
+                    "type": "text",
+                    "value": "\""
+                }
+            }
+        },
+        {
+            "zones": {
+                "center": {
+                    "type": "command",
+                    "id": "TOGGLE_CLIPBOARD_HISTORY"
+                },
+                "up": {
+                    "type": "command",
+                    "id": "GOTO_SETTINGS"
+                },
+                "down": {
+                    "type": "command",
+                    "id": "SWITCH_IME"
+                },
+                "left": {
+                    "type": "command",
+                    "id": "SWITCH_LANGUAGE"
+                },
+                "right": {
+                    "type": "command",
+                    "id": "MOVE_KEYBOARD"
+                },
+                "upLeft": {
+                    "type": "command",
+                    "id": "TOGGLE_HIDE_LETTERS"
+                },
+                "downLeft": {
+                    "type": "command",
+                    "id": "SWITCH_IME_VOICE"
+                }
+            }
+        },
+        {
+            "slide": {
+                "axis": "BOTH",
+                "behavior": "MOVE_CURSOR"
+            },
+            "zones": {
+                "center": {
+                    "type": "text",
+                    "value": " "
+                },
+                "up": {
+                    "type": "command",
+                    "id": "ARROW_UP"
+                },
+                "down": {
+                    "type": "command",
+                    "id": "ARROW_DOWN"
+                },
+                "left": {
+                    "type": "command",
+                    "id": "ARROW_LEFT"
+                },
+                "right": {
+                    "type": "command",
+                    "id": "ARROW_RIGHT"
+                }
+            }
+        },
+        {
+            "columnSpan": 2,
+            "zones": {
+                "center": {
+                    "type": "command",
+                    "id": "ENTER"
+                },
+                "up": {
+                    "type": "command",
+                    "id": "TAB"
+                }
+            }
+        }
+    ],
+    "shiftMappings": {
+        "ö": "Ö",
+        "ä": "Ä",
+        "ü": "Ü",
+        "ß": "SS",
+        "sch": "Sch",
+        "ch": "Ch"
+    },
+    "capsLockMappings": {
+        "sch": "SCH",
+        "ch": "CH"
+    },
+    "layerHeights": {
+        "EMOJI": 6,
+        "CLIPBOARD": 6
+    },
+    "layerContent": {
+        "EMOJI": "emojiPicker",
+        "CLIPBOARD": "clipboardHistory"
+    }
+}

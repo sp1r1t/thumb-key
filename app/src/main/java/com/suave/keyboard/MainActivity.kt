@@ -37,6 +37,8 @@ import com.suave.keyboard.db.AppSettingsViewModel
 import com.suave.keyboard.db.AppSettingsViewModelFactory
 import com.suave.keyboard.db.ClipboardDB
 import com.suave.keyboard.db.ClipboardRepository
+import com.suave.keyboard.layout.LayoutRegistry
+import com.suave.keyboard.layout.UserLayoutStore
 import com.suave.keyboard.ui.components.common.ShowChangelog
 import com.suave.keyboard.ui.components.settings.SettingsScreen
 import com.suave.keyboard.ui.components.settings.about.AboutScreen
@@ -44,10 +46,15 @@ import com.suave.keyboard.ui.components.settings.backupandrestore.BackupAndResto
 import com.suave.keyboard.ui.components.settings.behavior.BehaviorScreen
 import com.suave.keyboard.ui.components.settings.clipboard.ClipboardSettingsScreen
 import com.suave.keyboard.ui.components.settings.appearance.AppearanceScreen
+import com.suave.keyboard.ui.components.settings.appearance.ThemeEditorScreen
+import com.suave.keyboard.ui.components.settings.appearance.ThemesScreen
+import com.suave.keyboard.ui.components.settings.layouts.LayoutEditorScreen
+import com.suave.keyboard.ui.components.settings.layouts.LayoutsScreen
 import com.suave.keyboard.ui.components.settings.other.OtherSettingsScreen
 import com.suave.keyboard.ui.components.settings.suggestions.SuggestionsSettingsScreen
 import com.suave.keyboard.ui.components.setup.SetupScreen
 import com.suave.keyboard.ui.theme.SuaveTheme
+import com.suave.keyboard.ui.theme.ThemeRegistry
 import com.suave.keyboard.utils.ANIMATION_SPEED
 import com.suave.keyboard.utils.getImeNames
 import splitties.systemservices.inputMethodManager
@@ -66,11 +73,36 @@ class SuaveApplication : Application() {
             this,
         )
     }
+
+    val userLayoutStore: UserLayoutStore by lazy { UserLayoutStore.create(this) }
+
+    override fun onCreate() {
+        super.onCreate()
+        LayoutRegistry.ensureLoaded(this)
+        ThemeRegistry.ensureLoaded(this)
+        try {
+            kotlinx.coroutines.runBlocking {
+                userLayoutStore.loadIntoRegistry()
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("suave", "Failed to load user layouts: ${e.message}")
+        }
+    }
 }
 
 class MainActivity : AppCompatActivity() {
     private val appSettingsViewModel: AppSettingsViewModel by viewModels {
         AppSettingsViewModelFactory((application as SuaveApplication).appSettingsRepository)
+    }
+
+    override fun onStart() {
+        super.onStart()
+        SettingsSession.enter()
+    }
+
+    override fun onStop() {
+        SettingsSession.leave()
+        super.onStop()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -209,6 +241,19 @@ class MainActivity : AppCompatActivity() {
                             appSettingsViewModel = appSettingsViewModel,
                         )
                     }
+                    composable(route = "themes") {
+                        ThemesScreen(
+                            navController = navController,
+                            appSettingsViewModel = appSettingsViewModel,
+                        )
+                    }
+                    composable(route = "themeEditor/{themeId}") { entry ->
+                        val themeId = entry.arguments?.getString("themeId") ?: return@composable
+                        ThemeEditorScreen(
+                            navController = navController,
+                            themeId = themeId,
+                        )
+                    }
                     composable(route = "behavior") {
                         BehaviorScreen(
                             navController = navController,
@@ -247,6 +292,26 @@ class MainActivity : AppCompatActivity() {
                         OtherSettingsScreen(
                             navController = navController,
                             appSettingsViewModel = appSettingsViewModel,
+                        )
+                    }
+                    composable(route = "layouts") {
+                        LayoutsScreen(
+                            navController = navController,
+                            appSettingsViewModel = appSettingsViewModel,
+                        )
+                    }
+                    composable(route = "layoutEditor/{layoutId}") { entry ->
+                        LayoutEditorScreen(
+                            navController = navController,
+                            appSettingsViewModel = appSettingsViewModel,
+                            editId = entry.arguments?.getString("layoutId"),
+                        )
+                    }
+                    composable(route = "layoutCreate/{sourceId}") { entry ->
+                        LayoutEditorScreen(
+                            navController = navController,
+                            appSettingsViewModel = appSettingsViewModel,
+                            createFrom = entry.arguments?.getString("sourceId"),
                         )
                     }
                 }
