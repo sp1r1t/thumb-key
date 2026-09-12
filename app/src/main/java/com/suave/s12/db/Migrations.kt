@@ -570,3 +570,15 @@ val MIGRATION_38_39 =
             )
         }
     }
+
+val MIGRATION_39_40 =
+    object : Migration(39, 40) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN vibrate_on_hold_repeat INTEGER NOT NULL DEFAULT $DEFAULT_VIBRATE_ON_HOLD_REPEAT",
+            )
+            // Hold-repeat used to share the tap toggle. Copy so a silent keyboard stays silent
+            // until the user splits the two.
+            db.execSQL("UPDATE AppSettings SET vibrate_on_hold_repeat = vibrate_on_tap")
+        }
+    }

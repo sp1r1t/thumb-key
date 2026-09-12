@@ -72,6 +72,7 @@ import com.suave.s12.db.DEFAULT_THEME
 import com.suave.s12.db.DEFAULT_THEME_COLOR
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
 import com.suave.s12.db.DEFAULT_CAPTURE_SYSTEM_CLIPBOARD
+import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
 import com.suave.s12.layout.DEFAULT_LAYER_HEIGHTS
@@ -242,6 +243,7 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             layerHeights = DEFAULT_LAYER_HEIGHTS,
             vibrateOnTap = DEFAULT_VIBRATE_ON_TAP,
             vibrateOnSlide = DEFAULT_VIBRATE_ON_SLIDE,
+            vibrateOnHoldRepeat = DEFAULT_VIBRATE_ON_HOLD_REPEAT,
             minSwipeLength = DEFAULT_MIN_SWIPE_LENGTH,
             escAsModifier = DEFAULT_ESC_AS_MODIFIER,
             ctrlAsModifier = DEFAULT_CTRL_AS_MODIFIER,

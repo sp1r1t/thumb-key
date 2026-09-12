@@ -31,6 +31,7 @@ import androidx.compose.material.icons.outlined.LinearScale
 import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.Padding
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Repeat
 import androidx.compose.material.icons.outlined.RoundedCorner
 import androidx.compose.material.icons.outlined.South
 import androidx.compose.material.icons.outlined.Tag
@@ -88,6 +89,7 @@ import com.suave.s12.db.DEFAULT_KEY_RADIUS
 import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_THEME
 import com.suave.s12.db.DEFAULT_THEME_COLOR
+import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
 import com.suave.s12.db.LookAndFeelUpdate
@@ -136,6 +138,8 @@ fun LookAndFeelScreen(
 
     var vibrateOnTapState = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
     var vibrateOnSlideState = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
+    var vibrateOnHoldRepeatState =
+        (settings?.vibrateOnHoldRepeat ?: DEFAULT_VIBRATE_ON_HOLD_REPEAT).toBool()
     var animationPressHighlightState =
         (settings?.animationPressHighlight ?: DEFAULT_ANIMATION_PRESS_HIGHLIGHT).toBool()
     var animationReleaseFlashState =
@@ -169,6 +173,7 @@ fun LookAndFeelScreen(
                 id = 1,
                 vibrateOnTap = vibrateOnTapState.toInt(),
                 vibrateOnSlide = vibrateOnSlideState.toInt(),
+                vibrateOnHoldRepeat = vibrateOnHoldRepeatState.toInt(),
                 hideLetters = hideLettersState.toInt(),
                 hideSymbols = hideSymbolsState.toInt(),
                 hideNumbers = hideNumbersState.toInt(),
@@ -445,6 +450,7 @@ fun LookAndFeelScreen(
                                 updateLookAndFeel()
                             },
                             valueRange = 0..250,
+                            vibrateOnRepeat = vibrateOnHoldRepeatState,
                             title = {
                                 SettingTitle(
                                     text = stringResource(R.string.raise_from_bottom),
@@ -515,6 +521,7 @@ fun LookAndFeelScreen(
                                 updateLookAndFeel()
                             },
                             valueRange = 10..200,
+                            vibrateOnRepeat = vibrateOnHoldRepeatState,
                             title = {
                                 Text(stringResource(R.string.key_height))
                             },
@@ -543,6 +550,7 @@ fun LookAndFeelScreen(
                                 updateLookAndFeel()
                             },
                             valueRange = 0..10,
+                            vibrateOnRepeat = vibrateOnHoldRepeatState,
                             title = {
                                 SettingTitle(
                                     text = stringResource(R.string.key_spacing_horizontal),
@@ -583,6 +591,7 @@ fun LookAndFeelScreen(
                                 updateLookAndFeel()
                             },
                             valueRange = 0..10,
+                            vibrateOnRepeat = vibrateOnHoldRepeatState,
                             title = {
                                 SettingTitle(
                                     text = stringResource(R.string.key_spacing_vertical),
@@ -623,6 +632,7 @@ fun LookAndFeelScreen(
                                 updateLookAndFeel()
                             },
                             valueRange = 0..50,
+                            vibrateOnRepeat = vibrateOnHoldRepeatState,
                             title = {
                                 SettingTitle(
                                     text = stringResource(R.string.border_thickness),
@@ -663,6 +673,7 @@ fun LookAndFeelScreen(
                                 updateLookAndFeel()
                             },
                             valueRange = 0..100,
+                            vibrateOnRepeat = vibrateOnHoldRepeatState,
                             title = {
                                 Text(stringResource(R.string.corner_roundness))
                             },
@@ -694,6 +705,7 @@ fun LookAndFeelScreen(
                                     namedLayout = namedLayout,
                                     overrides = layerHeightOverrides,
                                     showInfo = index == 0,
+                                    vibrateOnRepeat = vibrateOnHoldRepeatState,
                                     onOverridesChange = { next ->
                                         layerHeightsState = formatLayerHeightOverrides(next)
                                         updateLookAndFeel()
@@ -749,6 +761,36 @@ fun LookAndFeelScreen(
                         icon = {
                             Icon(
                                 imageVector = Icons.Outlined.LinearScale,
+                                contentDescription = null,
+                            )
+                        },
+                    )
+                    SwitchPreference(
+                        value = vibrateOnHoldRepeatState,
+                        onValueChange = {
+                            vibrateOnHoldRepeatState = it
+                            updateLookAndFeel()
+                        },
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.vibrate_on_hold_repeat),
+                                infoText = stringResource(R.string.vibrate_on_hold_repeat_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                stringResource(
+                                    if (vibrateOnHoldRepeatState) {
+                                        R.string.vibrate_on_hold_repeat_on
+                                    } else {
+                                        R.string.vibrate_on_hold_repeat_off
+                                    },
+                                ),
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Repeat,
                                 contentDescription = null,
                             )
                         },
@@ -1005,6 +1047,7 @@ private fun LayerHeightRow(
     namedLayout: NamedLayout,
     overrides: Map<LayoutLayer, Int>,
     showInfo: Boolean,
+    vibrateOnRepeat: Boolean,
     onOverridesChange: (Map<LayoutLayer, Int>) -> Unit,
 ) {
     val gridRows = namedLayout.gridRowCount(layer)
@@ -1022,6 +1065,7 @@ private fun LayerHeightRow(
                 onOverridesChange(overrides + (layer to rows))
             },
             valueRange = gridRows..MAX_LAYER_HEIGHT_ROWS,
+            vibrateOnRepeat = vibrateOnRepeat,
             title = {
                 SettingTitle(
                     text = stringResource(layer.heightTitleRes()),

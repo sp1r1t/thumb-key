@@ -8,16 +8,17 @@ data class HapticPattern(
 
 /**
  * Minimal Phase 1 feedback settings - not a port of the old app's full settings surface, just
- * enough to drive [FeedbackDispatcher]. [tapVibrationEnabled] and [slideVibrationEnabled] are
- * kept independent, matching the pre-rewrite app's two separate settings ("Vibrate on tap" vs.
- * "Vibrate for slide gestures", the latter scoped specifically to the continuous spacebar/
- * backspace slide) - [FeedbackEvent.SlideStep] is gated by [slideVibrationEnabled], every other
- * event by [tapVibrationEnabled]. [baseAmplitude] is 1-255 (Android's `VibrationEffect`
- * amplitude range).
+ * enough to drive [FeedbackDispatcher]. [tapVibrationEnabled], [slideVibrationEnabled] and
+ * [holdRepeatVibrationEnabled] stay independent, matching the app's three separate settings
+ * ("Vibrate on tap", "Vibrate for slide gestures", "Vibrate on hold-repeat").
+ * [FeedbackEvent.SlideStep] is gated by [slideVibrationEnabled], [FeedbackEvent.RepeatTick] by
+ * [holdRepeatVibrationEnabled], every other event by [tapVibrationEnabled]. [baseAmplitude] is
+ * 1-255 (Android's `VibrationEffect` amplitude range).
  */
 data class FeedbackSettings(
     val tapVibrationEnabled: Boolean,
     val slideVibrationEnabled: Boolean,
+    val holdRepeatVibrationEnabled: Boolean,
     val baseDurationMs: Long,
     val baseAmplitude: Int,
 )
@@ -35,7 +36,12 @@ object FeedbackDispatcher {
         settings: FeedbackSettings,
         player: HapticPlayer,
     ) {
-        val enabled = if (event is FeedbackEvent.SlideStep) settings.slideVibrationEnabled else settings.tapVibrationEnabled
+        val enabled =
+            when (event) {
+                is FeedbackEvent.SlideStep -> settings.slideVibrationEnabled
+                is FeedbackEvent.RepeatTick -> settings.holdRepeatVibrationEnabled
+                else -> settings.tapVibrationEnabled
+            }
         if (!enabled) return
         player.play(patternFor(event, settings))
     }

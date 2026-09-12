@@ -33,8 +33,8 @@ internal const val STEPPER_REPEAT_INTERVAL_MS = 80L
 
 /**
  * Preference row with minus/plus buttons for an integer setting. One tap moves [step]; holding
- * a button past [STEPPER_REPEAT_DELAY_MS] buzzes once and then repeats so a wide range (key
- * height, swipe length) is still reachable without a slider.
+ * a button past [STEPPER_REPEAT_DELAY_MS] repeats so a wide range (key height, swipe length)
+ * is still reachable without a slider. A threshold buzz is optional via [vibrateOnRepeat].
  */
 @Composable
 fun IntStepperPreference(
@@ -47,6 +47,7 @@ fun IntStepperPreference(
     icon: @Composable (() -> Unit)? = null,
     summary: @Composable (() -> Unit)? = null,
     step: Int = 1,
+    vibrateOnRepeat: Boolean = true,
 ) {
     Preference(
         title = title,
@@ -59,12 +60,14 @@ fun IntStepperPreference(
                 RepeatingIconButton(
                     onClick = { nextStepperValue(value, -step, valueRange)?.let(onValueChange) },
                     enabled = enabled && value > valueRange.first,
+                    vibrateOnRepeat = vibrateOnRepeat,
                     imageVector = Icons.Outlined.Remove,
                     contentDescription = stringResource(R.string.decrease_value),
                 )
                 RepeatingIconButton(
                     onClick = { nextStepperValue(value, step, valueRange)?.let(onValueChange) },
                     enabled = enabled && value < valueRange.last,
+                    vibrateOnRepeat = vibrateOnRepeat,
                     imageVector = Icons.Outlined.Add,
                     contentDescription = stringResource(R.string.increase_value),
                 )
@@ -87,12 +90,14 @@ internal fun nextStepperValue(
 private fun RepeatingIconButton(
     onClick: () -> Unit,
     enabled: Boolean,
+    vibrateOnRepeat: Boolean,
     imageVector: ImageVector,
     contentDescription: String,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
     val onClickState = rememberUpdatedState(onClick)
+    val vibrateOnRepeatState = rememberUpdatedState(vibrateOnRepeat)
     var repeating by remember { mutableStateOf(false) }
     val view = LocalView.current
 
@@ -104,10 +109,12 @@ private fun RepeatingIconButton(
         repeating = false
         delay(STEPPER_REPEAT_DELAY_MS)
         repeating = true
-        view.performHapticFeedback(
-            HapticFeedbackConstants.KEYBOARD_TAP,
-            HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING,
-        )
+        if (vibrateOnRepeatState.value) {
+            view.performHapticFeedback(
+                HapticFeedbackConstants.KEYBOARD_TAP,
+                HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING,
+            )
+        }
         while (true) {
             onClickState.value()
             delay(STEPPER_REPEAT_INTERVAL_MS)

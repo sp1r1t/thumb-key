@@ -46,6 +46,10 @@
     <string name="theme_color">Designfarbe</string>
     <string name="position">Position</string>
     <string name="vibrate_on_tap">haptisches Feedback</string>
+    <string name="vibrate_on_hold_repeat">Vibrieren beim Halten-Wiederholen</string>
+    <string name="vibrate_on_hold_repeat_on">An - vibriert, wenn Halten-Wiederholen einsetzt (Tasten und Plus/Minus in den Einstellungen)</string>
+    <string name="vibrate_on_hold_repeat_off">Aus - Halten-Wiederholen bleibt still</string>
+    <string name="vibrate_on_hold_repeat_info">Braucht Touch-Feedback in den Systemeinstellungen. Das erste Antippen folgt \"Vibrieren beim Tippen\"; dieser Schalter gilt nur für die Wiederholung danach.</string>
     <string name="play_sound_on_tap">akustisches Feedback</string>
     <string name="auto_capitalize">Auto-Großschreibung</string>
     <string name="key_size">Tastengröße: %1$s</string>

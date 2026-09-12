@@ -56,6 +56,10 @@
     <string name="vibrate_on_slide_on">On - buzzes when sliding on the spacebar or backspace keys</string>
     <string name="vibrate_on_slide_off">Off - no vibration while sliding</string>
     <string name="vibrate_on_slide_info">Requires touch feedback to be enabled in your device\'s system settings, or this has no effect regardless of this toggle.</string>
+    <string name="vibrate_on_hold_repeat">Vibrate on hold-repeat</string>
+    <string name="vibrate_on_hold_repeat_on">On - buzzes when hold-repeat starts on a key or a settings plus/minus</string>
+    <string name="vibrate_on_hold_repeat_off">Off - holding to repeat does not vibrate</string>
+    <string name="vibrate_on_hold_repeat_info">Requires touch feedback in your device\'s system settings, or this has no effect. The first tap still follows Vibrate on tap; this switch is only the repeating that follows a hold.</string>
     <string name="play_sound_on_tap">Play sound on tap</string>
     <string name="auto_capitalize">Auto-capitalize</string>
     <string name="auto_size_keys">Maximize to fit screen width</string>

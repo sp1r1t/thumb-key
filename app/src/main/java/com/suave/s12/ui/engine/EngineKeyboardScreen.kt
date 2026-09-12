@@ -69,6 +69,7 @@ import com.suave.s12.db.DEFAULT_POSITION
 import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
+import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
 import com.suave.s12.engine.action.SemanticAction
@@ -133,6 +134,7 @@ fun EngineKeyboardScreen(
 
     val vibrateOnTap = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
     val vibrateOnSlide = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
+    val vibrateOnHoldRepeat = (settings?.vibrateOnHoldRepeat ?: DEFAULT_VIBRATE_ON_HOLD_REPEAT).toBool()
     val legendVisibility =
         LegendVisibility(
             hideLetters = (settings?.hideLetters ?: DEFAULT_HIDE_LETTERS).toBool(),
@@ -186,13 +188,14 @@ fun EngineKeyboardScreen(
     val passwordField = remember { isPasswordField(ime) }
 
     val feedbackSettings =
-        remember(vibrateOnTap, vibrateOnSlide) {
+        remember(vibrateOnTap, vibrateOnSlide, vibrateOnHoldRepeat) {
             // baseDurationMs/baseAmplitude are currently inert - HapticFeedbackPlayer's
             // underlying primitive doesn't expose either (see its doc for why) - kept so this
             // doesn't need touching if a real second lever ever turns up.
             FeedbackSettings(
                 tapVibrationEnabled = vibrateOnTap,
                 slideVibrationEnabled = vibrateOnSlide,
+                holdRepeatVibrationEnabled = vibrateOnHoldRepeat,
                 baseDurationMs = 25L,
                 baseAmplitude = 130,
             )

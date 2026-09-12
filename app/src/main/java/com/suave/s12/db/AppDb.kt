@@ -42,6 +42,7 @@ const val DEFAULT_THEME = 0
 const val DEFAULT_THEME_COLOR = 0
 const val DEFAULT_VIBRATE_ON_TAP = 1
 const val DEFAULT_VIBRATE_ON_SLIDE = 1
+const val DEFAULT_VIBRATE_ON_HOLD_REPEAT = 1
 const val DEFAULT_SOUND_ON_TAP = 0
 const val DEFAULT_MIN_SWIPE_LENGTH = 40
 const val DEFAULT_PUSHUP_SIZE = 0
@@ -188,6 +189,11 @@ data class AppSettings(
         defaultValue = DEFAULT_VIBRATE_ON_SLIDE.toString(),
     )
     val vibrateOnSlide: Int,
+    @ColumnInfo(
+        name = "vibrate_on_hold_repeat",
+        defaultValue = DEFAULT_VIBRATE_ON_HOLD_REPEAT.toString(),
+    )
+    val vibrateOnHoldRepeat: Int = DEFAULT_VIBRATE_ON_HOLD_REPEAT,
     @ColumnInfo(
         name = "min_swipe_length",
         defaultValue = DEFAULT_MIN_SWIPE_LENGTH.toString(),
@@ -378,6 +384,8 @@ data class LookAndFeelUpdate(
     val vibrateOnTap: Int,
     @ColumnInfo(name = "vibrate_on_slide")
     val vibrateOnSlide: Int,
+    @ColumnInfo(name = "vibrate_on_hold_repeat")
+    val vibrateOnHoldRepeat: Int,
     @ColumnInfo(name = "backdrop_enabled")
     val backdropEnabled: Int,
     @ColumnInfo(name = "key_padding")
@@ -535,7 +543,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 39,
+    version = 40,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -619,6 +627,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_36_37,
                             MIGRATION_37_38,
                             MIGRATION_38_39,
+                            MIGRATION_39_40,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

@@ -43,6 +43,7 @@ import com.suave.s12.db.DEFAULT_CLIPBOARD_MAX_SIZE
 import com.suave.s12.db.DEFAULT_CLIPBOARD_SIZE_LIMIT_ENABLED
 import com.suave.s12.db.DEFAULT_CAPTURE_SYSTEM_CLIPBOARD
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
+import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
 import com.suave.s12.db.MAX_CLIPBOARD_MAX_SIZE
 import com.suave.s12.db.MIN_CLIPBOARD_MAX_SIZE
 import com.suave.s12.ui.components.common.IntStepperPreference
@@ -107,6 +108,7 @@ fun ClipboardSettingsScreen(
         (settings?.usePrivateClipboard ?: DEFAULT_USE_PRIVATE_CLIPBOARD).toBool()
     var captureSystemClipboardState =
         (settings?.captureSystemClipboard ?: DEFAULT_CAPTURE_SYSTEM_CLIPBOARD).toBool()
+    val vibrateOnHoldRepeat = (settings?.vibrateOnHoldRepeat ?: DEFAULT_VIBRATE_ON_HOLD_REPEAT).toBool()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
@@ -352,6 +354,7 @@ fun ClipboardSettingsScreen(
                                 updateClipboardSettings()
                             },
                             valueRange = MIN_CLIPBOARD_MAX_SIZE..MAX_CLIPBOARD_MAX_SIZE,
+                            vibrateOnRepeat = vibrateOnHoldRepeat,
                             enabled = clipboardHistoryEnabledState && clipboardSizeLimitEnabledState,
                             title = {
                                 Text(stringResource(R.string.clipboard_max_size))

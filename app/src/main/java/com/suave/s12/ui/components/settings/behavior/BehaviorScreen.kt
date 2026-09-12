@@ -32,6 +32,7 @@ import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
 import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.SettingTitle
@@ -60,6 +61,7 @@ fun BehaviorScreen(
     var ctrlAsModifierState = (settings?.ctrlAsModifier ?: DEFAULT_CTRL_AS_MODIFIER).toBool()
     var altAsModifierState = (settings?.altAsModifier ?: DEFAULT_ALT_AS_MODIFIER).toBool()
     var shiftAsModifierState = (settings?.shiftAsModifier ?: DEFAULT_SHIFT_AS_MODIFIER).toBool()
+    val vibrateOnHoldRepeat = (settings?.vibrateOnHoldRepeat ?: DEFAULT_VIBRATE_ON_HOLD_REPEAT).toBool()
 
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -110,6 +112,7 @@ fun BehaviorScreen(
                                 updateBehavior()
                             },
                             valueRange = 0..200,
+                            vibrateOnRepeat = vibrateOnHoldRepeat,
                             title = {
                                 Text(stringResource(R.string.min_swipe_length))
                             },
