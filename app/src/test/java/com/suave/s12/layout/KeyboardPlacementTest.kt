@@ -104,6 +104,7 @@ class KeyboardPlacementTest {
             reachableKeyboardPositions(
                 enabled = all,
                 preventCrampedDual = true,
+                preventNeedlessSplit = true,
                 screenWidthDp = widePhone,
                 columnCount = 5,
             )
@@ -116,11 +117,65 @@ class KeyboardPlacementTest {
     fun `reachable keeps Dual when prevent-cramped is off or there is room`() {
         assertEquals(
             all,
-            reachableKeyboardPositions(all, preventCrampedDual = false, screenWidthDp = widePhone, columnCount = 5),
+            reachableKeyboardPositions(
+                all,
+                preventCrampedDual = false,
+                preventNeedlessSplit = false,
+                screenWidthDp = widePhone,
+                columnCount = 5,
+            ),
         )
         assertEquals(
             all,
-            reachableKeyboardPositions(all, preventCrampedDual = true, screenWidthDp = tablet, columnCount = 5),
+            reachableKeyboardPositions(
+                all,
+                preventCrampedDual = true,
+                preventNeedlessSplit = false,
+                screenWidthDp = tablet,
+                columnCount = 5,
+            ),
+        )
+    }
+
+    @Test
+    fun `split makes sense only when Dual is cramped and Split keys still fit`() {
+        assertTrue(splitMakesSense(widePhone, columnCount = 5))
+        assertFalse(splitMakesSense(tablet, columnCount = 5))
+        assertTrue(isSplitCramped(200, columnCount = 5))
+        assertFalse(splitMakesSense(200, columnCount = 5))
+    }
+
+    @Test
+    fun `reachable drops Split when Dual already fits or Split itself is cramped`() {
+        assertEquals(
+            listOf(KeyboardPosition.Center, KeyboardPosition.Dual),
+            reachableKeyboardPositions(
+                enabled = all,
+                preventCrampedDual = true,
+                preventNeedlessSplit = true,
+                screenWidthDp = tablet,
+                columnCount = 5,
+            ),
+        )
+        assertEquals(
+            listOf(KeyboardPosition.Center),
+            reachableKeyboardPositions(
+                enabled = all,
+                preventCrampedDual = true,
+                preventNeedlessSplit = true,
+                screenWidthDp = 200,
+                columnCount = 5,
+            ),
+        )
+        assertEquals(
+            all,
+            reachableKeyboardPositions(
+                enabled = all,
+                preventCrampedDual = true,
+                preventNeedlessSplit = false,
+                screenWidthDp = tablet,
+                columnCount = 5,
+            ),
         )
     }
 

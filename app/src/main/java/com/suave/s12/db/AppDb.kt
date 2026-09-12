@@ -38,6 +38,7 @@ const val DEFAULT_POSITION = 0
 const val DEFAULT_POSITION_PADDING = 0
 const val DEFAULT_KEYBOARD_POSITIONS = "Center,Dual,Split"
 const val DEFAULT_PREVENT_CRAMPED_DUAL = 1
+const val DEFAULT_PREVENT_NEEDLESS_SPLIT = 1
 const val DEFAULT_AUTO_CAPITALIZE = 1
 const val DEFAULT_KEYBOARD_LAYOUT = 0
 const val DEFAULT_THEME = 0
@@ -264,6 +265,11 @@ data class AppSettings(
         defaultValue = DEFAULT_PREVENT_CRAMPED_DUAL.toString(),
     )
     val preventCrampedDual: Int = DEFAULT_PREVENT_CRAMPED_DUAL,
+    @ColumnInfo(
+        name = "prevent_needless_split",
+        defaultValue = DEFAULT_PREVENT_NEEDLESS_SPLIT.toString(),
+    )
+    val preventNeedlessSplit: Int = DEFAULT_PREVENT_NEEDLESS_SPLIT,
     @ColumnInfo(
         name = "inline_suggestions",
         defaultValue = DEFAULT_INLINE_SUGGESTIONS.toString(),
@@ -499,6 +505,10 @@ data class AppearanceUpdate(
     val keyboardPositions: String,
     @ColumnInfo(name = "prevent_cramped_dual")
     val preventCrampedDual: Int,
+    @ColumnInfo(name = "prevent_needless_split")
+    val preventNeedlessSplit: Int,
+    @ColumnInfo(name = "show_toast_on_layout_switch")
+    val showToastOnLayoutSwitch: Int,
     @ColumnInfo(name = "inline_suggestions")
     val inlineSuggestions: Int,
     @ColumnInfo(name = "inline_suggestion_height")
@@ -642,7 +652,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 44,
+    version = 45,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -731,6 +741,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_41_42,
                             MIGRATION_42_43,
                             MIGRATION_43_44,
+                            MIGRATION_44_45,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

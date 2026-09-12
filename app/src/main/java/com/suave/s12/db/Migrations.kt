@@ -645,3 +645,12 @@ val MIGRATION_43_44 =
             )
         }
     }
+
+val MIGRATION_44_45 =
+    object : Migration(44, 45) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN prevent_needless_split INTEGER NOT NULL DEFAULT $DEFAULT_PREVENT_NEEDLESS_SPLIT",
+            )
+        }
+    }

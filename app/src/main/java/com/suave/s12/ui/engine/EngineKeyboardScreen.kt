@@ -70,6 +70,7 @@ import com.suave.s12.db.DEFAULT_KEYBOARD_POSITIONS
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_POSITION
 import com.suave.s12.db.DEFAULT_PREVENT_CRAMPED_DUAL
+import com.suave.s12.db.DEFAULT_PREVENT_NEEDLESS_SPLIT
 import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
@@ -170,6 +171,7 @@ fun EngineKeyboardScreen(
         reachableKeyboardPositions(
             enabled = parseKeyboardPositions(settings?.keyboardPositions ?: DEFAULT_KEYBOARD_POSITIONS),
             preventCrampedDual = (settings?.preventCrampedDual ?: DEFAULT_PREVENT_CRAMPED_DUAL).toBool(),
+            preventNeedlessSplit = (settings?.preventNeedlessSplit ?: DEFAULT_PREVENT_NEEDLESS_SPLIT).toBool(),
             screenWidthDp = screenWidthDp,
             columnCount = namedLayout.layout.columnCount(),
         )
