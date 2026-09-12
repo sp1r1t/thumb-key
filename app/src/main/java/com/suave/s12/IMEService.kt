@@ -34,8 +34,6 @@ import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
 import com.suave.s12.db.DEFAULT_INLINE_SUGGESTIONS
 import com.suave.s12.db.DEFAULT_INLINE_SUGGESTION_HEIGHT
 import com.suave.s12.db.DEFAULT_SHOW_ON_SCREEN_KEYBOARD
-import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_COPY
-import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_CUT
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
 import com.suave.s12.db.isCredentialStorageUnlocked
 import com.suave.s12.ime.InlineAutofillHost
@@ -314,18 +312,6 @@ class IMEService :
         val clipboardHistoryEnabled = (settings?.clipboardHistoryEnabled ?: DEFAULT_CLIPBOARD_HISTORY_ENABLED).toBool()
         val usePrivateClipboard = (settings?.usePrivateClipboard ?: DEFAULT_USE_PRIVATE_CLIPBOARD).toBool()
         return clipboardHistoryEnabled && usePrivateClipboard
-    }
-
-    fun showToastOnCopy(): Boolean {
-        val settingsRepo = (application as ThumbkeyApplication).appSettingsRepository
-        val settings = settingsRepo.appSettings.getValue()
-        return (settings?.showToastOnCopy ?: DEFAULT_SHOW_TOAST_ON_COPY).toBool()
-    }
-
-    fun showToastOnCut(): Boolean {
-        val settingsRepo = (application as ThumbkeyApplication).appSettingsRepository
-        val settings = settingsRepo.appSettings.getValue()
-        return (settings?.showToastOnCut ?: DEFAULT_SHOW_TOAST_ON_CUT).toBool()
     }
 
     fun clipboardAddPrivateClip(text: String): Unit? = clipboardManager?.addPrivateClip(text)
