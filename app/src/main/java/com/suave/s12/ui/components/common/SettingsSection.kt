@@ -28,14 +28,14 @@ import androidx.compose.ui.unit.dp
 import com.suave.s12.R
 
 /**
- * A labeled, collapsible group of preference rows. Use this instead of a plain divider
- * when a screen has more than one cluster of related settings.
+ * A labeled, collapsible group of preference rows, folded by default. Use this instead
+ * of a plain divider when a screen has more than one cluster of related settings.
  */
 @Composable
 fun SettingsSection(
     title: String,
     modifier: Modifier = Modifier,
-    initiallyExpanded: Boolean = true,
+    initiallyExpanded: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var expanded by rememberSaveable { mutableStateOf(initiallyExpanded) }

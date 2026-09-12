@@ -279,9 +279,7 @@ fun LookAndFeelScreen(
                     }
 
                     SettingsSection(
-                        title = stringResource(R.string.settings_section_labels),
-                        initiallyExpanded = false,
-                    ) {
+                        title = stringResource(R.string.settings_section_labels)                    ) {
                     HideLabelSwitch(
                         value = hideLettersState,
                         onValueChange = {
@@ -381,9 +379,7 @@ fun LookAndFeelScreen(
                     }
 
                     SettingsSection(
-                        title = stringResource(R.string.settings_section_keyboard),
-                        initiallyExpanded = false,
-                    ) {
+                        title = stringResource(R.string.settings_section_keyboard)                    ) {
                     SettingRow {
                         SwitchPreference(
                             value = backdropEnabledState,
@@ -690,9 +686,7 @@ fun LookAndFeelScreen(
                     }
 
                     SettingsSection(
-                        title = stringResource(R.string.settings_section_layers),
-                        initiallyExpanded = false,
-                    ) {
+                        title = stringResource(R.string.settings_section_layers)                    ) {
                         namedLayout.availableLayers().forEachIndexed { index, layer ->
                             key(layer) {
                                 LayerHeightRow(
@@ -710,9 +704,7 @@ fun LookAndFeelScreen(
                     }
 
                     SettingsSection(
-                        title = stringResource(R.string.settings_section_feedback),
-                        initiallyExpanded = false,
-                    ) {
+                        title = stringResource(R.string.settings_section_feedback)                    ) {
                     SwitchPreference(
                         value = vibrateOnTapState,
                         onValueChange = {
@@ -764,9 +756,7 @@ fun LookAndFeelScreen(
                     }
 
                     SettingsSection(
-                        title = stringResource(R.string.settings_section_animations),
-                        initiallyExpanded = false,
-                    ) {
+                        title = stringResource(R.string.settings_section_animations)                    ) {
                         SwitchPreference(
                             value = animationPressHighlightState,
                             onValueChange = {
