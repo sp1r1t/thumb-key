@@ -6,9 +6,10 @@ enum class SwipeDirections { NONE, FOUR_WAY, EIGHT_WAY }
 /**
  * Per-key gesture thresholds. One [GestureConfig] describes everything [GestureRecognizer]
  * needs to know about a single key's capabilities; a plain character key sets [directions] and
- * leaves [slideAxis] null, spacebar/backspace set both (short swipe still resolves to a
- * [SwipeDirections] zone within [minSwipeDistancePx]; sustained movement along [slideAxis]
- * becomes a slide instead).
+ * leaves [slideAxis] null. Spacebar and backspace set both: a short swipe still resolves to a
+ * [SwipeDirections] zone when the movement is off the slide axis, and sustained movement along
+ * [slideAxis] becomes a slide instead. [SlideAxis.BOTH] (spacebar) slides on whichever axis
+ * is dominant once the threshold is crossed, so left/right and up/down all scroll the cursor.
  */
 data class GestureConfig(
     val minSwipeDistancePx: Float,

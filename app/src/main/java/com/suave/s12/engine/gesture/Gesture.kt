@@ -12,8 +12,11 @@ sealed class Zone {
     ) : Zone()
 }
 
-/** The axis a slidable key (spacebar/backspace) reports continuous movement along. */
-enum class SlideAxis { HORIZONTAL, VERTICAL }
+/** The axis a slidable key (spacebar/backspace) reports continuous movement along.
+ *  [BOTH] is a config value: once the swipe threshold is crossed, the recognizer locks onto
+ *  whichever of [HORIZONTAL] or [VERTICAL] was dominant. [Gesture.SlideStep] always carries
+ *  the locked axis, never [BOTH]. */
+enum class SlideAxis { HORIZONTAL, VERTICAL, BOTH }
 
 /**
  * A recognized gesture, emitted by [GestureRecognizer]. Deliberately small: tap and swipe are

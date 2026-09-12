@@ -316,5 +316,6 @@ class KeyDispatcher(
         when (step.axis) {
             SlideAxis.HORIZONTAL -> if (step.steps > 0) CursorDirection.RIGHT else CursorDirection.LEFT
             SlideAxis.VERTICAL -> if (step.steps > 0) CursorDirection.DOWN else CursorDirection.UP
+            SlideAxis.BOTH -> error("SlideStep.axis is the locked axis, never BOTH")
         }
 }

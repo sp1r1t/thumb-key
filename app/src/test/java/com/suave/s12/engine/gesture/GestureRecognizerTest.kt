@@ -183,4 +183,63 @@ class GestureRecognizerTest {
 
         assertEquals(listOf(Gesture.Tap(Zone.Directional(Direction.UP)), Gesture.Released), result)
     }
+
+    @Test
+    fun `a both-axis key slides vertically when that is the dominant movement`() {
+        val config =
+            GestureConfig(
+                minSwipeDistancePx = 20f,
+                directions = SwipeDirections.FOUR_WAY,
+                slideAxis = SlideAxis.BOTH,
+                slideStepPx = 24f,
+            )
+        val recognizer = GestureRecognizer(config)
+        recognizer.process(down())
+
+        val firstMove = recognizer.process(move(x = 2f, y = -24f, t = START_MS + 30))
+        val secondMove = recognizer.process(move(x = 2f, y = -48f, t = START_MS + 60))
+        val thirdMove = recognizer.process(move(x = 2f, y = -24f, t = START_MS + 90))
+        val released = recognizer.process(up(START_MS + 120))
+
+        assertEquals(listOf(Gesture.SlideStep(SlideAxis.VERTICAL, -1)), firstMove)
+        assertEquals(listOf(Gesture.SlideStep(SlideAxis.VERTICAL, -1)), secondMove)
+        assertEquals(listOf(Gesture.SlideStep(SlideAxis.VERTICAL, 1)), thirdMove)
+        assertEquals(listOf(Gesture.Released), released)
+    }
+
+    @Test
+    fun `a both-axis key still slides horizontally when that is the dominant movement`() {
+        val config =
+            GestureConfig(
+                minSwipeDistancePx = 20f,
+                directions = SwipeDirections.FOUR_WAY,
+                slideAxis = SlideAxis.BOTH,
+                slideStepPx = 24f,
+            )
+        val recognizer = GestureRecognizer(config)
+        recognizer.process(down())
+
+        val firstMove = recognizer.process(move(x = 24f, y = 2f, t = START_MS + 30))
+        val released = recognizer.process(up(START_MS + 60))
+
+        assertEquals(listOf(Gesture.SlideStep(SlideAxis.HORIZONTAL, 1)), firstMove)
+        assertEquals(listOf(Gesture.Released), released)
+    }
+
+    @Test
+    fun `a both-axis key keeps the axis it locked onto even if later movement is orthogonal`() {
+        val config =
+            GestureConfig(
+                minSwipeDistancePx = 20f,
+                directions = SwipeDirections.FOUR_WAY,
+                slideAxis = SlideAxis.BOTH,
+                slideStepPx = 24f,
+            )
+        val recognizer = GestureRecognizer(config)
+        recognizer.process(down())
+        recognizer.process(move(x = 2f, y = -24f, t = START_MS + 30))
+        val sideways = recognizer.process(move(x = 50f, y = -24f, t = START_MS + 60))
+
+        assertEquals("horizontal movement after a vertical lock does not emit horizontal steps", emptyList<Gesture>(), sideways)
+    }
 }

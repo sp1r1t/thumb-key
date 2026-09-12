@@ -353,6 +353,24 @@ class KeyDispatcherTest {
     }
 
     @Test
+    fun `sliding a cursor-move key vertically moves the cursor up and down`() {
+        val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Text(" ")), slideBehavior = SlideBehavior.MOVE_CURSOR)
+        val dispatcher = KeyDispatcher(key)
+        val executed = mutableListOf<SemanticAction>()
+
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.VERTICAL, -1), ModifierState(), executed::add)
+        dispatcher.handle(Gesture.SlideStep(SlideAxis.VERTICAL, 1), ModifierState(), executed::add)
+
+        assertEquals(
+            listOf(
+                SemanticAction.MoveCursor(CursorDirection.UP, resetAnchor = true),
+                SemanticAction.MoveCursor(CursorDirection.DOWN, resetAnchor = false),
+            ),
+            executed,
+        )
+    }
+
+    @Test
     fun `releasing Shift mid-slide switches a cursor-move key from extending back to just moving`() {
         val key = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.Text(" ")), slideBehavior = SlideBehavior.MOVE_CURSOR)
         val dispatcher = KeyDispatcher(key)

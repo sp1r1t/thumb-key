@@ -151,7 +151,7 @@ private val SUAVE_SPACE =
         bottom = "down",
         left = "left",
         right = "right",
-        gesture = FOUR_WAY_KEY.copy(slideAxis = SlideAxis.HORIZONTAL),
+        gesture = FOUR_WAY_KEY.copy(slideAxis = SlideAxis.BOTH),
         slideBehavior = SlideBehavior.MOVE_CURSOR,
     )
 private val SUAVE_CTRL = key("ctrl", right = "alt", top = "esc", gesture = FOUR_WAY_KEY)

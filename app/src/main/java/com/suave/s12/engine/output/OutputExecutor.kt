@@ -164,9 +164,8 @@ object OutputExecutor {
 
                 CursorDirection.RIGHT -> 1
 
-                // Slide only ever produces LEFT/RIGHT in this layout; UP/DOWN have no simple
-                // selection-relative equivalent without knowing line-wrap layout, so they always
-                // fall through to the KeyEvent path below.
+                // Vertical slides have no simple selection-relative equivalent without knowing
+                // line-wrap layout, so they always fall through to the KeyEvent path below.
                 CursorDirection.UP, CursorDirection.DOWN -> null
             }
         val handled =

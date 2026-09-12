@@ -1,6 +1,7 @@
 package com.suave.s12.layout
 
 import com.suave.s12.engine.gesture.Direction
+import com.suave.s12.engine.gesture.SlideAxis
 import com.suave.s12.engine.gesture.Zone
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.KeyIntent
@@ -44,6 +45,8 @@ class SuaveLayoutTest {
 
         assertEquals(SlideBehavior.SELECT_AND_DELETE, backspace.slideBehavior)
         assertEquals(SlideBehavior.MOVE_CURSOR, spacebar.slideBehavior)
+        assertEquals(SlideAxis.HORIZONTAL, backspace.gestureConfig.slideAxis)
+        assertEquals(SlideAxis.BOTH, spacebar.gestureConfig.slideAxis)
         assertEquals(KeyIntent.Command(CommandId.BACKSPACE), backspace.intents[Zone.Center])
         assertEquals(KeyIntent.Text(" "), spacebar.intents[Zone.Center])
     }

@@ -29,7 +29,7 @@ class GestureRecognizer(
 
     private var zone: Zone = Zone.Center
     private var zoneLocked = false
-    private var sliding = false
+    private var slidingAxis: SlideAxis? = null
     private var holdFired = false
     private var done = false
 
@@ -69,7 +69,7 @@ class GestureRecognizer(
         }
 
     private fun onMove(event: TouchEvent): List<Gesture> {
-        if (sliding) return emitSlideSteps(event)
+        if (slidingAxis != null) return emitSlideSteps(event)
 
         if (zoneLocked || holdFired) {
             // Zone (or a fired hold on the center) already committed for this press; further
@@ -83,9 +83,9 @@ class GestureRecognizer(
         val totalDy = event.y - originY
         if (hypot(totalDx, totalDy) < config.minSwipeDistancePx) return emptyList()
 
-        val slideAxis = config.slideAxis
-        if (slideAxis != null && isDominantlyAlong(slideAxis, totalDx, totalDy)) {
-            sliding = true
+        val lockedAxis = lockSlideAxis(config.slideAxis, totalDx, totalDy)
+        if (lockedAxis != null) {
+            slidingAxis = lockedAxis
             lastX = originX
             lastY = originY
             return emitSlideSteps(event)
@@ -105,8 +105,13 @@ class GestureRecognizer(
     }
 
     private fun emitSlideSteps(event: TouchEvent): List<Gesture> {
-        val axis = config.slideAxis ?: return emptyList()
-        val delta = if (axis == SlideAxis.HORIZONTAL) event.x - lastX else event.y - lastY
+        val axis = slidingAxis ?: return emptyList()
+        val delta =
+            when (axis) {
+                SlideAxis.HORIZONTAL -> event.x - lastX
+                SlideAxis.VERTICAL -> event.y - lastY
+                SlideAxis.BOTH -> 0f
+            }
         lastX = event.x
         lastY = event.y
         slideAccumulator += delta
@@ -121,7 +126,7 @@ class GestureRecognizer(
     }
 
     private fun onTick(nowMs: Long): List<Gesture> {
-        if (sliding) return emptyList()
+        if (slidingAxis != null) return emptyList()
         if (!holdFired) {
             if (nowMs - startTimeMs < config.longPressTimeoutMs) return emptyList()
             holdFired = true
@@ -135,7 +140,7 @@ class GestureRecognizer(
 
     private fun onRelease(): List<Gesture> {
         done = true
-        return if (!holdFired && !sliding) {
+        return if (!holdFired && slidingAxis == null) {
             listOf(Gesture.Tap(zone), Gesture.Released)
         } else {
             listOf(Gesture.Released)
@@ -147,14 +152,16 @@ class GestureRecognizer(
         return listOf(Gesture.Cancelled)
     }
 
-    private fun isDominantlyAlong(
-        axis: SlideAxis,
+    private fun lockSlideAxis(
+        configured: SlideAxis?,
         dx: Float,
         dy: Float,
-    ): Boolean =
-        when (axis) {
-            SlideAxis.HORIZONTAL -> abs(dx) > abs(dy)
-            SlideAxis.VERTICAL -> abs(dy) > abs(dx)
+    ): SlideAxis? =
+        when (configured) {
+            null -> null
+            SlideAxis.HORIZONTAL -> if (abs(dx) > abs(dy)) SlideAxis.HORIZONTAL else null
+            SlideAxis.VERTICAL -> if (abs(dy) > abs(dx)) SlideAxis.VERTICAL else null
+            SlideAxis.BOTH -> if (abs(dx) >= abs(dy)) SlideAxis.HORIZONTAL else SlideAxis.VERTICAL
         }
 }
 
