@@ -245,7 +245,7 @@ class IMEService :
                 ).toInt()
                 .coerceAtLeast(1)
         inlineAutofill.markWaiting(heightPx)
-        return createInlineSuggestionsRequest(this, heightPx, uiExtras)
+        return createInlineSuggestionsRequest(this, heightPx)
     }
 
     @RequiresApi(Build.VERSION_CODES.R)
@@ -255,11 +255,7 @@ class IMEService :
             inlineAutofill.clear()
             return false
         }
-        val items = response.inlineSuggestions
-        val pinned = items.count { it.info.isPinned }
-        Log.d(TAG, "inline suggestions response count=${items.size} pinned=$pinned")
-        inlineAutofill.show(this, items)
-        // false means "IME is not interested" and Samsung/AOSP then drop later fills.
+        inlineAutofill.show(this, response.inlineSuggestions)
         return true
     }
 

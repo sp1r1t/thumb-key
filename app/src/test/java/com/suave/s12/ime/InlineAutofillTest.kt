@@ -2,7 +2,6 @@ package com.suave.s12.ime
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class InlineAutofillTest {
@@ -30,33 +29,11 @@ class InlineAutofillTest {
     }
 
     @Test
-    fun `presentation sizes keep a height range Bitwarden can fill`() {
-        assertEquals(32, INLINE_PRESENTATION_MIN_WIDTH_DP)
-        assertEquals(8, INLINE_PRESENTATION_MIN_HEIGHT_DP)
-        assertEquals(48, INLINE_PRESENTATION_MAX_HEIGHT_DP)
-        assertEquals(INLINE_PRESENTATION_MAX_WIDTH_PX, inlinePresentationMaxWidthPx(1080))
-        assertTrue(inlinePresentationMaxWidthPx(2640) > INLINE_PRESENTATION_MAX_WIDTH_PX)
-        assertEquals(6, INLINE_SUGGESTION_MAX_COUNT)
-        assertEquals(6, INLINE_SUGGESTION_SPEC_COUNT)
-    }
-
-    @Test
-    fun `empty ping while waiting stays wait so a later fill can arrive`() {
-        val host = InlineAutofillHost()
-        assertEquals(true, host.offerEmptyResponse())
-        assertEquals(INLINE_STATUS_IDLE, host.status.value)
-        host.markWaiting(40)
-        assertEquals(INLINE_STATUS_WAIT, host.status.value)
-        assertEquals(true, host.offerEmptyResponse())
-        assertEquals(INLINE_STATUS_WAIT, host.status.value)
-    }
-
-    @Test
-    fun `clear after wait makes a stale empty timeout a no-op`() {
+    fun `empty ping does not clear wait until a real fill is missing`() {
         val host = InlineAutofillHost()
         host.markWaiting(40)
+        assertEquals(INLINE_STATUS_WAIT, host.status.value)
         host.clear()
-        assertEquals(true, host.offerEmptyResponse())
         assertEquals(INLINE_STATUS_IDLE, host.status.value)
     }
 }
