@@ -18,9 +18,9 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        // Distinct from upstream Thumb-Key's com.dessalines.thumbkey namespace so Suave can be
+        // Distinct from upstream Thumb-Key's com.dessalines.thumbkey namespace so the Suave keyboard can be
         // installed side-by-side with a stock Thumb-Key build during the engine rewrite.
-        applicationId = "com.suave.s12"
+        applicationId = "com.suave.keyboard"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
@@ -94,7 +94,7 @@ android {
         compose = true
         buildConfig = true
     }
-    namespace = "com.suave.s12"
+    namespace = "com.suave.keyboard"
 }
 
 // Name the built APKs "suave-<variant>.apk" instead of AGP's default "app-<variant>.apk",

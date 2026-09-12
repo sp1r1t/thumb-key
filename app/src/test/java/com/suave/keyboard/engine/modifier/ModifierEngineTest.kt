@@ -1,0 +1,233 @@
+package com.suave.keyboard.engine.modifier
+
+import com.suave.keyboard.engine.gesture.Direction
+import com.suave.keyboard.engine.gesture.Gesture
+import com.suave.keyboard.engine.gesture.Zone
+import com.suave.keyboard.engine.intent.CommandId
+import com.suave.keyboard.engine.intent.KeyIntent
+import com.suave.keyboard.engine.intent.ModifierId
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+private val TAP_CENTER = Gesture.Tap(Zone.Center)
+private val HOLD_CENTER = Gesture.Hold(Zone.Center)
+private val HOLD_REPEAT_CENTER = Gesture.HoldRepeat(Zone.Center)
+
+class ModifierEngineTest {
+    // --- Ctrl: tap = one-shot, hold = held-while-down, release-while-held = one more key ---
+
+    @Test
+    fun `tapping Ctrl activates one-shot`() {
+        val state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.CTRL, TAP_CENTER)
+
+        assertTrue(state.isActive(ModifierId.CTRL))
+        assertEquals(ActivationMode.ONE_SHOT, state.active.getValue(ModifierId.CTRL).mode)
+    }
+
+    @Test
+    fun `one-shot Ctrl transforms exactly the next character then consumeOneShots clears it`() {
+        var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.CTRL, TAP_CENTER)
+
+        val resolved = ModifierEngine.resolve(state, KeyIntent.Text("c"))
+        state = ModifierEngine.consumeOneShots(state)
+
+        assertEquals(ResolvedIntent.TypedText("c", setOf(ModifierId.CTRL)), resolved)
+        assertFalse("one-shot Ctrl must not still be active for the key after it", state.isActive(ModifierId.CTRL))
+    }
+
+    @Test
+    fun `holding Ctrl activates held, stays active across HoldRepeat ticks, applies to many keys`() {
+        var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.CTRL, HOLD_CENTER)
+        assertEquals(ActivationMode.HELD, state.active.getValue(ModifierId.CTRL).mode)
+
+        // HoldRepeat on the modifier key itself is a no-op - it doesn't re-toggle anything. This
+        // is what stops a held modifier from spamming its own activation once repeat-on-hold
+        // applies uniformly to every key (the bug that hit Shift's capslock-hold previously).
+        state = ModifierEngine.applyModifierGesture(state, ModifierId.CTRL, HOLD_REPEAT_CENTER)
+        assertEquals(ActivationMode.HELD, state.active.getValue(ModifierId.CTRL).mode)
+
+        // Two separate other-key presses, both while still held: both get Ctrl.
+        val firstKey = ModifierEngine.resolve(state, KeyIntent.Text("x"))
+        state = ModifierEngine.consumeOneShots(state) // no-op for HELD
+        val secondKey = ModifierEngine.resolve(state, KeyIntent.Text("s"))
+        state = ModifierEngine.consumeOneShots(state)
+
+        assertEquals(ResolvedIntent.TypedText("x", setOf(ModifierId.CTRL)), firstKey)
+        assertEquals(ResolvedIntent.TypedText("s", setOf(ModifierId.CTRL)), secondKey)
+        assertTrue("held Ctrl must survive across multiple key presses while still down", state.isActive(ModifierId.CTRL))
+    }
+
+    @Test
+    fun `releasing a held Ctrl deactivates it immediately, unlike a quick tap's one-shot`() {
+        var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.CTRL, HOLD_CENTER)
+        state = ModifierEngine.applyModifierGesture(state, ModifierId.CTRL, Gesture.Released)
+
+        // This is the exact fix for the old engine's bug: releasing Ctrl must actually transition
+        // to inactive, not just flip an unread tracking flag. Deliberately immediate, not a
+        // one-more-key grace period - the hold+release itself is the explicit signal, unlike a
+        // quick tap (which has no separate "held" moment, so it stays ONE_SHOT - see the
+        // one-shot test above, an entirely different path this doesn't touch).
+        assertFalse(state.isActive(ModifierId.CTRL))
+
+        val nextKey = ModifierEngine.resolve(state, KeyIntent.Text("a"))
+        assertEquals(ResolvedIntent.TypedText("a", emptySet()), nextKey)
+    }
+
+    @Test
+    fun `tapping an already-active modifier deactivates it outright`() {
+        var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.CTRL, HOLD_CENTER)
+        state = ModifierEngine.applyModifierGesture(state, ModifierId.CTRL, TAP_CENTER)
+
+        assertFalse(state.isActive(ModifierId.CTRL))
+    }
+
+    // --- Shift: tap = one-shot capital, hold = caps lock, persists past release ---
+
+    @Test
+    fun `tapping Shift capitalizes exactly the next character via uppercase, not a modifier flag`() {
+        var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.SHIFT, TAP_CENTER)
+
+        val resolved = ModifierEngine.resolve(state, KeyIntent.Text("a"))
+        state = ModifierEngine.consumeOneShots(state)
+
+        assertEquals(ResolvedIntent.TypedText("A", emptySet()), resolved)
+        assertFalse(state.isActive(ModifierId.SHIFT))
+    }
+
+    @Test
+    fun `holding Shift locks caps lock and it survives release`() {
+        var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.SHIFT, HOLD_CENTER)
+        assertEquals(ActivationMode.LOCKED, state.active.getValue(ModifierId.SHIFT).mode)
+
+        state = ModifierEngine.applyModifierGesture(state, ModifierId.SHIFT, Gesture.Released)
+        assertEquals(
+            "caps lock must not revert on release like HELD does",
+            ActivationMode.LOCKED,
+            state.active.getValue(ModifierId.SHIFT).mode,
+        )
+
+        // Typing several letters while locked: caps lock is untouched by consumeOneShots.
+        repeat(3) {
+            ModifierEngine.resolve(state, KeyIntent.Text("a"))
+            state = ModifierEngine.consumeOneShots(state)
+        }
+        assertTrue(state.isActive(ModifierId.SHIFT))
+    }
+
+    @Test
+    fun `a custom shift mapping table overrides plain uppercasing`() {
+        val state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.SHIFT, TAP_CENTER)
+
+        val resolved = ModifierEngine.resolve(state, KeyIntent.Text("1"), shiftMappings = mapOf("1" to "!"))
+
+        assertEquals(ResolvedIntent.TypedText("!", emptySet()), resolved)
+        assertEquals("!", ModifierEngine.applyShift("1", mapOf("1" to "!")))
+        assertEquals("SS", ModifierEngine.applyShift("ß", mapOf("ß" to "SS")))
+        assertEquals("A", ModifierEngine.applyShift("a"))
+    }
+
+    @Test
+    fun `multi-character text ignores held modifiers but still gets shift-mapped`() {
+        var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.CTRL, HOLD_CENTER)
+        state = ModifierEngine.applyModifierGesture(state, ModifierId.SHIFT, TAP_CENTER)
+
+        // "sch" has no KeyEvent representation for a Ctrl combo, so Ctrl is dropped for this key
+        // - but the shift mapping table (analogous to Suave's SHIFT_MAPPINGS) still applies.
+        val resolved = ModifierEngine.resolve(state, KeyIntent.Text("sch"), shiftMappings = mapOf("sch" to "Sch"))
+
+        assertEquals(ResolvedIntent.TypedText("Sch", emptySet()), resolved)
+    }
+
+    // --- Commands keep Shift as a real modifier flag, since there's no "shifted backspace" char ---
+
+    @Test
+    fun `shift stays in the modifier set for command intents instead of transforming text`() {
+        val state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.SHIFT, TAP_CENTER)
+
+        val resolved = ModifierEngine.resolve(state, KeyIntent.Command(CommandId.TAB))
+
+        assertEquals(ResolvedIntent.TypedCommand(CommandId.TAB, setOf(ModifierId.SHIFT)), resolved)
+    }
+
+    // --- Combining modifiers ---
+
+    @Test
+    fun `ctrl and alt held simultaneously both apply to the same character`() {
+        var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.CTRL, HOLD_CENTER)
+        state = ModifierEngine.applyModifierGesture(state, ModifierId.ALT, HOLD_CENTER)
+
+        val resolved = ModifierEngine.resolve(state, KeyIntent.Text("z"))
+
+        assertEquals(ResolvedIntent.TypedText("z", setOf(ModifierId.CTRL, ModifierId.ALT)), resolved)
+    }
+
+    @Test
+    fun `ctrl and shift held together keep shift as a real modifier flag, not just a case transform`() {
+        var state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.CTRL, HOLD_CENTER)
+        state = ModifierEngine.applyModifierGesture(state, ModifierId.SHIFT, HOLD_CENTER)
+
+        // Termux (like most terminal emulators) binds paste to Ctrl+Shift+V, not Ctrl+V (which is
+        // the terminal's own "quoted insert") - so once a real modifier forces a raw KeyEvent,
+        // Shift must ride along as a genuine flag too, not get silently absorbed into the
+        // uppercase text the way it would for plain typing.
+        val resolved = ModifierEngine.resolve(state, KeyIntent.Text("v"))
+
+        assertEquals(ResolvedIntent.TypedText("V", setOf(ModifierId.CTRL, ModifierId.SHIFT)), resolved)
+    }
+
+    @Test
+    fun `esc swipe zone example still resolves through the same ModifierPress routing`() {
+        // Esc reached by swiping to a directional zone on the same physical key Ctrl sits on -
+        // the gesture that fires applyModifierGesture is just whatever zone it locked to; the
+        // modifier engine doesn't care which zone, only which ModifierId the layout bound there.
+        val escTapOnSwipeZone = Gesture.Tap(Zone.Directional(Direction.UP))
+        val state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.ESC, escTapOnSwipeZone)
+
+        assertTrue(state.isActive(ModifierId.ESC))
+        assertEquals(ActivationMode.ONE_SHOT, state.active.getValue(ModifierId.ESC).mode)
+    }
+
+    @Test
+    fun `letter-key legend state collapses HELD and ONE_SHOT but keeps LOCKED distinct`() {
+        val held = ModifierState().activate(ModifierId.SHIFT, ActivationMode.HELD)
+        val oneShot = ModifierState().activate(ModifierId.SHIFT, ActivationMode.ONE_SHOT)
+        val locked = ModifierState().activate(ModifierId.SHIFT, ActivationMode.LOCKED)
+
+        assertTrue(held.forLetterLegends() === oneShot.forLetterLegends())
+        assertTrue(held.forLetterLegends() === ModifierState.SHIFT_ON_FOR_LEGENDS)
+        assertTrue(locked.forLetterLegends() === ModifierState.CAPS_ON_FOR_LEGENDS)
+        assertTrue(ModifierState().forLetterLegends() === ModifierState.NONE)
+        assertTrue(oneShot.forLetterLegends().isActive(ModifierId.SHIFT))
+        assertEquals(ActivationMode.ONE_SHOT, oneShot.forLetterLegends().active.getValue(ModifierId.SHIFT).mode)
+        assertEquals(ActivationMode.LOCKED, locked.forLetterLegends().active.getValue(ModifierId.SHIFT).mode)
+        assertFalse(ModifierState().activate(ModifierId.CTRL, ActivationMode.HELD).forLetterLegends().isActive(ModifierId.CTRL))
+    }
+
+    @Test
+    fun `caps lock uses the caps-lock mapping so sch becomes SCH`() {
+        val state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.SHIFT, HOLD_CENTER)
+        assertEquals(ActivationMode.LOCKED, state.active.getValue(ModifierId.SHIFT).mode)
+
+        val resolved =
+            ModifierEngine.resolve(
+                state,
+                KeyIntent.Text("sch"),
+                shiftMappings = mapOf("sch" to "Sch"),
+                capsLockMappings = mapOf("sch" to "SCH"),
+            )
+
+        assertEquals(ResolvedIntent.TypedText("SCH", emptySet()), resolved)
+        assertEquals(
+            "SCH",
+            ModifierEngine.applyCapsLock("sch", mapOf("sch" to "SCH"), mapOf("sch" to "Sch")),
+        )
+        assertEquals(
+            "fallback to shift when caps has no override",
+            "SS",
+            ModifierEngine.applyCapsLock("ß", emptyMap(), mapOf("ß" to "SS")),
+        )
+        assertEquals("Sch", ModifierEngine.applyShift("sch", mapOf("sch" to "Sch")))
+    }
+}

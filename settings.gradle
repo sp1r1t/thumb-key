@@ -17,5 +17,5 @@ dependencyResolutionManagement {
         maven { url 'https://jitpack.io' }
     }
 }
-rootProject.name = "s12"
+rootProject.name = "suave-keyboard"
 include ':app'

@@ -1,0 +1,345 @@
+package com.suave.keyboard.layout
+
+import com.suave.keyboard.engine.gesture.Direction
+import com.suave.keyboard.engine.gesture.GestureConfig
+import com.suave.keyboard.engine.gesture.SlideAxis
+import com.suave.keyboard.engine.gesture.Zone
+import com.suave.keyboard.engine.gesture.withOccupiedDirections
+import com.suave.keyboard.engine.intent.CommandId
+import com.suave.keyboard.engine.intent.KeyIntent
+import com.suave.keyboard.engine.intent.KeyMapping
+import com.suave.keyboard.engine.intent.KeyPosition
+import com.suave.keyboard.engine.intent.Layout
+import com.suave.keyboard.engine.intent.ModifierId
+import com.suave.keyboard.engine.intent.SlideBehavior
+
+/**
+ * S12's shift mapping: irregular capitalizations/combos that don't just uppercase (German
+ * umlauts, "sch"/"ch" digraphs, "ß" -> "SS"), reused verbatim from the pre-rewrite layout. Fed to
+ * [com.suave.keyboard.engine.modifier.ModifierEngine.resolve] as `shiftMappings`, not baked into the
+ * layout itself - Shift is the modifier engine's job.
+ *
+ * One-shot / held Shift title-cases digraphs ("Sch"); caps lock only overrides tokens that
+ * differ ([S12_CAPS_LOCK_MAPPINGS]) and otherwise falls back to this table.
+ */
+val S12_SHIFT_MAPPINGS: Map<String, String> =
+    mapOf(
+        "ö" to "Ö",
+        "ä" to "Ä",
+        "ü" to "Ü",
+        "ß" to "SS",
+        "sch" to "Sch",
+        "ch" to "Ch",
+    )
+
+/** Caps-lock overrides on top of [S12_SHIFT_MAPPINGS] (e.g. "sch" -> "SCH" instead of "Sch"). */
+val S12_CAPS_LOCK_MAPPINGS: Map<String, String> =
+    mapOf(
+        "sch" to "SCH",
+        "ch" to "CH",
+    )
+
+// minSwipeDistancePx is a placeholder here - Step 5's wiring overrides it per the user's swipe-
+// threshold setting (`config.copy(minSwipeDistancePx = ...)`) when it turns this Layout into live
+// GestureRecognizers; occupied swipe directions are inferred from intents (see
+// docs/swipe-zone-inference.md).
+private val DEFAULT_GESTURE = GestureConfig(minSwipeDistancePx = 64f)
+private val SLIDE_HORIZONTAL = DEFAULT_GESTURE.copy(slideAxis = SlideAxis.HORIZONTAL)
+private val SLIDE_BOTH = DEFAULT_GESTURE.copy(slideAxis = SlideAxis.BOTH)
+
+/**
+ * Maps a key-definition token to what it means. Unlike the pre-rewrite `generateS12Layout`,
+ * this has no mode parameter and no branching on Ctrl/Alt/Shift/Esc state at all - every token
+ * means exactly one thing, always; modifier transformation happens later, entirely inside
+ * [com.suave.keyboard.engine.modifier.ModifierEngine]. Anything not recognized as a special token is
+ * just typed text (case-insensitive on the token itself, so "selectAll" and "selectall" are the
+ * same key - German letters like "S" stay meaningful because they're multi-character or
+ * mixed-case tokens like "sch" fall through untouched; the single letters this layout actually
+ * uses are all lowercase already).
+ */
+private fun token(text: String): KeyIntent =
+    when (text.lowercase()) {
+        "shift" -> KeyIntent.ModifierPress(ModifierId.SHIFT)
+
+        "ctrl" -> KeyIntent.ModifierPress(ModifierId.CTRL)
+
+        "alt" -> KeyIntent.ModifierPress(ModifierId.ALT)
+
+        "esc" -> KeyIntent.ModifierPress(ModifierId.ESC)
+
+        "backspace" -> KeyIntent.Command(CommandId.BACKSPACE)
+
+        // "return" and "enter" are the same Command: there is no KeyEvent-level primitive for
+        // "smart submit" vs a literal newline. Well-behaved single-line vs multiline fields
+        // already interpret one Enter KeyEvent correctly on their own.
+        "return", "enter" -> KeyIntent.Command(CommandId.ENTER)
+
+        "tab" -> KeyIntent.Command(CommandId.TAB)
+
+        "left" -> KeyIntent.Command(CommandId.ARROW_LEFT)
+
+        "right" -> KeyIntent.Command(CommandId.ARROW_RIGHT)
+
+        "up" -> KeyIntent.Command(CommandId.ARROW_UP)
+
+        "down" -> KeyIntent.Command(CommandId.ARROW_DOWN)
+
+        "emoji" -> KeyIntent.Command(CommandId.TOGGLE_EMOJI_MODE)
+
+        "numeric" -> KeyIntent.Command(CommandId.TOGGLE_NUMERIC_MODE)
+
+        "abc" -> KeyIntent.Command(CommandId.TOGGLE_ABC_MODE)
+
+        "copy" -> KeyIntent.Command(CommandId.COPY)
+
+        "selectall" -> KeyIntent.Command(CommandId.SELECT_ALL)
+
+        "cut" -> KeyIntent.Command(CommandId.CUT)
+
+        "undo" -> KeyIntent.Command(CommandId.UNDO)
+
+        "redo" -> KeyIntent.Command(CommandId.REDO)
+
+        "paste" -> KeyIntent.Command(CommandId.PASTE)
+
+        "clipboard" -> KeyIntent.Command(CommandId.TOGGLE_CLIPBOARD_HISTORY)
+
+        "settings" -> KeyIntent.Command(CommandId.GOTO_SETTINGS)
+
+        "hide" -> KeyIntent.Command(CommandId.TOGGLE_HIDE_LETTERS)
+
+        "ime" -> KeyIntent.Command(CommandId.SWITCH_IME)
+
+        "voice" -> KeyIntent.Command(CommandId.SWITCH_IME_VOICE)
+
+        "lang" -> KeyIntent.Command(CommandId.SWITCH_LANGUAGE)
+
+        "move" -> KeyIntent.Command(CommandId.MOVE_KEYBOARD)
+
+        else -> KeyIntent.Text(text)
+    }
+
+private fun key(
+    center: String,
+    top: String? = null,
+    topLeft: String? = null,
+    topRight: String? = null,
+    left: String? = null,
+    right: String? = null,
+    bottom: String? = null,
+    bottomLeft: String? = null,
+    bottomRight: String? = null,
+    gesture: GestureConfig? = null,
+    slideBehavior: SlideBehavior? = null,
+    columnSpan: Int = 1,
+): KeyMapping {
+    val intents =
+        buildMap {
+            put(Zone.Center, token(center))
+            top?.let { put(Zone.Directional(Direction.UP), token(it)) }
+            bottom?.let { put(Zone.Directional(Direction.DOWN), token(it)) }
+            left?.let { put(Zone.Directional(Direction.LEFT), token(it)) }
+            right?.let { put(Zone.Directional(Direction.RIGHT), token(it)) }
+            topLeft?.let { put(Zone.Directional(Direction.UP_LEFT), token(it)) }
+            topRight?.let { put(Zone.Directional(Direction.UP_RIGHT), token(it)) }
+            bottomLeft?.let { put(Zone.Directional(Direction.DOWN_LEFT), token(it)) }
+            bottomRight?.let { put(Zone.Directional(Direction.DOWN_RIGHT), token(it)) }
+        }
+    // Occupied swipe directions are inferred from intents - no separate FOUR_WAY / EIGHT_WAY
+    // flag. Slide axis (space/backspace) is the only gesture shape layouts still pass explicitly.
+    val resolvedGesture = (gesture ?: DEFAULT_GESTURE).withOccupiedDirections(intents)
+    return KeyMapping(resolvedGesture, intents, slideBehavior, columnSpan)
+}
+
+private val S12_BACKSPACE =
+    key(
+        "backspace",
+        top = "'",
+        bottom = "\"",
+        gesture = SLIDE_HORIZONTAL,
+        slideBehavior = SlideBehavior.SELECT_AND_DELETE,
+    )
+private val S12_SPACE =
+    key(
+        " ",
+        top = "up",
+        bottom = "down",
+        left = "left",
+        right = "right",
+        gesture = SLIDE_BOTH,
+        slideBehavior = SlideBehavior.MOVE_CURSOR,
+    )
+private val S12_CTRL = key("ctrl", right = "alt", top = "esc")
+
+/** Settings / IME / language / move stay reachable on overlay layers that drop the letter grid. */
+private fun overlayUtilityKey(center: String) =
+    key(
+        center,
+        top = "settings",
+        topLeft = "hide",
+        bottom = "ime",
+        bottomLeft = "voice",
+        left = "lang",
+        right = "move",
+    )
+
+private val S12_EMOJI_KEY = overlayUtilityKey("emoji")
+private val S12_CLIPBOARD_KEY = overlayUtilityKey("clipboard")
+private val S12_NUMERIC_KEY =
+    key(
+        "numeric",
+        top = "copy",
+        topLeft = "selectAll",
+        topRight = "cut",
+        left = "clipboard",
+        bottomLeft = "undo",
+        bottomRight = "redo",
+        bottom = "paste",
+    )
+private val S12_ABC_KEY =
+    key(
+        "abc",
+        top = "copy",
+        topLeft = "selectAll",
+        topRight = "cut",
+        left = "clipboard",
+        bottomLeft = "undo",
+        bottomRight = "redo",
+        bottom = "paste",
+    )
+private val S12_ENTER = key("return", top = "tab", columnSpan = 2)
+
+/**
+ * S12, ported to pure data: position + gesture -> intent, nothing else. Compare to the
+ * pre-rewrite `generateS12Layout` (~360 lines of mode-branching Kotlin) - this is what "a
+ * layout should be a flat table of data" actually looks like once modifier composition isn't the
+ * layout's job. Row/col indices match the original grid; Enter's [KeyMapping.columnSpan] of 2 is
+ * what makes the 4-key bottom row fill the same width as the 5-key letter rows.
+ */
+val S12_LAYOUT: Layout =
+    mapOf(
+        // Row 0
+        KeyPosition(0, 0) to key("o", top = "1", right = "2", bottom = "ö"),
+        KeyPosition(0, 1) to key("r", top = "4", right = "5", bottom = "w", bottomLeft = "?", bottomRight = ",", left = "3"),
+        KeyPosition(0, 2) to S12_BACKSPACE,
+        KeyPosition(0, 3) to key("t", top = "7", right = "8", bottom = "p", bottomLeft = ".", bottomRight = "!", left = "6"),
+        KeyPosition(0, 4) to key("h", top = "0", bottom = "q", left = "9"),
+        // Row 1
+        KeyPosition(1, 0) to key("a", right = "ä", bottom = "+"),
+        KeyPosition(1, 1) to key("e", top = "v", topRight = "€", right = "c", bottom = "f", bottomRight = "ch", left = "z"),
+        KeyPosition(1, 2) to S12_SPACE,
+        KeyPosition(1, 3) to key("n", top = "b", right = "k", bottom = "m", left = "g"),
+        KeyPosition(1, 4) to key("s", top = "~", topLeft = "$", bottomLeft = "sch", left = "ß"),
+        // Row 2
+        KeyPosition(2, 0) to key("u", top = "ü", topRight = "(", right = "[", bottomRight = "{"),
+        KeyPosition(2, 1) to key("i", topLeft = "<", right = "x", bottom = "#", bottomLeft = "@", bottomRight = "$"),
+        KeyPosition(2, 2) to
+            key(
+                "shift",
+                top = "-",
+                left = "—",
+                topLeft = ";",
+                topRight = ":",
+                right = "_",
+                bottom = "^",
+                bottomLeft = "%",
+                bottomRight = "&",
+            ),
+        KeyPosition(2, 3) to key("d", top = "j", topRight = ">", bottom = "=", bottomLeft = "*", bottomRight = "/", left = "y"),
+        KeyPosition(2, 4) to key("l", top = "|", topLeft = ")", bottom = "\\", bottomLeft = "}", left = "]"),
+        // Row 3
+        KeyPosition(3, 0) to S12_CTRL,
+        KeyPosition(3, 1) to S12_EMOJI_KEY,
+        KeyPosition(3, 2) to S12_NUMERIC_KEY,
+        KeyPosition(3, 3) to S12_ENTER,
+    )
+
+/**
+ * S12's numeric layer: a full grid of the same shape as [S12_LAYOUT], with abc on the
+ * cluster that numeric occupies on the main layer. Superscripts/subscripts are real typed
+ * characters; combining diacritics from the old overlay are omitted until keys can show a
+ * display label distinct from the committed text.
+ */
+val S12_NUMERIC_LAYOUT: Layout =
+    mapOf(
+        KeyPosition(0, 0) to key("1", top = "\u00B9", bottom = "\u2081"),
+        KeyPosition(0, 1) to key("2", top = "\u00B2", bottom = "\u2082"),
+        KeyPosition(0, 2) to S12_BACKSPACE,
+        KeyPosition(0, 3) to key("3", top = "\u00B3", bottom = "\u2083"),
+        KeyPosition(0, 4) to key("4", top = "\u2074", bottom = "\u2084"),
+        KeyPosition(1, 0) to key("5", top = "\u2075", bottom = "\u2085"),
+        KeyPosition(1, 1) to key("6", top = "\u2076", topRight = "\u20AC", bottom = "\u2086"),
+        KeyPosition(1, 2) to S12_SPACE,
+        KeyPosition(1, 3) to key("7", top = "\u2077", bottom = "\u2087"),
+        KeyPosition(1, 4) to key("8", top = "\u2078", topLeft = "$", bottom = "\u2088"),
+        KeyPosition(2, 0) to
+            key(
+                "9",
+                top = "\u2079",
+                topRight = "(",
+                right = "[",
+                bottom = "\u2089",
+                bottomRight = "{",
+            ),
+        KeyPosition(2, 1) to
+            key(
+                ",",
+                top = ";",
+                topLeft = "<",
+                bottom = "#",
+                bottomLeft = "@",
+                bottomRight = "$",
+            ),
+        KeyPosition(2, 2) to
+            key(
+                "+",
+                top = "-",
+                topLeft = ";",
+                topRight = ":",
+                right = "_",
+                bottom = "^",
+                bottomLeft = "%",
+                bottomRight = "&",
+            ),
+        KeyPosition(2, 3) to
+            key(
+                ".",
+                top = ":",
+                topRight = ">",
+                bottom = "=",
+                bottomLeft = "*",
+                bottomRight = "/",
+            ),
+        KeyPosition(2, 4) to
+            key(
+                "0",
+                top = "\u2070",
+                topLeft = ")",
+                left = "]",
+                bottom = "\u2080",
+                bottomLeft = "}",
+            ),
+        KeyPosition(3, 0) to S12_CTRL,
+        KeyPosition(3, 1) to S12_EMOJI_KEY,
+        KeyPosition(3, 2) to S12_ABC_KEY,
+        KeyPosition(3, 3) to S12_ENTER,
+    )
+
+/**
+ * Functional row under an overlay (emoji picker, clipboard history). Ctrl is replaced by
+ * Backspace (the letter grid is gone, so delete still has to live here) and the 123 cluster
+ * is replaced by the spacebar with arrow swipes so cursor movement and spaces work. Positions
+ * are a single row 0 so [layoutRows] yields one row. The second key is the overlay's own
+ * toggle so tapping it returns to the letter or number layer you came from.
+ */
+private fun overlayBottomRow(utilityKey: KeyMapping): Layout =
+    mapOf(
+        KeyPosition(0, 0) to S12_BACKSPACE,
+        KeyPosition(0, 1) to utilityKey,
+        KeyPosition(0, 2) to S12_SPACE,
+        KeyPosition(0, 3) to S12_ENTER,
+    )
+
+val S12_EMOJI_BOTTOM_ROW: Layout = overlayBottomRow(S12_EMOJI_KEY)
+
+val S12_CLIPBOARD_BOTTOM_ROW: Layout = overlayBottomRow(S12_CLIPBOARD_KEY)

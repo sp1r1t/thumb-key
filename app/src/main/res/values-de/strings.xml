@@ -18,7 +18,7 @@
     <string name="split">Geteilt</string>
     <string name="enabled_keyboard_positions">Aktive Positionen</string>
     <string name="enabled_keyboard_positions_summary">Aktuell %1$s - Tastatur verschieben wechselt durch diese</string>
-    <string name="enabled_keyboard_positions_info">Mitte ist eine Tastatur in voller Breite. Doppelt legt zwei volle Kopien nebeneinander. Geteilt schneidet das Tastenraster in Hälften und verdoppelt die mittlere Spalte, wenn die Spaltenzahl ungerade ist (bei Suave wird nur die mittlere Spalte verdoppelt). Links und Rechts bleiben hier ausgeblendet, bis sie eine schmalere Tastatur parken.</string>
+    <string name="enabled_keyboard_positions_info">Mitte ist eine Tastatur in voller Breite. Doppelt legt zwei volle Kopien nebeneinander. Geteilt schneidet das Tastenraster in Hälften und verdoppelt die mittlere Spalte, wenn die Spaltenzahl ungerade ist (bei S12 wird nur die mittlere Spalte verdoppelt). Links und Rechts bleiben hier ausgeblendet, bis sie eine schmalere Tastatur parken.</string>
     <string name="enabled_keyboard_positions_all">alle Anordnungen</string>
     <string name="enabled_keyboard_positions_two">%1$s und %2$s</string>
     <string name="enabled_keyboard_positions_many">%1$s und %2$s</string>
@@ -59,7 +59,7 @@
     <string name="follow_me_mastodon">Folge mir auf Mastodon</string>
     <string name="open_source">Open Source</string>
     <string name="source_code">Quellcode</string>
-    <string name="source_code_subtitle">Thumb-Key ist eine libre open-source Software, lizenziert unter der GNU Affero General Public License v3.0</string>
+    <string name="source_code_subtitle">Suave ist libre Open-Source-Software (ein Fork von Thumb-Key), lizenziert unter der GNU Affero General Public License v3.0</string>
     <string name="appearance">Erscheinungsbild</string>
     <string name="settings_section_labels">Beschriftungen</string>
     <string name="settings_section_keyboard">Tastatur</string>
