@@ -761,7 +761,7 @@ private fun LayoutGrid(
         remember(layout, splitHalves) {
             if (splitHalves) splitColumnRanges(layout.columnCount()) else null
         }
-    val shiftActive = modifierState.value.isActive(ModifierId.SHIFT)
+    val shiftLegendState = modifierState.value.forLetterLegends()
     for (row in rows) {
         Row(modifier = Modifier.fillMaxWidth().height(keyHeight)) {
             val ranges = splitRanges
@@ -772,7 +772,7 @@ private fun LayoutGrid(
                     namedLayout = namedLayout,
                     keyHeight = keyHeight,
                     modifierState = modifierState,
-                    shiftActive = shiftActive,
+                    shiftLegendState = shiftLegendState,
                     onExecute = onExecute,
                     onFeedback = onFeedback,
                     minSwipeDistancePx = minSwipeDistancePx,
@@ -796,7 +796,7 @@ private fun LayoutGrid(
                         namedLayout = namedLayout,
                         keyHeight = keyHeight,
                         modifierState = modifierState,
-                        shiftActive = shiftActive,
+                        shiftLegendState = shiftLegendState,
                         onExecute = onExecute,
                         onFeedback = onFeedback,
                         minSwipeDistancePx = minSwipeDistancePx,
@@ -819,7 +819,7 @@ private fun LayoutGrid(
                         namedLayout = namedLayout,
                         keyHeight = keyHeight,
                         modifierState = modifierState,
-                        shiftActive = shiftActive,
+                        shiftLegendState = shiftLegendState,
                         onExecute = onExecute,
                         onFeedback = onFeedback,
                         minSwipeDistancePx = minSwipeDistancePx,
@@ -847,7 +847,7 @@ private fun RowScope.LayoutRowKeys(
     namedLayout: NamedLayout,
     keyHeight: Dp,
     modifierState: MutableState<ModifierState>,
-    shiftActive: Boolean,
+    shiftLegendState: ModifierState,
     onExecute: (SemanticAction) -> Unit,
     onFeedback: (FeedbackEvent) -> Unit,
     minSwipeDistancePx: Float,
@@ -868,10 +868,11 @@ private fun RowScope.LayoutRowKeys(
             EngineKeyboardKey(
                 mapping = mapping,
                 modifierState = modifierState,
-                shiftActive = shiftActive,
+                shiftLegendState = shiftLegendState,
                 onExecute = onExecute,
                 onFeedback = onFeedback,
                 shiftMappings = namedLayout.shiftMappings,
+                capsLockMappings = namedLayout.capsLockMappings,
                 minSwipeDistancePx = minSwipeDistancePx,
                 legendVisibility = legendVisibility,
                 modifierBehaviors = modifierBehaviors,

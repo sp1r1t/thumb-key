@@ -22,6 +22,7 @@ import com.suave.s12.engine.intent.KeyMapping
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.modifier.ActivationMode
 import com.suave.s12.engine.modifier.ModifierState
+import com.suave.s12.layout.SUAVE_CAPS_LOCK_MAPPINGS
 import com.suave.s12.layout.SUAVE_SHIFT_MAPPINGS
 import com.suave.s12.utils.ColorVariant
 import com.suave.s12.utils.FontSizeVariant
@@ -42,12 +43,22 @@ class KeyLegendTest {
     @Test
     fun `letter keys preview the shift mapping while Shift is active`() {
         val shiftOn = ModifierState().activate(ModifierId.SHIFT, ActivationMode.ONE_SHOT)
+        val capsOn = ModifierState().activate(ModifierId.SHIFT, ActivationMode.LOCKED)
 
         assertEquals(KeyLegend.Text("a"), legend(KeyIntent.Text("a")))
         assertEquals(KeyLegend.Text("A"), legend(KeyIntent.Text("a"), modifierState = shiftOn))
         assertEquals(
             KeyLegend.Text("Sch"),
             legend(KeyIntent.Text("sch"), modifierState = shiftOn, shiftMappings = SUAVE_SHIFT_MAPPINGS),
+        )
+        assertEquals(
+            KeyLegend.Text("SCH"),
+            legend(
+                KeyIntent.Text("sch"),
+                modifierState = capsOn,
+                shiftMappings = SUAVE_SHIFT_MAPPINGS,
+                capsLockMappings = SUAVE_CAPS_LOCK_MAPPINGS,
+            ),
         )
         assertEquals(
             KeyLegend.Text("SS"),
@@ -258,5 +269,6 @@ class KeyLegendTest {
         visibility: LegendVisibility = shown,
         modifierState: ModifierState = idle,
         shiftMappings: Map<String, String> = emptyMap(),
-    ): KeyLegend? = keyLegend(intent, visibility, modifierState, shiftMappings)
+        capsLockMappings: Map<String, String> = emptyMap(),
+    ): KeyLegend? = keyLegend(intent, visibility, modifierState, shiftMappings, capsLockMappings)
 }

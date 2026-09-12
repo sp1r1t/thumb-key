@@ -18,6 +18,9 @@ import com.suave.s12.engine.intent.SlideBehavior
  * umlauts, "sch"/"ch" digraphs, "ß" -> "SS"), reused verbatim from the pre-rewrite layout. Fed to
  * [com.suave.s12.engine.modifier.ModifierEngine.resolve] as `shiftMappings`, not baked into the
  * layout itself - Shift is the modifier engine's job.
+ *
+ * One-shot / held Shift title-cases digraphs ("Sch"); caps lock only overrides tokens that
+ * differ ([SUAVE_CAPS_LOCK_MAPPINGS]) and otherwise falls back to this table.
  */
 val SUAVE_SHIFT_MAPPINGS: Map<String, String> =
     mapOf(
@@ -27,6 +30,13 @@ val SUAVE_SHIFT_MAPPINGS: Map<String, String> =
         "ß" to "SS",
         "sch" to "Sch",
         "ch" to "Ch",
+    )
+
+/** Caps-lock overrides on top of [SUAVE_SHIFT_MAPPINGS] (e.g. "sch" -> "SCH" instead of "Sch"). */
+val SUAVE_CAPS_LOCK_MAPPINGS: Map<String, String> =
+    mapOf(
+        "sch" to "SCH",
+        "ch" to "CH",
     )
 
 // minSwipeDistancePx is a placeholder here - Step 5's wiring overrides it per the user's swipe-

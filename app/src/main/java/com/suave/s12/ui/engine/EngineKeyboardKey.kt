@@ -79,10 +79,11 @@ private const val TICK_INTERVAL_MS = 30L
 fun EngineKeyboardKey(
     mapping: KeyMapping,
     modifierState: MutableState<ModifierState>,
-    shiftActive: Boolean,
+    shiftLegendState: ModifierState,
     onExecute: (SemanticAction) -> Unit,
     onFeedback: (FeedbackEvent) -> Unit,
     shiftMappings: Map<String, String>,
+    capsLockMappings: Map<String, String> = emptyMap(),
     minSwipeDistancePx: Float,
     legendVisibility: LegendVisibility,
     modifierBehaviors: Map<ModifierId, ModifierBehavior>,
@@ -97,7 +98,9 @@ fun EngineKeyboardKey(
     modifier: Modifier = Modifier,
 ) {
     val dispatcher =
-        remember(mapping, shiftMappings, modifierBehaviors) { KeyDispatcher(mapping, shiftMappings, modifierBehaviors) }
+        remember(mapping, shiftMappings, capsLockMappings, modifierBehaviors) {
+            KeyDispatcher(mapping, shiftMappings, modifierBehaviors, capsLockMappings)
+        }
 
     // Values that change across recompositions of the *same* mapping are read through
     // rememberUpdatedState. The loop itself restarts when [mapping] changes: numeric/main
@@ -119,14 +122,13 @@ fun EngineKeyboardKey(
     val hasModifierIntent = mapping.intents.values.any { it is KeyIntent.ModifierPress }
     // Letter keys must not read modifierState.value here: that would resubscribe them on
     // HELD -> ONE_SHOT and they would dispatch from a display-only copy. They take
-    // [shiftActive] for legends and read the live state only inside the pointer loop.
+    // [shiftLegendState] (off / shift / caps) for legends and read the live state only inside
+    // the pointer loop.
     val legendModifierState =
         if (hasModifierIntent) {
             modifierState.value
-        } else if (shiftActive) {
-            ModifierState.SHIFT_ON_FOR_LEGENDS
         } else {
-            ModifierState.NONE
+            shiftLegendState
         }
 
     val isModifierKeyActive =
@@ -301,6 +303,7 @@ fun EngineKeyboardKey(
                         legendVisibility,
                         legendModifierState,
                         shiftMappings,
+                        capsLockMappings,
                     )
                 if (legend != null) {
                     KeyLegendMark(
@@ -318,6 +321,7 @@ fun EngineKeyboardKey(
                     legendVisibility,
                     legendModifierState,
                     shiftMappings,
+                    capsLockMappings,
                 )
             if (centerLegend != null) {
                 val isUpperCase =

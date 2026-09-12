@@ -49,6 +49,7 @@ data class NamedLayout(
     val emojiBottomRow: Layout? = null,
     val clipboardBottomRow: Layout? = null,
     val shiftMappings: Map<String, String> = emptyMap(),
+    val capsLockMappings: Map<String, String> = emptyMap(),
     val layerHeights: Map<LayoutLayer, Int> = emptyMap(),
     val layerContent: Map<LayoutLayer, LayerContent> = emptyMap(),
 ) {
@@ -103,6 +104,7 @@ object BuiltinLayouts {
             emojiBottomRow = SUAVE_EMOJI_BOTTOM_ROW,
             clipboardBottomRow = SUAVE_CLIPBOARD_BOTTOM_ROW,
             shiftMappings = SUAVE_SHIFT_MAPPINGS,
+            capsLockMappings = SUAVE_CAPS_LOCK_MAPPINGS,
             layerHeights =
                 mapOf(
                     LayoutLayer.EMOJI to SUAVE_EMOJI_LAYER_HEIGHT_ROWS,

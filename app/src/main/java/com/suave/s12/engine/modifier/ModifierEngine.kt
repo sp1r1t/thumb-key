@@ -22,19 +22,48 @@ import com.suave.s12.engine.intent.ModifierId
  */
 object ModifierEngine {
     /**
-     * What [KeyIntent.Text] becomes while Shift is active: the layout's shift table first,
-     * then single-character uppercase. The keyboard preview uses this same function so the
-     * label matches what will actually be committed.
+     * What [KeyIntent.Text] becomes while one-shot/held Shift is active: the layout's shift
+     * table first, then single-character uppercase. The keyboard preview uses this same
+     * function so the label matches what will actually be committed.
      */
     fun applyShift(
         text: String,
         shiftMappings: Map<String, String> = emptyMap(),
     ): String = shiftMappings[text] ?: if (text.length == 1) text.uppercase() else text
 
+    /**
+     * What [KeyIntent.Text] becomes while Shift is LOCKED (caps lock): the layout's caps-lock
+     * overrides first, then the same fallback as [applyShift]. Digraphs that title-case under
+     * Shift (e.g. "sch" -> "Sch") only need a caps entry when they should fully uppercase.
+     */
+    fun applyCapsLock(
+        text: String,
+        capsLockMappings: Map<String, String> = emptyMap(),
+        shiftMappings: Map<String, String> = emptyMap(),
+    ): String = capsLockMappings[text] ?: applyShift(text, shiftMappings)
+
+    /**
+     * Applies the case transform that matches how Shift is currently active: caps-lock table
+     * (falling back to shift) when LOCKED, shift table for ONE_SHOT/HELD, unchanged when Shift
+     * is off.
+     */
+    fun applyCase(
+        text: String,
+        state: ModifierState,
+        shiftMappings: Map<String, String> = emptyMap(),
+        capsLockMappings: Map<String, String> = emptyMap(),
+    ): String =
+        when (state.active[ModifierId.SHIFT]?.mode) {
+            ActivationMode.LOCKED -> applyCapsLock(text, capsLockMappings, shiftMappings)
+            ActivationMode.HELD, ActivationMode.ONE_SHOT -> applyShift(text, shiftMappings)
+            null -> text
+        }
+
     fun resolve(
         state: ModifierState,
         intent: KeyIntent,
         shiftMappings: Map<String, String> = emptyMap(),
+        capsLockMappings: Map<String, String> = emptyMap(),
     ): ResolvedIntent =
         when (intent) {
             is KeyIntent.Text -> {
@@ -45,12 +74,7 @@ object ModifierEngine {
                 // *original* text, before Shift's transform below - Shift can itself change
                 // length (e.g. German "ß" -> "SS").
                 val modifiersApply = intent.text.length == 1
-                val text =
-                    if (state.isActive(ModifierId.SHIFT)) {
-                        applyShift(intent.text, shiftMappings)
-                    } else {
-                        intent.text
-                    }
+                val text = applyCase(intent.text, state, shiftMappings, capsLockMappings)
                 // Shift alone is already fully expressed above as a text-case transform, so it's
                 // dropped from the modifier set here - that keeps a plain capital letter on the
                 // commitText fast path (OutputExecutor.typeText) instead of forcing every shifted

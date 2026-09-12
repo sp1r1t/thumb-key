@@ -42,15 +42,23 @@ data class ModifierState(
     fun deactivate(id: ModifierId): ModifierState = copy(active = active - id)
 
     /**
-     * Display-only view for letter-key legends: whether Shift is on, not HELD vs ONE_SHOT.
-     * Never pass this into dispatch - LOCKED is not consumed after a typed letter, so a
-     * one-shot Shift would stick.
+     * Display-only view for letter-key legends: collapses HELD and ONE_SHOT to the same
+     * instance so letter keys do not recompose across that transition, but keeps LOCKED
+     * (caps lock) distinct so digraph legends can show "SCH" instead of "Sch".
+     * Never pass this into dispatch - ONE_SHOT here is not consumed after a typed letter.
      */
-    fun forLetterLegends(): ModifierState = if (isActive(ModifierId.SHIFT)) SHIFT_ON_FOR_LEGENDS else NONE
+    fun forLetterLegends(): ModifierState =
+        when (active[ModifierId.SHIFT]?.mode) {
+            null -> NONE
+            ActivationMode.LOCKED -> CAPS_ON_FOR_LEGENDS
+            ActivationMode.HELD, ActivationMode.ONE_SHOT -> SHIFT_ON_FOR_LEGENDS
+        }
 
     companion object {
         val NONE = ModifierState()
         val SHIFT_ON_FOR_LEGENDS =
+            ModifierState(mapOf(ModifierId.SHIFT to ActiveModifier(ActivationMode.ONE_SHOT)))
+        val CAPS_ON_FOR_LEGENDS =
             ModifierState(mapOf(ModifierId.SHIFT to ActiveModifier(ActivationMode.LOCKED)))
     }
 }

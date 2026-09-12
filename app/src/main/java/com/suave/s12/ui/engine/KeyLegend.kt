@@ -43,7 +43,7 @@ import com.suave.s12.utils.FontSizeVariant
 
 /**
  * What a key zone shows. Commands and modifiers use the same Material icons Thumb-Key put on
- * these actions; letters stay text and follow Shift via [ModifierEngine.applyShift].
+ * these actions; letters stay text and follow Shift / caps lock via [ModifierEngine.applyCase].
  */
 sealed class KeyLegend {
     data class Text(
@@ -103,17 +103,13 @@ fun keyLegend(
     visibility: LegendVisibility,
     modifierState: ModifierState,
     shiftMappings: Map<String, String>,
+    capsLockMappings: Map<String, String> = emptyMap(),
 ): KeyLegend? =
     when (intent) {
         null, KeyIntent.Noop -> null
 
         is KeyIntent.Text -> {
-            val shown =
-                if (modifierState.isActive(ModifierId.SHIFT)) {
-                    ModifierEngine.applyShift(intent.text, shiftMappings)
-                } else {
-                    intent.text
-                }
+            val shown = ModifierEngine.applyCase(intent.text, modifierState, shiftMappings, capsLockMappings)
             when {
                 shown.isBlank() -> null
                 visibility.hides(classifyText(shown)) -> null

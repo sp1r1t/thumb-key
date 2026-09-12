@@ -29,9 +29,9 @@ import kotlin.math.abs
  * Callbacks are parameters of [handle] itself, not constructor fields, deliberately: a
  * long-lived object holding onto Compose-recomposition-scoped lambdas is exactly the kind of
  * stale-closure hazard this rewrite exists to avoid (see [ModifierEngine]'s own doc). Only
- * [mapping], [shiftMappings], and [modifierBehaviors] - genuinely static for this key's lifetime,
- * or a settings value the UI layer already re-creates this dispatcher for when it changes - are
- * held.
+ * [mapping], [shiftMappings], [capsLockMappings], and [modifierBehaviors] - genuinely static for
+ * this key's lifetime, or a settings value the UI layer already re-creates this dispatcher for
+ * when it changes - are held.
  *
  * The state this class owns across a press: which [ModifierId] (if any) the press's locked zone
  * engaged, and whether *this specific press* is what activated it. The first matters because
@@ -47,6 +47,7 @@ class KeyDispatcher(
     private val mapping: KeyMapping,
     private val shiftMappings: Map<String, String> = emptyMap(),
     private val modifierBehaviors: Map<ModifierId, ModifierBehavior> = DEFAULT_MODIFIER_BEHAVIORS,
+    private val capsLockMappings: Map<String, String> = emptyMap(),
 ) {
     private var engagedModifier: ModifierId? = null
     private var freshlyActivatedByPressed = false
@@ -211,7 +212,7 @@ class KeyDispatcher(
 
             is KeyIntent.Text, is KeyIntent.Command, KeyIntent.Noop -> {
                 if (gesture is Gesture.HoldRepeat && !intent.repeatsOnHold()) return modifierState
-                val resolved = ModifierEngine.resolve(modifierState, intent, shiftMappings)
+                val resolved = ModifierEngine.resolve(modifierState, intent, shiftMappings, capsLockMappings)
                 onExecute(IntentCompiler.compile(resolved))
                 // Feedback for the press/swipe itself already happened on Gesture.Pressed/
                 // SwipeLocked; only an ongoing hold-repeat gets its own (quieter) tick here.

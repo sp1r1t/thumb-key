@@ -146,6 +146,17 @@ class SuaveLayoutTest {
         for (token in SUAVE_SHIFT_MAPPINGS.keys) {
             assertTrue("shift mapping for \"$token\" has no matching layout token", token in allTexts)
         }
+        for (token in SUAVE_CAPS_LOCK_MAPPINGS.keys) {
+            assertTrue("caps-lock mapping for \"$token\" has no matching layout token", token in allTexts)
+            assertTrue(
+                "caps-lock override \"$token\" should also exist in the shift table (fallback base)",
+                token in SUAVE_SHIFT_MAPPINGS,
+            )
+            assertTrue(
+                "caps-lock override for \"$token\" should differ from shift",
+                SUAVE_CAPS_LOCK_MAPPINGS.getValue(token) != SUAVE_SHIFT_MAPPINGS.getValue(token),
+            )
+        }
     }
 
     @Test

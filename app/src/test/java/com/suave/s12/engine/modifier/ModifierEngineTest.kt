@@ -190,14 +190,44 @@ class ModifierEngineTest {
     }
 
     @Test
-    fun `letter-key legend state stays the same instance while Shift only changes mode`() {
+    fun `letter-key legend state collapses HELD and ONE_SHOT but keeps LOCKED distinct`() {
         val held = ModifierState().activate(ModifierId.SHIFT, ActivationMode.HELD)
         val oneShot = ModifierState().activate(ModifierId.SHIFT, ActivationMode.ONE_SHOT)
+        val locked = ModifierState().activate(ModifierId.SHIFT, ActivationMode.LOCKED)
 
         assertTrue(held.forLetterLegends() === oneShot.forLetterLegends())
         assertTrue(held.forLetterLegends() === ModifierState.SHIFT_ON_FOR_LEGENDS)
+        assertTrue(locked.forLetterLegends() === ModifierState.CAPS_ON_FOR_LEGENDS)
         assertTrue(ModifierState().forLetterLegends() === ModifierState.NONE)
         assertTrue(oneShot.forLetterLegends().isActive(ModifierId.SHIFT))
+        assertEquals(ActivationMode.ONE_SHOT, oneShot.forLetterLegends().active.getValue(ModifierId.SHIFT).mode)
+        assertEquals(ActivationMode.LOCKED, locked.forLetterLegends().active.getValue(ModifierId.SHIFT).mode)
         assertFalse(ModifierState().activate(ModifierId.CTRL, ActivationMode.HELD).forLetterLegends().isActive(ModifierId.CTRL))
+    }
+
+    @Test
+    fun `caps lock uses the caps-lock mapping so sch becomes SCH`() {
+        val state = ModifierEngine.applyModifierGesture(ModifierState(), ModifierId.SHIFT, HOLD_CENTER)
+        assertEquals(ActivationMode.LOCKED, state.active.getValue(ModifierId.SHIFT).mode)
+
+        val resolved =
+            ModifierEngine.resolve(
+                state,
+                KeyIntent.Text("sch"),
+                shiftMappings = mapOf("sch" to "Sch"),
+                capsLockMappings = mapOf("sch" to "SCH"),
+            )
+
+        assertEquals(ResolvedIntent.TypedText("SCH", emptySet()), resolved)
+        assertEquals(
+            "SCH",
+            ModifierEngine.applyCapsLock("sch", mapOf("sch" to "SCH"), mapOf("sch" to "Sch")),
+        )
+        assertEquals(
+            "fallback to shift when caps has no override",
+            "SS",
+            ModifierEngine.applyCapsLock("ß", emptyMap(), mapOf("ß" to "SS")),
+        )
+        assertEquals("Sch", ModifierEngine.applyShift("sch", mapOf("sch" to "Sch")))
     }
 }
