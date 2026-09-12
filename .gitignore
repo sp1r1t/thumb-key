@@ -17,6 +17,9 @@ app/schemas
 .classpath
 .kotlin
 build.sh
-.claude/docs/session-notes.md
+.claude
+.cursor
+.copilot
+.chatgpt
 gradle/gradle-daemon-jvm.properties
 thumbkey.keystore
