@@ -181,6 +181,7 @@ internal fun CommandId.legendCategory(): LegendCategory =
         CommandId.TOGGLE_EMOJI_MODE,
         CommandId.TOGGLE_NUMERIC_MODE,
         CommandId.TOGGLE_ABC_MODE,
+        CommandId.TOGGLE_CLIPBOARD_HISTORY,
         -> LegendCategory.LAYER_SWITCH
 
         CommandId.COPY,
@@ -195,7 +196,6 @@ internal fun CommandId.legendCategory(): LegendCategory =
         CommandId.SWITCH_IME_VOICE,
         CommandId.SWITCH_LANGUAGE,
         CommandId.MOVE_KEYBOARD,
-        CommandId.TOGGLE_CLIPBOARD_HISTORY,
         -> LegendCategory.SPECIAL
     }
 

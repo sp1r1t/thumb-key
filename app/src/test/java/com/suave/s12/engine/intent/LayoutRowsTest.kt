@@ -36,4 +36,24 @@ class LayoutRowsTest {
     fun `columnSpan below 1 is rejected as layout data, not silently clamped`() {
         KeyMapping(config, mapOf(Zone.Center to KeyIntent.Text("a")), columnSpan = 0)
     }
+
+    @Test
+    fun `bottomRow remaps the last row to row 0 and keeps mappings`() {
+        val layout: Layout =
+            mapOf(
+                KeyPosition(0, 0) to key("a"),
+                KeyPosition(1, 0) to key("b"),
+                KeyPosition(1, 2) to key("c"),
+            )
+        val bottom = layout.bottomRow()
+        assertEquals(setOf(KeyPosition(0, 0), KeyPosition(0, 2)), bottom.keys)
+        assertEquals(KeyIntent.Text("b"), bottom.getValue(KeyPosition(0, 0)).intents[Zone.Center])
+        assertEquals(KeyIntent.Text("c"), bottom.getValue(KeyPosition(0, 2)).intents[Zone.Center])
+    }
+
+    @Test
+    fun `bottomRow of an empty layout is empty`() {
+        val empty: Layout = emptyMap()
+        assertEquals(emptyMap<KeyPosition, KeyMapping>(), empty.bottomRow())
+    }
 }

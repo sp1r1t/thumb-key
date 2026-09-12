@@ -8,6 +8,9 @@ const val MAX_LAYER_HEIGHT_ROWS = 12
 /** Suave emoji: five picker rows plus the functional bottom row. */
 const val SUAVE_EMOJI_LAYER_HEIGHT_ROWS = 6
 
+/** Suave clipboard: same total height as the letter grid so the keyboard does not jump. */
+const val SUAVE_CLIPBOARD_LAYER_HEIGHT_ROWS = 4
+
 /** Pre-generic compact emoji height (picker filled the three letter rows). Used only to migrate the old expand-emoji toggle off. */
 const val COMPACT_EMOJI_LAYER_HEIGHT_ROWS = 4
 

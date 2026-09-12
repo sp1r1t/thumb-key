@@ -23,7 +23,7 @@ import com.suave.s12.utils.nextVisible
 
 /**
  * Host callbacks for commands that are not editor I/O: settings, layout switch, IME picker,
- * keyboard position, hide-letters, and layer switches (numeric / emoji / abc).
+ * keyboard position, hide-letters, and layer switches (numeric / emoji / abc / clipboard).
  */
 data class AppCommandHost(
     val onToggleHideLetters: () -> Unit,

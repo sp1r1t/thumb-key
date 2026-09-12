@@ -1,18 +1,20 @@
 package com.suave.s12.layout
 
 import com.suave.s12.engine.intent.Layout
+import com.suave.s12.engine.intent.bottomRow
 import com.suave.s12.engine.intent.layoutRows
 import kotlin.math.max
 
 /**
  * Which grid a [NamedLayout] is currently showing. This is a layout switch, not a modifier:
- * numeric and emoji replace the letter grid the same way a second NamedLayout would, without
- * tearing down [com.suave.s12.engine.modifier.ModifierState].
+ * numeric, emoji, and clipboard replace the letter grid the same way a second NamedLayout would,
+ * without tearing down [com.suave.s12.engine.modifier.ModifierState].
  */
 enum class LayoutLayer {
     MAIN,
     NUMERIC,
     EMOJI,
+    CLIPBOARD,
 }
 
 /**
@@ -23,6 +25,8 @@ sealed class LayerContent {
     data object None : LayerContent()
 
     data object EmojiPicker : LayerContent()
+
+    data object ClipboardHistory : LayerContent()
 }
 
 /**
@@ -34,8 +38,8 @@ sealed class LayerContent {
  * registry entries (language switch still walks [BuiltinLayouts.ALL]).
  *
  * [layerHeights] is the default total height in key-height units per layer. Missing entries
- * use the grid's row count. Extra rows sit above the keys and show [layerContent] (the emoji
- * picker today). User overrides of these heights live in settings, not here.
+ * use the grid's row count. Extra rows sit above the keys and show [layerContent] (emoji
+ * picker, clipboard list). User overrides of these heights live in settings, not here.
  */
 data class NamedLayout(
     val id: String,
@@ -52,13 +56,28 @@ data class NamedLayout(
             LayoutLayer.MAIN -> layout
             LayoutLayer.NUMERIC -> numericLayout ?: layout
             LayoutLayer.EMOJI -> emojiBottomRow ?: layout
+            LayoutLayer.CLIPBOARD -> layout.bottomRow()
         }
+
+    /**
+     * Clipboard keeps the bottom row of the layer you opened it from (123 vs ABC) so those
+     * keys do not jump. Emoji/clipboard themselves fall back to the letter bottom row.
+     */
+    fun gridForClipboard(from: LayoutLayer): Layout {
+        val source =
+            when (from) {
+                LayoutLayer.NUMERIC -> numericLayout ?: layout
+                else -> layout
+            }
+        return source.bottomRow()
+    }
 
     fun availableLayers(): List<LayoutLayer> =
         buildList {
             add(LayoutLayer.MAIN)
             if (numericLayout != null) add(LayoutLayer.NUMERIC)
             if (emojiBottomRow != null) add(LayoutLayer.EMOJI)
+            if (layerContent[LayoutLayer.CLIPBOARD] != null) add(LayoutLayer.CLIPBOARD)
         }
 
     fun gridRowCount(layer: LayoutLayer): Int = layoutRows(gridFor(layer)).size.coerceAtLeast(1)
@@ -93,8 +112,16 @@ object BuiltinLayouts {
             numericLayout = SUAVE_NUMERIC_LAYOUT,
             emojiBottomRow = SUAVE_EMOJI_BOTTOM_ROW,
             shiftMappings = SUAVE_SHIFT_MAPPINGS,
-            layerHeights = mapOf(LayoutLayer.EMOJI to SUAVE_EMOJI_LAYER_HEIGHT_ROWS),
-            layerContent = mapOf(LayoutLayer.EMOJI to LayerContent.EmojiPicker),
+            layerHeights =
+                mapOf(
+                    LayoutLayer.EMOJI to SUAVE_EMOJI_LAYER_HEIGHT_ROWS,
+                    LayoutLayer.CLIPBOARD to SUAVE_CLIPBOARD_LAYER_HEIGHT_ROWS,
+                ),
+            layerContent =
+                mapOf(
+                    LayoutLayer.EMOJI to LayerContent.EmojiPicker,
+                    LayoutLayer.CLIPBOARD to LayerContent.ClipboardHistory,
+                ),
         )
 
     val ALL: List<NamedLayout> = listOf(SUAVE)

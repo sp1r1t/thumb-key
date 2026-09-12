@@ -66,9 +66,10 @@
     <string name="layer_height_main">Main layer height</string>
     <string name="layer_height_numeric">Numeric layer height</string>
     <string name="layer_height_emoji">Emoji layer height</string>
+    <string name="layer_height_clipboard">Clipboard layer height</string>
     <string name="layer_height_summary_flush">Currently %1$s key-heights - same height as the key grid</string>
     <string name="layer_height_summary_extra">Currently %1$s key-heights - %2$s extra above the keys for this layer\'s content</string>
-    <string name="layer_height_info">Every layer has a height in key-heights. Taller than the key grid leaves space above the keys; that space is the layer\'s content area (the emoji picker on emoji, empty on layers with no content yet). Reset restores the layout default.</string>
+    <string name="layer_height_info">Every layer has a height in key-heights. Taller than the key grid leaves space above the keys; that space is the layer\'s content area (the emoji picker on emoji, the clipboard list on clipboard, empty on layers with no content). Reset restores the layout default.</string>
     <string name="key_width">Key width: %1$s</string>
     <string name="bottom_offset">Bottom offset: %1$s</string>
     <string name="min_swipe_length">Minimum swipe length</string>

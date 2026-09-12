@@ -94,11 +94,12 @@ class KeyLegendTest {
     }
 
     @Test
-    fun `hiding layer switches blanks emoji numeric abc icons`() {
+    fun `hiding layer switches blanks emoji numeric abc and clipboard icons`() {
         val hidden = LegendVisibility(hideLayerSwitches = true)
         assertNull(legend(KeyIntent.Command(CommandId.TOGGLE_EMOJI_MODE), hidden))
         assertNull(legend(KeyIntent.Command(CommandId.TOGGLE_NUMERIC_MODE), hidden))
         assertNull(legend(KeyIntent.Command(CommandId.TOGGLE_ABC_MODE), hidden))
+        assertNull(legend(KeyIntent.Command(CommandId.TOGGLE_CLIPBOARD_HISTORY), hidden))
         assertEquals(KeyLegend.Icon(Icons.Outlined.ContentCopy), legend(KeyIntent.Command(CommandId.COPY), hidden))
     }
 
@@ -108,6 +109,10 @@ class KeyLegendTest {
         assertNull(legend(KeyIntent.Command(CommandId.COPY), hidden))
         assertNull(legend(KeyIntent.Command(CommandId.GOTO_SETTINGS), hidden))
         assertNull(legend(KeyIntent.Command(CommandId.TOGGLE_HIDE_LETTERS), hidden))
+        assertEquals(
+            KeyLegend.Icon(Icons.Outlined.History),
+            legend(KeyIntent.Command(CommandId.TOGGLE_CLIPBOARD_HISTORY), hidden),
+        )
         assertEquals(
             KeyLegend.Icon(Icons.AutoMirrored.Outlined.KeyboardArrowLeft),
             legend(KeyIntent.Command(CommandId.ARROW_LEFT), hidden),

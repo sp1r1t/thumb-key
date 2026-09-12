@@ -121,6 +121,13 @@
     <string name="vibrate_warning">Erfordert die Aktivierung des Touch-Feedbacks in den Systemeinstellungen</string>
     <string name="key_non_square">Nicht-quadratische Tasten verwenden</string>
     <string name="key_height">Tastenhöhe: %1$s</string>
+    <string name="layer_height_main">Höhe der Hauptebene</string>
+    <string name="layer_height_numeric">Höhe der Zahlenebene</string>
+    <string name="layer_height_emoji">Höhe der Emoji-Ebene</string>
+    <string name="layer_height_clipboard">Höhe der Zwischenablage-Ebene</string>
+    <string name="layer_height_summary_flush">Aktuell %1$s Tastenhöhen - gleiche Höhe wie das Tastenraster</string>
+    <string name="layer_height_summary_extra">Aktuell %1$s Tastenhöhen - %2$s extra über den Tasten für den Inhalt dieser Ebene</string>
+    <string name="layer_height_info">Jede Ebene hat eine Höhe in Tastenhöhen. Mehr als das Tastenraster lässt Platz über den Tasten; dort liegt der Inhalt der Ebene (der Emoji-Wähler bei Emoji, die Zwischenablage-Liste bei der Zwischenablage, sonst leer). Zurücksetzen stellt den Layout-Standard wieder her.</string>
     <string name="key_width">Tastenbreite: %1$s</string>
     <string name="slide_sensitivity">Schiebeempfindlichkeit: %1$s</string>
     <string name="slide_cursor_acceleration_constant">Keine Beschleunigung / Konstante Geschwindigkeit</string>

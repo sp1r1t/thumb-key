@@ -17,20 +17,21 @@ class LayerHeightsTest {
         val stored = formatLayerHeightOverrides(
             mapOf(
                 LayoutLayer.EMOJI to 8,
+                LayoutLayer.CLIPBOARD to 6,
                 LayoutLayer.MAIN to 5,
             ),
         )
-        assertEquals("MAIN=5,EMOJI=8", stored)
+        assertEquals("MAIN=5,EMOJI=8,CLIPBOARD=6", stored)
         assertEquals(
-            mapOf(LayoutLayer.MAIN to 5, LayoutLayer.EMOJI to 8),
+            mapOf(LayoutLayer.MAIN to 5, LayoutLayer.EMOJI to 8, LayoutLayer.CLIPBOARD to 6),
             parseLayerHeightOverrides(stored),
         )
     }
 
     @Test
     fun `unknown names and non-positive values are ignored`() {
-        val parsed = parseLayerHeightOverrides("EMOJI=6,FUTURE=9,MAIN=0,NUMERIC=abc")
-        assertEquals(mapOf(LayoutLayer.EMOJI to 6), parsed)
+        val parsed = parseLayerHeightOverrides("EMOJI=6,CLIPBOARD=7,FUTURE=9,MAIN=0,NUMERIC=abc")
+        assertEquals(mapOf(LayoutLayer.EMOJI to 6, LayoutLayer.CLIPBOARD to 7), parsed)
     }
 
     @Test
@@ -49,6 +50,11 @@ class LayerHeightsTest {
         assertEquals(SUAVE_EMOJI_LAYER_HEIGHT_ROWS, suave.heightRows(LayoutLayer.EMOJI))
         assertEquals(5, suave.contentRows(LayoutLayer.EMOJI))
         assertEquals(LayerContent.EmojiPicker, suave.contentFor(LayoutLayer.EMOJI))
+
+        assertEquals(1, suave.gridRowCount(LayoutLayer.CLIPBOARD))
+        assertEquals(SUAVE_CLIPBOARD_LAYER_HEIGHT_ROWS, suave.heightRows(LayoutLayer.CLIPBOARD))
+        assertEquals(3, suave.contentRows(LayoutLayer.CLIPBOARD))
+        assertEquals(LayerContent.ClipboardHistory, suave.contentFor(LayoutLayer.CLIPBOARD))
     }
 
     @Test
@@ -59,13 +65,16 @@ class LayerHeightsTest {
         assertEquals(8, suave.heightRows(LayoutLayer.EMOJI, overrideRows = 8))
         assertEquals(4, suave.heightRows(LayoutLayer.EMOJI, overrideRows = 4))
         assertEquals(3, suave.contentRows(LayoutLayer.EMOJI, overrideRows = 4))
+        assertEquals(1, suave.heightRows(LayoutLayer.CLIPBOARD, overrideRows = 1))
+        assertEquals(6, suave.heightRows(LayoutLayer.CLIPBOARD, overrideRows = 6))
+        assertEquals(5, suave.contentRows(LayoutLayer.CLIPBOARD, overrideRows = 6))
     }
 
     @Test
     fun `available layers follow which optional grids the layout actually has`() {
         val suave = BuiltinLayouts.SUAVE
         assertEquals(
-            listOf(LayoutLayer.MAIN, LayoutLayer.NUMERIC, LayoutLayer.EMOJI),
+            listOf(LayoutLayer.MAIN, LayoutLayer.NUMERIC, LayoutLayer.EMOJI, LayoutLayer.CLIPBOARD),
             suave.availableLayers(),
         )
         assertTrue(LayoutLayer.MAIN in suave.availableLayers())

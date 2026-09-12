@@ -132,7 +132,34 @@ class SuaveLayoutTest {
         assertEquals(SUAVE_EMOJI_BOTTOM_ROW, suave.gridFor(LayoutLayer.EMOJI))
         assertEquals(LayerContent.EmojiPicker, suave.contentFor(LayoutLayer.EMOJI))
         assertEquals(SUAVE_EMOJI_LAYER_HEIGHT_ROWS, suave.heightRows(LayoutLayer.EMOJI))
+        assertEquals(LayerContent.ClipboardHistory, suave.contentFor(LayoutLayer.CLIPBOARD))
+        assertEquals(SUAVE_CLIPBOARD_LAYER_HEIGHT_ROWS, suave.heightRows(LayoutLayer.CLIPBOARD))
         assertEquals(listOf(suave), BuiltinLayouts.ALL)
+    }
+
+    @Test
+    fun `clipboard keeps the origin bottom row remapped to row 0`() {
+        val suave = BuiltinLayouts.SUAVE
+        val fromMain = suave.gridForClipboard(LayoutLayer.MAIN)
+        val fromNumeric = suave.gridForClipboard(LayoutLayer.NUMERIC)
+        val fromEmoji = suave.gridForClipboard(LayoutLayer.EMOJI)
+
+        assertEquals(
+            KeyIntent.Command(CommandId.TOGGLE_NUMERIC_MODE),
+            fromMain.getValue(KeyPosition(0, 2)).intents[Zone.Center],
+        )
+        assertEquals(
+            SUAVE_LAYOUT.getValue(KeyPosition(3, 0)).intents,
+            fromMain.getValue(KeyPosition(0, 0)).intents,
+        )
+        assertEquals(
+            KeyIntent.Command(CommandId.TOGGLE_ABC_MODE),
+            fromNumeric.getValue(KeyPosition(0, 2)).intents[Zone.Center],
+        )
+        assertEquals(fromMain, fromEmoji)
+        assertEquals(fromMain, suave.gridFor(LayoutLayer.CLIPBOARD))
+        assertEquals(setOf(KeyPosition(0, 0), KeyPosition(0, 1), KeyPosition(0, 2), KeyPosition(0, 3)), fromMain.keys)
+        assertEquals(2, fromMain.getValue(KeyPosition(0, 3)).columnSpan)
     }
 
     @Test

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -37,9 +36,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.MutableLiveData
 import com.suave.s12.IMEService
 import com.suave.s12.MainActivity
 import com.suave.s12.db.AppSettings
+import com.suave.s12.db.ClipboardItem
 import com.suave.s12.db.ClipboardRepository
 import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_ANIMATION_LETTER_DROP
@@ -101,7 +102,7 @@ import java.util.Locale
 /**
  * Renders the selected [NamedLayout] on the new engine end to end. Owns the two pieces of
  * state every key on the keyboard shares: [ModifierState] (modifiers are not a layout mode)
- * and [LayoutLayer] (numeric/emoji are layout switches, not modifiers). Both survive Dual's
+ * and [LayoutLayer] (numeric/emoji/clipboard are layout switches, not modifiers). Both survive Dual's
  * second copy of the grid, so Ctrl held on the left half still applies on the right.
  *
  * The grid is derived from the layout data ([layoutRows]), not a hardcoded 4x5. Suave is one
@@ -124,14 +125,11 @@ fun EngineKeyboardScreen(
 
     val modifierState = remember { mutableStateOf(ModifierState()) }
     var layer by remember { mutableStateOf(LayoutLayer.MAIN) }
-    var showClipboardHistory by remember { mutableStateOf(false) }
+    var clipboardOrigin by remember { mutableStateOf(LayoutLayer.MAIN) }
     val clipboardScope = rememberCoroutineScope()
-    val clipboardItems =
-        if (showClipboardHistory) {
-            clipboardRepository?.allClipboardItems?.observeAsState(emptyList())?.value.orEmpty()
-        } else {
-            emptyList()
-        }
+    val emptyClipboardItems = remember { MutableLiveData(emptyList<ClipboardItem>()) }
+    val clipboardItems by
+        (clipboardRepository?.allClipboardItems ?: emptyClipboardItems).observeAsState(emptyList())
 
     val vibrateOnTap = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
     val vibrateOnSlide = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
@@ -204,15 +202,46 @@ fun EngineKeyboardScreen(
     // input focus), matching how the old engine treated editor capability too.
     val capabilities = remember { EditorCapabilityResolver.resolve(ime.currentInputEditorInfo) }
 
-    LaunchedEffect(namedLayout.id) { layer = LayoutLayer.MAIN }
-    LaunchedEffect(showClipboardHistory) {
-        if (showClipboardHistory) {
+    LaunchedEffect(namedLayout.id) {
+        layer = LayoutLayer.MAIN
+        clipboardOrigin = LayoutLayer.MAIN
+    }
+    LaunchedEffect(layer) {
+        if (layer == LayoutLayer.CLIPBOARD) {
             clipboardRepository?.clearExpired()
         }
     }
 
     val clipboardHistoryEnabled =
         (settings?.clipboardHistoryEnabled ?: DEFAULT_CLIPBOARD_HISTORY_ENABLED).toBool()
+    val clipboardSession =
+        ClipboardLayerSession(
+            items = clipboardItems,
+            enabled = clipboardHistoryEnabled && clipboardRepository != null,
+            onPasteAndLeave = { item ->
+                ime.currentInputConnection?.commitText(item.text, 1)
+                layer = clipboardOrigin
+            },
+            onPasteAndStay = { item ->
+                ime.currentInputConnection?.commitText(item.text, 1)
+            },
+            onDelete = { item ->
+                clipboardScope.launch { clipboardRepository?.deleteItem(item) }
+            },
+            onPin = { item ->
+                clipboardScope.launch { clipboardRepository?.togglePin(item) }
+            },
+            onBack = { layer = clipboardOrigin },
+            onClearAll = {
+                clipboardScope.launch { clipboardRepository?.clearUnpinned() }
+            },
+            onOpenSettings = {
+                val intent = Intent(ime, MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                intent.putExtra("startRoute", "clipboardSettings")
+                ime.startActivity(intent)
+            },
+        )
 
     val onToggleHideLettersState = rememberUpdatedState(onToggleHideLetters)
     val onSwitchLanguageState = rememberUpdatedState(onSwitchLanguage)
@@ -223,23 +252,35 @@ fun EngineKeyboardScreen(
             AppCommandHost(
                 onToggleHideLetters = { onToggleHideLettersState.value() },
                 onSwitchLanguage = {
-                    showClipboardHistory = false
                     layer = LayoutLayer.MAIN
+                    clipboardOrigin = LayoutLayer.MAIN
                     onSwitchLanguageState.value()
                 },
                 onChangePosition = { f -> onChangePositionState.value(f) },
                 onSelectLayer = { requested ->
-                    showClipboardHistory = false
                     val current = namedLayoutState.value
                     layer =
                         when (requested) {
                             LayoutLayer.NUMERIC -> if (current.numericLayout != null) LayoutLayer.NUMERIC else layer
                             LayoutLayer.EMOJI -> if (current.emojiBottomRow != null) LayoutLayer.EMOJI else layer
                             LayoutLayer.MAIN -> LayoutLayer.MAIN
+                            LayoutLayer.CLIPBOARD ->
+                                if (current.layerContent[LayoutLayer.CLIPBOARD] != null) {
+                                    if (layer != LayoutLayer.CLIPBOARD) {
+                                        clipboardOrigin =
+                                            if (layer == LayoutLayer.NUMERIC) {
+                                                LayoutLayer.NUMERIC
+                                            } else {
+                                                LayoutLayer.MAIN
+                                            }
+                                    }
+                                    LayoutLayer.CLIPBOARD
+                                } else {
+                                    layer
+                                }
                         }
                 },
                 onToggleEmojiLayer = {
-                    showClipboardHistory = false
                     val current = namedLayoutState.value
                     layer =
                         when {
@@ -248,7 +289,16 @@ fun EngineKeyboardScreen(
                             else -> layer
                         }
                 },
-                onToggleClipboardHistory = { showClipboardHistory = !showClipboardHistory },
+                onToggleClipboardHistory = {
+                    val current = namedLayoutState.value
+                    if (layer == LayoutLayer.CLIPBOARD) {
+                        layer = clipboardOrigin
+                    } else if (current.layerContent[LayoutLayer.CLIPBOARD] != null) {
+                        clipboardOrigin =
+                            if (layer == LayoutLayer.NUMERIC) LayoutLayer.NUMERIC else LayoutLayer.MAIN
+                        layer = LayoutLayer.CLIPBOARD
+                    }
+                },
             )
         }
         val onExecute =
@@ -299,6 +349,8 @@ fun EngineKeyboardScreen(
                 modifier = panelModifier,
                 namedLayout = namedLayout,
                 layer = layer,
+                clipboardOrigin = clipboardOrigin,
+                clipboardSession = clipboardSession,
                 keyHeight = keyHeight,
                 layerHeightOverrides = layerHeightOverrides,
                 modifierState = modifierState,
@@ -348,50 +400,7 @@ fun EngineKeyboardScreen(
                         .padding(bottom = pushupSize)
                         .then(if (backdropEnabled) Modifier.padding(top = 6.dp) else Modifier),
             ) {
-                if (showClipboardHistory) {
-                    val keyboardHeight =
-                        keyHeight * namedLayout.heightRows(layer, layerHeightOverrides[layer] ?: 0)
-                    Box(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .height(keyboardHeight),
-                    ) {
-                        ClipboardHistoryScreen(
-                            clipboardItems = clipboardItems,
-                            isEnabled = clipboardHistoryEnabled && clipboardRepository != null,
-                            onItemClick = { item ->
-                                ime.currentInputConnection?.commitText(item.text, 1)
-                                showClipboardHistory = false
-                            },
-                            onItemPaste = { item ->
-                                ime.currentInputConnection?.commitText(item.text, 1)
-                            },
-                            onItemDelete = { item ->
-                                clipboardScope.launch { clipboardRepository?.deleteItem(item) }
-                            },
-                            onItemTogglePin = { item ->
-                                clipboardScope.launch { clipboardRepository?.togglePin(item) }
-                            },
-                            onBack = { showClipboardHistory = false },
-                            onClearAll = {
-                                clipboardScope.launch { clipboardRepository?.clearUnpinned() }
-                            },
-                            onGoToClipboardSettings = {
-                                showClipboardHistory = false
-                                val intent = Intent(ime, MainActivity::class.java)
-                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                                intent.putExtra("startRoute", "clipboardSettings")
-                                ime.startActivity(intent)
-                            },
-                            keyHeight = keyHeight.value,
-                            keyPadding = keyPadding,
-                            cornerRadius = keyCornerRadius.value,
-                            vibrateOnTap = vibrateOnTap,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                } else if (keyboardPosition == KeyboardPosition.Dual) {
+                if (keyboardPosition == KeyboardPosition.Dual) {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         renderPanel(Modifier.weight(1f))
                         renderPanel(Modifier.weight(1f))
@@ -404,11 +413,25 @@ fun EngineKeyboardScreen(
     }
 }
 
+private data class ClipboardLayerSession(
+    val items: List<ClipboardItem>,
+    val enabled: Boolean,
+    val onPasteAndLeave: (ClipboardItem) -> Unit,
+    val onPasteAndStay: (ClipboardItem) -> Unit,
+    val onDelete: (ClipboardItem) -> Unit,
+    val onPin: (ClipboardItem) -> Unit,
+    val onBack: () -> Unit,
+    val onClearAll: () -> Unit,
+    val onOpenSettings: () -> Unit,
+)
+
 @Composable
 private fun EngineKeyboardPanel(
     modifier: Modifier,
     namedLayout: NamedLayout,
     layer: LayoutLayer,
+    clipboardOrigin: LayoutLayer,
+    clipboardSession: ClipboardLayerSession,
     keyHeight: Dp,
     layerHeightOverrides: Map<LayoutLayer, Int>,
     modifierState: MutableState<ModifierState>,
@@ -427,7 +450,12 @@ private fun EngineKeyboardPanel(
     animations: KeyAnimationSettings,
     isPasswordField: Boolean,
 ) {
-    val grid = namedLayout.gridFor(layer)
+    val grid =
+        if (layer == LayoutLayer.CLIPBOARD) {
+            namedLayout.gridForClipboard(clipboardOrigin)
+        } else {
+            namedLayout.gridFor(layer)
+        }
     val overrideRows = layerHeightOverrides[layer] ?: 0
     val contentRows = namedLayout.contentRows(layer, overrideRows)
     Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
@@ -438,6 +466,10 @@ private fun EngineKeyboardPanel(
                 vibrateOnTap = vibrateOnTap,
                 capabilities = capabilities,
                 ime = ime,
+                clipboardSession = clipboardSession,
+                keyHeight = keyHeight,
+                keyPadding = keyPadding,
+                keyCornerRadius = keyCornerRadius,
             )
         }
         LayoutGrid(
@@ -467,6 +499,10 @@ private fun LayerContentSlot(
     vibrateOnTap: Boolean,
     capabilities: EditorCapabilities,
     ime: IMEService,
+    clipboardSession: ClipboardLayerSession,
+    keyHeight: Dp,
+    keyPadding: Int,
+    keyCornerRadius: Dp,
 ) {
     val view = LocalView.current
     when (content) {
@@ -502,6 +538,24 @@ private fun LayerContentSlot(
                     modifier = Modifier.fillMaxWidth().height(height),
                 )
             }
+        }
+        LayerContent.ClipboardHistory -> {
+            ClipboardHistoryScreen(
+                clipboardItems = clipboardSession.items,
+                isEnabled = clipboardSession.enabled,
+                onItemClick = clipboardSession.onPasteAndLeave,
+                onItemPaste = clipboardSession.onPasteAndStay,
+                onItemDelete = clipboardSession.onDelete,
+                onItemTogglePin = clipboardSession.onPin,
+                onBack = clipboardSession.onBack,
+                onClearAll = clipboardSession.onClearAll,
+                onGoToClipboardSettings = clipboardSession.onOpenSettings,
+                keyHeight = keyHeight.value,
+                keyPadding = keyPadding,
+                cornerRadius = keyCornerRadius.value,
+                vibrateOnTap = vibrateOnTap,
+                modifier = Modifier.fillMaxWidth().height(height),
+            )
         }
     }
 }

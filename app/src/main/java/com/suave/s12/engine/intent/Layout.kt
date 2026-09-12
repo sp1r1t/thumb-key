@@ -55,3 +55,9 @@ fun layoutRows(layout: Layout): List<List<KeyPosition>> =
         .groupBy { it.row }
         .toSortedMap()
         .map { (_, positions) -> positions.sortedBy { it.col } }
+
+/** The last row of [layout], remapped to row 0 so it can sit under a layer's content slot. */
+fun Layout.bottomRow(): Layout {
+    val lastRow = layoutRows(this).lastOrNull() ?: return emptyMap()
+    return lastRow.associate { pos -> KeyPosition(0, pos.col) to getValue(pos) }
+}

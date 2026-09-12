@@ -22,6 +22,7 @@ import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.Height
 import androidx.compose.material.icons.outlined.Highlight
 import androidx.compose.material.icons.outlined.HideImage
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.KeyboardControlKey
@@ -1065,6 +1066,7 @@ private fun LayoutLayer.heightTitleRes(): Int =
         LayoutLayer.MAIN -> R.string.layer_height_main
         LayoutLayer.NUMERIC -> R.string.layer_height_numeric
         LayoutLayer.EMOJI -> R.string.layer_height_emoji
+        LayoutLayer.CLIPBOARD -> R.string.layer_height_clipboard
     }
 
 private fun LayoutLayer.heightIcon(): ImageVector =
@@ -1072,6 +1074,7 @@ private fun LayoutLayer.heightIcon(): ImageVector =
         LayoutLayer.MAIN -> Icons.Outlined.Keyboard
         LayoutLayer.NUMERIC -> Icons.Outlined.Numbers
         LayoutLayer.EMOJI -> Icons.Outlined.EmojiEmotions
+        LayoutLayer.CLIPBOARD -> Icons.Outlined.History
     }
 
 private fun tenthsOfDpLabel(tenths: Int): String {
