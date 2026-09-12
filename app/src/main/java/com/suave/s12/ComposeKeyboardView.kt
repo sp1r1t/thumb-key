@@ -18,6 +18,7 @@ import com.suave.s12.ui.engine.EngineKeyboardScreen
 import com.suave.s12.ui.engine.toggleHideLabels
 import com.suave.s12.ui.theme.ThumbkeyTheme
 import com.suave.s12.utils.KeyboardPosition
+import com.suave.s12.utils.toBool
 import kotlinx.coroutines.launch
 
 @SuppressLint("ViewConstructor")
@@ -55,7 +56,9 @@ class ComposeKeyboardView(
                                 val nextIndex = BuiltinLayouts.ALL.indexOfFirst { it.id == next.id }.coerceAtLeast(0)
                                 val s2 = s.copy(keyboardLayout = nextIndex)
                                 settingsRepo.update(s2)
-                                Toast.makeText(context, next.title, Toast.LENGTH_SHORT).show()
+                                if (s.showToastOnLayoutSwitch.toBool()) {
+                                    Toast.makeText(context, next.title, Toast.LENGTH_SHORT).show()
+                                }
                             }
                         }
                     },
@@ -63,9 +66,11 @@ class ComposeKeyboardView(
                         ctx.lifecycleScope.launch {
                             val state = settingsState.value
                             state?.let { s ->
-                                val nextPosition = f(KeyboardPosition.entries[s.position]).ordinal
-                                val s2 = s.copy(position = nextPosition)
-                                settingsRepo.update(s2)
+                                val current =
+                                    KeyboardPosition.entries.getOrElse(s.position) { KeyboardPosition.Center }
+                                val next = f(current)
+                                settingsRepo.update(s.copy(position = next.ordinal))
+                                Toast.makeText(context, context.getString(next.resId), Toast.LENGTH_SHORT).show()
                             }
                         }
                     },
