@@ -80,8 +80,8 @@ fun SettingsSection(
 }
 
 /**
- * Settings options scroll in the remaining space; the test-out control stays pinned to the
- * bottom of the screen instead of sitting directly under the last option.
+ * Settings options scroll in the remaining space. The test-out button stays pinned to
+ * the bottom; the text field only takes height while you are actually typing.
  */
 @Composable
 fun SettingsScreenBody(

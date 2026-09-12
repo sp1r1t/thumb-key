@@ -16,9 +16,11 @@ import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +37,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -49,15 +52,38 @@ fun TestOutTextField() {
     var text by remember { mutableStateOf("") }
     var showField by remember { mutableStateOf(false) }
     var fieldFocused by remember { mutableStateOf(false) }
+    var imeHadShown by remember { mutableStateOf(false) }
     var focusNonce by remember { mutableIntStateOf(0) }
     val focusRequester = remember { FocusRequester() }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
     val density = LocalDensity.current
     val ime = WindowInsets.ime
     val imeTarget = WindowInsets.imeAnimationTarget
     val imeVisible = WindowInsets.isImeVisible
     val hideButton = showField && fieldFocused && imeVisible
+
+    fun collapse() {
+        keyboardController?.hide()
+        focusManager.clearFocus()
+        showField = false
+        fieldFocused = false
+        imeHadShown = false
+    }
+
+    LaunchedEffect(showField, imeVisible) {
+        if (shouldCollapseTestField(showField, imeVisible, imeHadShown)) {
+            collapse()
+            return@LaunchedEffect
+        }
+        if (showField && imeVisible) {
+            imeHadShown = true
+        }
+        if (!showField) {
+            imeHadShown = false
+        }
+    }
 
     Column(
         modifier =
@@ -98,7 +124,16 @@ fun TestOutTextField() {
                 onValueChange = { text = it },
                 placeholder = { Text(stringResource(R.string.test_out_placeholder)) },
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                minLines = 3,
+                minLines = 1,
+                maxLines = 3,
+                trailingIcon = {
+                    IconButton(onClick = { collapse() }) {
+                        Icon(
+                            imageVector = Icons.Outlined.Close,
+                            contentDescription = stringResource(R.string.test_out_hide),
+                        )
+                    }
+                },
             )
             LaunchedEffect(focusNonce) {
                 withFrameNanos { }
@@ -116,6 +151,12 @@ fun TestOutTextField() {
         }
     }
 }
+
+internal fun shouldCollapseTestField(
+    showField: Boolean,
+    imeVisible: Boolean,
+    imeHadShown: Boolean,
+): Boolean = showField && imeHadShown && !imeVisible
 
 /** Wait until the IME inset has reached its animation target, not just the first non-zero frame. */
 private suspend fun awaitImeSpawned(
