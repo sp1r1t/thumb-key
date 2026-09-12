@@ -38,6 +38,7 @@ import com.suave.s12.IMEService
 import com.suave.s12.R
 import com.suave.s12.db.AppSettings
 import com.suave.s12.db.ClipboardRepository
+import com.suave.s12.engine.output.ClipboardPaste
 import com.suave.s12.db.DEFAULT_ANIMATION_HELPER_SPEED
 import com.suave.s12.db.DEFAULT_ANIMATION_SPEED
 import com.suave.s12.db.DEFAULT_AUTO_CAPITALIZE
@@ -693,13 +694,12 @@ fun KeyboardScreen(
                     clipboardItems = clipboardItems,
                     isEnabled = clipboardHistoryEnabled,
                     onItemClick = { item ->
-                        // Paste and return to keyboard
-                        ctx.currentInputConnection.commitText(item.text, 1)
-                        mode = KeyboardMode.MAIN
+                        if (ClipboardPaste.pasteHistoryItem(ctx, item)) {
+                            mode = KeyboardMode.MAIN
+                        }
                     },
                     onItemPaste = { item ->
-                        // Paste WITHOUT returning to keyboard
-                        ctx.currentInputConnection.commitText(item.text, 1)
+                        ClipboardPaste.pasteHistoryItem(ctx, item)
                     },
                     onItemDelete = { item ->
                         scope.launch {

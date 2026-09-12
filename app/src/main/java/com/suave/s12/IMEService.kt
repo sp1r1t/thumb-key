@@ -38,6 +38,7 @@ import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_COPY
 import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_CUT
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
 import com.suave.s12.db.isCredentialStorageUnlocked
+import com.suave.s12.engine.output.LiveClipboardImage
 import com.suave.s12.ime.InlineAutofillHost
 import com.suave.s12.ime.createInlineSuggestionsRequest
 import com.suave.s12.utils.KeyboardDefinition
@@ -47,6 +48,7 @@ import com.suave.s12.utils.ThumbKeyClipboardManager
 import com.suave.s12.utils.toBool
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 class IMEService :
     InputMethodService(),
@@ -80,6 +82,7 @@ class IMEService :
 
     var currentKeyboardDefinition: KeyboardDefinition? = null
     private var clipboardManager: ThumbKeyClipboardManager? = null
+    private val noLiveClipboardImage = MutableStateFlow<LiveClipboardImage?>(null)
     private var unlockReceiver: BroadcastReceiver? = null
     val inlineAutofill = InlineAutofillHost()
     val inputEpoch = MutableStateFlow(0)
@@ -122,6 +125,7 @@ class IMEService :
         restarting: Boolean,
     ) {
         super.onStartInputView(info, restarting)
+        clipboardIngestPrimary()
         bumpInputEpoch()
     }
 
@@ -335,6 +339,13 @@ class IMEService :
     fun clipboardWasLastCopyDoneViaSystem(): Boolean = clipboardManager?.wasLastCopyOperationDoneViaSystem() ?: true
 
     fun clipboardGetLastClip(): String? = clipboardManager?.getLastClip()
+
+    fun clipboardIngestPrimary() {
+        clipboardManager?.ingestPrimaryClip()
+    }
+
+    fun clipboardLiveImage(): StateFlow<LiveClipboardImage?> =
+        clipboardManager?.liveImage ?: noLiveClipboardImage
 
     private fun bumpInputEpoch() {
         inputEpoch.value = inputEpoch.value + 1

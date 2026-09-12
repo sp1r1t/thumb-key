@@ -1,6 +1,5 @@
 package com.suave.s12.engine.output
 
-import android.content.ClipData
 import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
@@ -16,17 +15,19 @@ import androidx.core.view.inputmethod.InputConnectionCompat
 import androidx.core.view.inputmethod.InputContentInfoCompat
 import com.suave.s12.IMEService
 import com.suave.s12.R
+import com.suave.s12.db.ClipboardItem
 import com.suave.s12.engine.action.SemanticAction
 import com.suave.s12.engine.capability.EditorCapabilities
 import com.suave.s12.engine.capability.EditorCapabilityLevel
 import com.suave.s12.engine.intent.ModifierId
+import com.suave.s12.utils.ClipboardImageStore
 import com.suave.s12.utils.TAG
 import java.io.File
 
 /**
  * Paste for the focused editor: images go through [InputConnection.commitContent] when the
  * field declared a matching `contentMimeTypes` entry; otherwise the existing text paste path
- * is unchanged. Clipboard history stays text-only; this reads the current system clip.
+ * is unchanged. History images are stored as files in app storage, not as dangling content URIs.
  */
 object ClipboardPaste {
     private const val CACHE_DIR = "commit-content"
@@ -81,6 +82,71 @@ object ClipboardPaste {
         }
     }
 
+    /**
+     * Paste a history row. Returns true when the editor received content so the clipboard
+     * layer can close. Image taps that the field rejects stay on the layer and show a notice.
+     */
+    fun pasteHistoryItem(
+        ime: IMEService,
+        item: ClipboardItem,
+    ): Boolean {
+        if (item.isImage()) {
+            return pasteStoredImage(ime, item)
+        }
+        val ic = ime.currentInputConnection ?: return false
+        if (item.text.isEmpty()) return false
+        ic.commitText(item.text, 1)
+        return true
+    }
+
+    fun pasteLiveImage(
+        ime: IMEService,
+        live: LiveClipboardImage,
+    ): Boolean {
+        val editorInfo = ime.currentInputEditorInfo
+        val ic = ime.currentInputConnection ?: return false
+        val accepted = EditorInfoCompat.getContentMimeTypes(editorInfo)
+        if (!MimeTypeMatcher.editorAccepts(accepted, live.mimeType)) {
+            ime.showNotice(ime.getString(R.string.paste_image_not_accepted))
+            return false
+        }
+        val image = ClipboardImage(uri = live.uri, mimeType = live.mimeType)
+        if (!commitImage(ime, ic, editorInfo, image)) {
+            ime.showNotice(ime.getString(R.string.paste_image_failed))
+            return false
+        }
+        return true
+    }
+
+    private fun pasteStoredImage(
+        ime: IMEService,
+        item: ClipboardItem,
+    ): Boolean {
+        val editorInfo = ime.currentInputEditorInfo
+        val ic = ime.currentInputConnection ?: return false
+        val accepted = EditorInfoCompat.getContentMimeTypes(editorInfo)
+        if (!MimeTypeMatcher.editorAccepts(accepted, item.mimeType)) {
+            ime.showNotice(ime.getString(R.string.paste_image_not_accepted))
+            return false
+        }
+        val fileName = item.localPath
+        if (fileName.isNullOrBlank()) {
+            ime.showNotice(ime.getString(R.string.paste_image_failed))
+            return false
+        }
+        val file = ClipboardImageStore.fileFor(ime, fileName)
+        if (!file.isFile) {
+            ime.showNotice(ime.getString(R.string.paste_image_failed))
+            return false
+        }
+        val image = ClipboardImage(uri = Uri.fromFile(file), mimeType = item.mimeType)
+        if (!commitImage(ime, ic, editorInfo, image)) {
+            ime.showNotice(ime.getString(R.string.paste_image_failed))
+            return false
+        }
+        return true
+    }
+
     internal fun matchingClipboardImage(
         context: Context,
         editorInfo: EditorInfo?,
@@ -95,39 +161,25 @@ object ClipboardPaste {
 
     internal fun imageFromClip(
         context: Context,
-        clip: ClipData,
+        clip: android.content.ClipData,
         accepted: Array<out String>,
     ): ClipboardImage? {
-        val desc = clip.description
-        val descMimes =
-            if (desc != null) {
-                (0 until desc.mimeTypeCount).map { desc.getMimeType(it) }
-            } else {
-                emptyList()
-            }
-        for (i in 0 until clip.itemCount) {
-            val item = clip.getItemAt(i)
-            val uri = item.uri
-            if (uri != null) {
-                val resolverType =
-                    try {
-                        context.contentResolver.getType(uri)
-                    } catch (_: SecurityException) {
-                        null
-                    }
-                val offered = mutableListOf<String>()
-                if (!resolverType.isNullOrBlank()) offered.add(resolverType)
-                offered.addAll(descMimes)
-                val mime = MimeTypeMatcher.chooseOfferedMime(accepted, offered)
-                if (mime != null) {
-                    return ClipboardImage(uri = uri, mimeType = mime)
+        val inspected =
+            ClipInspector.fromClip(clip) { uri ->
+                try {
+                    context.contentResolver.getType(uri)
+                } catch (_: SecurityException) {
+                    null
                 }
             }
-        }
-        return null
+        if (!inspected.hasImage) return null
+        val mime = inspected.imageMime ?: return null
+        val uriString = inspected.imageUri ?: return null
+        if (!MimeTypeMatcher.editorAccepts(accepted, mime)) return null
+        return ClipboardImage(uri = Uri.parse(uriString), mimeType = mime)
     }
 
-    private fun commitImage(
+    internal fun commitImage(
         context: Context,
         ic: InputConnection,
         editorInfo: EditorInfo?,
@@ -171,7 +223,7 @@ object ClipboardPaste {
                 ?: if (MimeTypeMatcher.isImage(image.mimeType)) "png" else "bin"
         val file = File(dir, "clip_${System.currentTimeMillis()}.$ext")
         try {
-            context.contentResolver.openInputStream(image.uri)?.use { input ->
+            ClipboardImageStore.openStream(context, image.uri)?.use { input ->
                 file.outputStream().use { output -> input.copyTo(output) }
             } ?: return null
         } catch (e: Exception) {

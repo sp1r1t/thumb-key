@@ -120,6 +120,8 @@ import com.suave.s12.engine.intent.layoutRows
 import com.suave.s12.engine.modifier.ModifierBehavior
 import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.engine.modifier.modifierBehaviors
+import com.suave.s12.engine.output.ClipboardPaste
+import com.suave.s12.engine.output.LiveClipboardImage
 import com.suave.s12.engine.output.OutputExecutor
 import com.suave.s12.ime.INLINE_STATUS_IDLE
 import com.suave.s12.layout.BuiltinLayouts
@@ -181,6 +183,7 @@ fun EngineKeyboardScreen(
     val emptyClipboardItems = remember { MutableLiveData(emptyList<ClipboardItem>()) }
     val clipboardItems by
         (clipboardRepository?.allClipboardItems ?: emptyClipboardItems).observeAsState(emptyList())
+    val liveClipboardImage by ime.clipboardLiveImage().collectAsState()
 
     val canSwitchLayout = BuiltinLayouts.canSwitch(settings?.keyboardLayouts)
     val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
@@ -314,6 +317,7 @@ fun EngineKeyboardScreen(
     }
     LaunchedEffect(layer) {
         if (layer == LayoutLayer.CLIPBOARD) {
+            ime.clipboardIngestPrimary()
             clipboardRepository?.clearExpired()
         }
     }
@@ -324,12 +328,24 @@ fun EngineKeyboardScreen(
         ClipboardLayerSession(
             items = clipboardItems,
             enabled = clipboardHistoryEnabled && clipboardRepository != null,
+            liveImage = liveClipboardImage,
             onPasteAndLeave = { item ->
-                ime.currentInputConnection?.commitText(item.text, 1)
-                layerSessionState.value = layerSessionState.value.leaveOverlay()
+                if (ClipboardPaste.pasteHistoryItem(ime, item)) {
+                    layerSessionState.value = layerSessionState.value.leaveOverlay()
+                }
             },
             onPasteAndStay = { item ->
-                ime.currentInputConnection?.commitText(item.text, 1)
+                ClipboardPaste.pasteHistoryItem(ime, item)
+            },
+            onPasteLiveAndLeave = {
+                liveClipboardImage?.let { live ->
+                    if (ClipboardPaste.pasteLiveImage(ime, live)) {
+                        layerSessionState.value = layerSessionState.value.leaveOverlay()
+                    }
+                }
+            },
+            onPasteLiveAndStay = {
+                liveClipboardImage?.let { live -> ClipboardPaste.pasteLiveImage(ime, live) }
             },
             onDelete = { item ->
                 clipboardScope.launch { clipboardRepository?.deleteItem(item) }
@@ -573,8 +589,11 @@ fun EngineKeyboardScreen(
 private data class ClipboardLayerSession(
     val items: List<ClipboardItem>,
     val enabled: Boolean,
+    val liveImage: LiveClipboardImage?,
     val onPasteAndLeave: (ClipboardItem) -> Unit,
     val onPasteAndStay: (ClipboardItem) -> Unit,
+    val onPasteLiveAndLeave: () -> Unit,
+    val onPasteLiveAndStay: () -> Unit,
     val onDelete: (ClipboardItem) -> Unit,
     val onPin: (ClipboardItem) -> Unit,
     val onBack: () -> Unit,
@@ -717,6 +736,9 @@ private fun LayerContentSlot(
                 cornerRadius = keyCornerRadius.value,
                 vibrateOnTap = vibrateOnTap,
                 tapHapticType = tapHapticType,
+                liveImage = clipboardSession.liveImage,
+                onLiveImageClick = clipboardSession.onPasteLiveAndLeave,
+                onLiveImagePaste = clipboardSession.onPasteLiveAndStay,
                 modifier = Modifier.fillMaxWidth().height(height),
             )
         }

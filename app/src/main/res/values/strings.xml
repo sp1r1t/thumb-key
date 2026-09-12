@@ -161,6 +161,7 @@
     <string name="copy">Copied selected text</string>
     <string name="cut">Cut selected text</string>
     <string name="paste_image_failed">Couldn\'t paste the clipboard image</string>
+    <string name="paste_image_not_accepted">This field doesn\'t accept images</string>
     <string name="hide_letters">Hide letters</string>
     <string name="hide_letters_on">On - keys show no letter labels</string>
     <string name="hide_letters_off">Off - keys show their letter labels</string>
@@ -290,8 +291,8 @@
     <!-- Clipboard History -->
     <string name="clipboard_history">Clipboard history</string>
     <string name="clipboard_history_enabled">Enable clipboard history</string>
-    <string name="clipboard_history_enabled_on">On - stores copied text for quick access</string>
-    <string name="clipboard_history_enabled_off">Off - copied text isn\'t stored for later</string>
+    <string name="clipboard_history_enabled_on">On - stores copied text and images for quick access</string>
+    <string name="clipboard_history_enabled_off">Off - copied text and images aren\'t stored for later</string>
     <string name="clipboard_auto_cleanup">Auto-cleanup old clips</string>
     <string name="clipboard_auto_cleanup_on">On - old unpinned clips are removed automatically</string>
     <string name="clipboard_auto_cleanup_off">Off - clips stay in history until you remove them</string>
@@ -323,14 +324,16 @@
     <string name="clipboard_disabled">Clipboard history is disabled</string>
     <string name="clipboard_go_to_settings">Go to clipboard settings</string>
     <string name="clipboard_characters">%1$d characters</string>
+    <string name="clipboard_image">Image</string>
+    <string name="clipboard_current">Current</string>
     <string name="use_private_clipboard">Use private clipboard</string>
     <string name="use_private_clipboard_on">On - copies go to Suave\'s internal clipboard instead of the system clipboard</string>
     <string name="use_private_clipboard_off">Off - copies go to the normal system clipboard, shared with every app</string>
     <string name="use_private_clipboard_info">The system clipboard is shared across every app on the device, and some apps or accessibility services can read it. Suave\'s private clipboard is only ever accessible from this keyboard, at the cost of not being able to paste what you copied here into another keyboard or clipboard manager.</string>
     <string name="capture_system_clipboard">Use system clipboard history</string>
-    <string name="capture_system_clipboard_on">On - copies from other apps are stored in Suave\'s history</string>
+    <string name="capture_system_clipboard_on">On - copies from other apps, including images, are stored in Suave\'s history</string>
     <string name="capture_system_clipboard_off">Off - only copies made from this keyboard are stored</string>
-    <string name="capture_system_clipboard_info">Suave cannot read Samsung\'s existing clipboard panel. While this is on and Suave is the keyboard, new system copies are recorded. Swipe left on the 123 or ABC key to open the list and paste an older entry.</string>
+    <string name="capture_system_clipboard_info">Suave cannot read Samsung\'s existing clipboard panel. While this is on and Suave is the keyboard, new system copies (text and images) are recorded into Suave\'s own list. Swipe left on the 123 or ABC key to open it. The current system clip is also shown there even before it is stored.</string>
     <!-- Advanced -->
     <string name="other">Advanced</string>
     <string name="show_on_screen_keyboard">Show on-screen keyboard</string>

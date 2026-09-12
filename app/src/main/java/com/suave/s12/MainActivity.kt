@@ -50,6 +50,7 @@ class ThumbkeyApplication : Application() {
         ClipboardRepository(
             clipboardDatabase.clipboardItemDao(),
             AppDB.getDatabase(this).appSettingsDao(),
+            this,
         )
     }
 }

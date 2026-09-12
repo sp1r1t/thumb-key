@@ -1,5 +1,12 @@
 package com.suave.s12.ui.components.keyboard
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.ImageDecoder
+import android.net.Uri
+import android.os.Build
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +26,7 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DeleteSweep
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
@@ -36,13 +44,17 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
@@ -54,7 +66,12 @@ import androidx.compose.ui.window.PopupProperties
 import com.suave.s12.R
 import com.suave.s12.db.ClipboardItem
 import com.suave.s12.engine.feedback.HapticType
+import com.suave.s12.engine.output.LiveClipboardImage
 import com.suave.s12.ui.engine.playHaptic
+import com.suave.s12.utils.ClipboardImageStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.File
 
 val spacing = 16.dp
 
@@ -75,10 +92,16 @@ fun ClipboardHistoryScreen(
     cornerRadius: Float,
     vibrateOnTap: Boolean,
     tapHapticType: HapticType = HapticType.KEYBOARD_TAP,
+    liveImage: LiveClipboardImage? = null,
+    onLiveImageClick: () -> Unit = {},
+    onLiveImagePaste: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val headerHeight = (keyHeight * 0.6f).dp
     val backdropColor = MaterialTheme.colorScheme.surfaceContainerLow
+    val currentClip = liveImage
+    val showLive =
+        currentClip != null && clipboardItems.none { it.sourceKey == currentClip.sourceKey }
 
     Column(
         modifier =
@@ -86,7 +109,6 @@ fun ClipboardHistoryScreen(
                 .fillMaxSize()
                 .background(backdropColor),
     ) {
-        // Header row
         ClipboardHeader(
             onBack = onBack,
             onClearAll = onClearAll,
@@ -96,13 +118,13 @@ fun ClipboardHistoryScreen(
             cornerRadius = cornerRadius,
         )
 
-        // Show disabled state
-        if (!isEnabled) {
+        val historyEmpty = clipboardItems.isEmpty()
+        if (!isEnabled && !showLive) {
             ClipboardDisabledView(
                 onGoToClipboardSettings = onGoToClipboardSettings,
                 cornerRadius = cornerRadius,
             )
-        } else if (clipboardItems.isEmpty()) {
+        } else if (isEnabled && historyEmpty && !showLive) {
             Box(
                 modifier =
                     Modifier
@@ -127,34 +149,52 @@ fun ClipboardHistoryScreen(
                         .padding(horizontal = keyPadding.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                // Pinned section
-                if (pinnedItems.isNotEmpty()) {
-                    items(pinnedItems, key = { it.id }) { item ->
-                        ClipboardItemRow(
-                            item = item,
-                            onClick = { onItemClick(item) },
-                            onPaste = { onItemPaste(item) },
-                            onDelete = { onItemDelete(item) },
-                            onTogglePin = { onItemTogglePin(item) },
+                if (currentClip != null && showLive) {
+                    item(key = "live-${currentClip.sourceKey}") {
+                        LiveClipboardImageRow(
+                            image = currentClip,
+                            onClick = onLiveImageClick,
+                            onPaste = onLiveImagePaste,
                             cornerRadius = cornerRadius,
                             vibrateOnTap = vibrateOnTap,
                             tapHapticType = tapHapticType,
                         )
                     }
                 }
-
-                // Unpinned section
-                if (unpinnedItems.isNotEmpty()) {
-                    items(unpinnedItems, key = { it.id }) { item ->
-                        ClipboardItemRow(
-                            item = item,
-                            onClick = { onItemClick(item) },
-                            onPaste = { onItemPaste(item) },
-                            onDelete = { onItemDelete(item) },
-                            onTogglePin = { onItemTogglePin(item) },
+                if (isEnabled) {
+                    if (pinnedItems.isNotEmpty()) {
+                        items(pinnedItems, key = { "p-${it.id}" }) { item ->
+                            ClipboardItemRow(
+                                item = item,
+                                onClick = { onItemClick(item) },
+                                onPaste = { onItemPaste(item) },
+                                onDelete = { onItemDelete(item) },
+                                onTogglePin = { onItemTogglePin(item) },
+                                cornerRadius = cornerRadius,
+                                vibrateOnTap = vibrateOnTap,
+                                tapHapticType = tapHapticType,
+                            )
+                        }
+                    }
+                    if (unpinnedItems.isNotEmpty()) {
+                        items(unpinnedItems, key = { "u-${it.id}" }) { item ->
+                            ClipboardItemRow(
+                                item = item,
+                                onClick = { onItemClick(item) },
+                                onPaste = { onItemPaste(item) },
+                                onDelete = { onItemDelete(item) },
+                                onTogglePin = { onItemTogglePin(item) },
+                                cornerRadius = cornerRadius,
+                                vibrateOnTap = vibrateOnTap,
+                                tapHapticType = tapHapticType,
+                            )
+                        }
+                    }
+                } else {
+                    item(key = "history-disabled") {
+                        ClipboardDisabledView(
+                            onGoToClipboardSettings = onGoToClipboardSettings,
                             cornerRadius = cornerRadius,
-                            vibrateOnTap = vibrateOnTap,
-                            tapHapticType = tapHapticType,
                         )
                     }
                 }
@@ -171,7 +211,7 @@ private fun ClipboardDisabledView(
     Box(
         modifier =
             Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(spacing),
         contentAlignment = Alignment.Center,
     ) {
@@ -225,7 +265,6 @@ private fun ClipboardHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Back button with tooltip (left side)
             TooltipBox(
                 positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
                 tooltip = {
@@ -250,9 +289,7 @@ private fun ClipboardHeader(
                 color = MaterialTheme.colorScheme.onSurface,
             )
 
-            // Right side buttons
             Row {
-                // Clear all button with tooltip (only show when enabled)
                 if (showClearAll) {
                     TooltipBox(
                         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
@@ -273,7 +310,6 @@ private fun ClipboardHeader(
                     }
                 }
 
-                // Back button (right side for right-handed users)
                 TooltipBox(
                     positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
                     tooltip = {
@@ -306,6 +342,32 @@ private fun formatTimestamp(timestamp: Long): String =
         ).toString()
 
 @Composable
+private fun LiveClipboardImageRow(
+    image: LiveClipboardImage,
+    onClick: () -> Unit,
+    onPaste: () -> Unit,
+    cornerRadius: Float,
+    vibrateOnTap: Boolean,
+    tapHapticType: HapticType,
+) {
+    ClipboardEntryRow(
+        onClick = onClick,
+        onPaste = onPaste,
+        onDelete = null,
+        onTogglePin = null,
+        isPinned = false,
+        cornerRadius = cornerRadius,
+        vibrateOnTap = vibrateOnTap,
+        tapHapticType = tapHapticType,
+        thumbUri = image.uri,
+        thumbFile = null,
+        label = stringResource(R.string.clipboard_image),
+        meta = stringResource(R.string.clipboard_current),
+        pinLabel = "",
+    )
+}
+
+@Composable
 private fun ClipboardItemRow(
     item: ClipboardItem,
     onClick: () -> Unit,
@@ -316,11 +378,70 @@ private fun ClipboardItemRow(
     vibrateOnTap: Boolean,
     tapHapticType: HapticType,
 ) {
+    val context = LocalContext.current
+    val imageFile =
+        item.localPath
+            ?.takeIf { item.isImage() }
+            ?.let { ClipboardImageStore.fileFor(context, it) }
+    val label =
+        if (item.isImage()) {
+            stringResource(R.string.clipboard_image)
+        } else {
+            item.text.replace("\n", " ").replace("\r", "")
+        }
+    val meta =
+        if (item.isImage()) {
+            formatTimestamp(item.timestamp)
+        } else {
+            stringResource(R.string.clipboard_characters, item.text.length)
+        }
+    ClipboardEntryRow(
+        onClick = onClick,
+        onPaste = onPaste,
+        onDelete = onDelete,
+        onTogglePin = onTogglePin,
+        isPinned = item.isPinned,
+        cornerRadius = cornerRadius,
+        vibrateOnTap = vibrateOnTap,
+        tapHapticType = tapHapticType,
+        thumbUri = null,
+        thumbFile = imageFile,
+        label = label,
+        meta = if (item.isImage()) meta else formatTimestamp(item.timestamp),
+        extraMeta = if (item.isImage()) null else meta,
+        pinLabel =
+            if (item.isPinned) {
+                stringResource(R.string.clipboard_unpin)
+            } else {
+                stringResource(R.string.clipboard_pin)
+            },
+        showImageThumb = item.isImage(),
+    )
+}
+
+@Composable
+private fun ClipboardEntryRow(
+    onClick: () -> Unit,
+    onPaste: () -> Unit,
+    onDelete: (() -> Unit)?,
+    onTogglePin: (() -> Unit)?,
+    isPinned: Boolean,
+    cornerRadius: Float,
+    vibrateOnTap: Boolean,
+    tapHapticType: HapticType,
+    thumbUri: Uri?,
+    thumbFile: File?,
+    label: String,
+    meta: String,
+    extraMeta: String? = null,
+    pinLabel: String,
+    showImageThumb: Boolean = true,
+) {
     var showContextMenu by remember { mutableStateOf(false) }
-    // Track the press location for context menu positioning
     var pressOffset by remember { mutableStateOf(Offset.Zero) }
     val density = LocalDensity.current
     val view = LocalView.current
+    val showThumb = showImageThumb && (thumbUri != null || thumbFile != null)
 
     Box {
         Surface(
@@ -350,7 +471,7 @@ private fun ClipboardItemRow(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                if (item.isPinned) {
+                if (isPinned) {
                     Icon(
                         imageVector = Icons.Outlined.PushPin,
                         contentDescription = null,
@@ -358,9 +479,16 @@ private fun ClipboardItemRow(
                         tint = MaterialTheme.colorScheme.primary,
                     )
                 }
+                if (showThumb) {
+                    ClipboardThumb(
+                        uri = thumbUri,
+                        file = thumbFile,
+                        modifier = Modifier.size(48.dp),
+                    )
+                }
 
                 Text(
-                    text = item.text.replace("\n", " ").replace("\r", ""),
+                    text = label,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.MiddleEllipsis,
@@ -371,21 +499,21 @@ private fun ClipboardItemRow(
                     horizontalAlignment = Alignment.End,
                 ) {
                     Text(
-                        text = formatTimestamp(item.timestamp),
+                        text = meta,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-
-                    Text(
-                        text = stringResource(R.string.clipboard_characters, item.text.length),
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    if (extraMeta != null) {
+                        Text(
+                            text = extraMeta,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }
 
-        // Context menu positioned at the long-press location
         val menuOffset =
             with(density) {
                 DpOffset(pressOffset.x.toDp(), pressOffset.y.toDp())
@@ -409,40 +537,148 @@ private fun ClipboardItemRow(
                     )
                 },
             )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.clipboard_delete)) },
-                onClick = {
-                    showContextMenu = false
-                    onDelete()
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.Delete,
-                        contentDescription = null,
-                    )
-                },
-            )
-            DropdownMenuItem(
-                text = {
-                    Text(
-                        if (item.isPinned) {
-                            stringResource(R.string.clipboard_unpin)
-                        } else {
-                            stringResource(R.string.clipboard_pin)
-                        },
-                    )
-                },
-                onClick = {
-                    showContextMenu = false
-                    onTogglePin()
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Outlined.PushPin,
-                        contentDescription = null,
-                    )
-                },
-            )
+            if (onDelete != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.clipboard_delete)) },
+                    onClick = {
+                        showContextMenu = false
+                        onDelete()
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = null,
+                        )
+                    },
+                )
+            }
+            if (onTogglePin != null) {
+                DropdownMenuItem(
+                    text = { Text(pinLabel) },
+                    onClick = {
+                        showContextMenu = false
+                        onTogglePin()
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.PushPin,
+                            contentDescription = null,
+                        )
+                    },
+                )
+            }
         }
     }
+}
+
+@Composable
+private fun ClipboardThumb(
+    uri: Uri?,
+    file: File?,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val bitmap by produceState<androidx.compose.ui.graphics.ImageBitmap?>(null, uri, file) {
+        value =
+            withContext(Dispatchers.IO) {
+                decodeClipboardThumbnail(context, uri, file)?.asImageBitmap()
+            }
+    }
+    val image = bitmap
+    if (image != null) {
+        Image(
+            bitmap = image,
+            contentDescription = stringResource(R.string.clipboard_image),
+            contentScale = ContentScale.Crop,
+            modifier = modifier.clip(RoundedCornerShape(6.dp)),
+        )
+    } else {
+        Icon(
+            imageVector = Icons.Outlined.Image,
+            contentDescription = stringResource(R.string.clipboard_image),
+            modifier = modifier,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+private fun decodeClipboardThumbnail(
+    context: Context,
+    uri: Uri?,
+    file: File?,
+    maxPx: Int = 128,
+): Bitmap? =
+    try {
+        when {
+            file != null && file.isFile -> decodeFileThumbnail(file, maxPx)
+            uri != null -> decodeUriThumbnail(context, uri, maxPx)
+            else -> null
+        }
+    } catch (_: Exception) {
+        null
+    }
+
+private fun decodeFileThumbnail(
+    file: File,
+    maxPx: Int,
+): Bitmap? {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        val source = ImageDecoder.createSource(file)
+        return ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+            decoder.setTargetSampleSize(sampleSize(info.size.width, info.size.height, maxPx))
+        }
+    }
+    return decodeBitmapFactory(file.absolutePath, maxPx)
+}
+
+private fun decodeUriThumbnail(
+    context: Context,
+    uri: Uri,
+    maxPx: Int,
+): Bitmap? {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+        val source = ImageDecoder.createSource(context.contentResolver, uri)
+        return ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+            decoder.setTargetSampleSize(sampleSize(info.size.width, info.size.height, maxPx))
+        }
+    }
+    context.contentResolver.openInputStream(uri)?.use { input ->
+        val bytes = input.readBytes()
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+        val opts =
+            BitmapFactory.Options().apply {
+                inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight, maxPx)
+            }
+        return BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
+    }
+    return null
+}
+
+private fun decodeBitmapFactory(
+    path: String,
+    maxPx: Int,
+): Bitmap? {
+    val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+    BitmapFactory.decodeFile(path, bounds)
+    val opts =
+        BitmapFactory.Options().apply {
+            inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight, maxPx)
+        }
+    return BitmapFactory.decodeFile(path, opts)
+}
+
+private fun sampleSize(
+    width: Int,
+    height: Int,
+    maxPx: Int,
+): Int {
+    val longest = maxOf(width, height).coerceAtLeast(1)
+    var sample = 1
+    while (longest / sample > maxPx * 2) {
+        sample *= 2
+    }
+    return sample
 }

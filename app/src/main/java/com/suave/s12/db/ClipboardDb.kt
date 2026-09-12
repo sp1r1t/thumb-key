@@ -14,7 +14,10 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Update
-import kotlinx.coroutines.flow.Flow
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+
+const val CLIPBOARD_MIME_TEXT = "text/plain"
 
 @Entity(tableName = "ClipboardItem")
 data class ClipboardItem(
@@ -26,7 +29,15 @@ data class ClipboardItem(
     val timestamp: Long = System.currentTimeMillis(),
     @ColumnInfo(name = "is_pinned", defaultValue = "0")
     val isPinned: Boolean = false,
-)
+    @ColumnInfo(name = "mime_type", defaultValue = CLIPBOARD_MIME_TEXT)
+    val mimeType: String = CLIPBOARD_MIME_TEXT,
+    @ColumnInfo(name = "local_path")
+    val localPath: String? = null,
+    @ColumnInfo(name = "source_key")
+    val sourceKey: String? = null,
+) {
+    fun isImage(): Boolean = mimeType.startsWith("image/", ignoreCase = true)
+}
 
 @Dao
 interface ClipboardItemDao {
@@ -63,12 +74,32 @@ interface ClipboardItemDao {
     @Query("DELETE FROM ClipboardItem WHERE is_pinned = 0 AND timestamp < :cutoffTime")
     suspend fun deleteOlderThan(cutoffTime: Long)
 
-    @Query("SELECT * FROM ClipboardItem WHERE text = :text LIMIT 1")
-    suspend fun findByText(text: String): ClipboardItem?
+    @Query("SELECT * FROM ClipboardItem WHERE text = :text AND mime_type = :mimeType LIMIT 1")
+    suspend fun findByText(
+        text: String,
+        mimeType: String = CLIPBOARD_MIME_TEXT,
+    ): ClipboardItem?
+
+    @Query("SELECT * FROM ClipboardItem WHERE source_key = :sourceKey LIMIT 1")
+    suspend fun findBySourceKey(sourceKey: String): ClipboardItem?
+
+    @Query("SELECT local_path FROM ClipboardItem WHERE local_path IS NOT NULL")
+    suspend fun getAllLocalPaths(): List<String>
 }
 
+val CLIPBOARD_MIGRATION_1_2 =
+    object : Migration(1, 2) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE ClipboardItem ADD COLUMN mime_type TEXT NOT NULL DEFAULT '$CLIPBOARD_MIME_TEXT'",
+            )
+            db.execSQL("ALTER TABLE ClipboardItem ADD COLUMN local_path TEXT")
+            db.execSQL("ALTER TABLE ClipboardItem ADD COLUMN source_key TEXT")
+        }
+    }
+
 @Database(
-    version = 1,
+    version = 2,
     entities = [ClipboardItem::class],
     exportSchema = true,
 )
@@ -90,7 +121,8 @@ abstract class ClipboardDB : RoomDatabase() {
                             context.applicationContext,
                             ClipboardDB::class.java,
                             "clipboard_db",
-                        ).fallbackToDestructiveMigration(dropAllTables = true)
+                        ).addMigrations(CLIPBOARD_MIGRATION_1_2)
+                        .fallbackToDestructiveMigration(dropAllTables = true)
                         .build()
                 Companion.instance = instance
                 instance
