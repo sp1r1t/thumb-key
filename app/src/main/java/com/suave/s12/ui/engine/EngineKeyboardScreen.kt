@@ -92,6 +92,7 @@ import com.suave.s12.engine.action.SemanticAction
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.capability.EditorCapabilities
 import com.suave.s12.engine.capability.EditorCapabilityResolver
+import com.suave.s12.engine.capability.EditorInfoDebug
 import com.suave.s12.engine.feedback.FeedbackDispatcher
 import com.suave.s12.engine.feedback.FeedbackEvent
 import com.suave.s12.engine.feedback.FeedbackSettings
@@ -430,14 +431,15 @@ fun EngineKeyboardScreen(
             // cache gets reused whenever only source files change, which skips re-running the
             // build script and any Date() call in it, so a config-time timestamp went stale
             // exactly when it mattered most: confirming a fresh `adb install` actually took
-            // effect), plus which app the IME thinks it's connected to and how its editor was
-            // classified.
+            // effect), which app the IME is connected to, and orthogonal EditorInfo facts
+            // (class / variation / flags / content mime) rather than a single fake field type.
             val installTime =
                 remember {
                     val info = ime.packageManager.getPackageInfo(ime.packageName, 0)
                     SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault()).format(Date(info.lastUpdateTime))
                 }
             val targetApp = remember(inputEpoch) { ime.currentInputEditorInfo?.packageName ?: "?" }
+            val editorDebug = remember(inputEpoch) { EditorInfoDebug.describe(ime.currentInputEditorInfo) }
             val inlineEnabled = (settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()
             val af =
                 when {
@@ -446,12 +448,12 @@ fun EngineKeyboardScreen(
                     else -> autofillStatus.ifEmpty { INLINE_STATUS_IDLE }
                 }
             Text(
-                text = "$installTime | $targetApp (${capabilities.level}) af=$af",
+                text = "$installTime | $targetApp | $editorDebug | af=$af",
                 modifier =
                     Modifier
                         .fillMaxWidth()
                         .background(MaterialTheme.colorScheme.error)
-                        .padding(vertical = 2.dp),
+                        .padding(horizontal = 4.dp, vertical = 2.dp),
                 textAlign = TextAlign.Center,
                 fontSize = 10.sp,
                 color = MaterialTheme.colorScheme.onError,
