@@ -9,8 +9,9 @@ import android.view.inputmethod.EditorInfo
  * level: Firefox web fields, Termux, and password boxes all stay whatever
  * [EditorCapabilityResolver] already classified them as.
  *
- * [describe] is the short chip (class, variation, real multiline, content mime). [verbose]
- * adds default-y IME flags and hex values so they can be copied without covering the board.
+ * [describe] is the short line (class, variation, real multiline, compact content mime).
+ * [verbose] adds default-y IME flags and hex values so they can be copied without covering
+ * the board.
  */
 object EditorInfoDebug {
     private const val SEP = " . "
@@ -66,7 +67,7 @@ object EditorInfoDebug {
         if (klass == InputType.TYPE_NULL) {
             tokens += "RAW"
             tokens += "TYPE_NULL"
-            appendContent(tokens, contentMimeTypes)
+            appendContent(tokens, contentMimeTypes, compact = !verbose)
             return tokens
         }
 
@@ -98,7 +99,7 @@ object EditorInfoDebug {
             }
         }
         if (verbose) appendImeOptions(tokens, imeOptions)
-        appendContent(tokens, contentMimeTypes)
+        appendContent(tokens, contentMimeTypes, compact = !verbose)
         return tokens
     }
 
@@ -137,7 +138,7 @@ object EditorInfoDebug {
             if (inputType has InputType.TYPE_TEXT_FLAG_AUTO_COMPLETE) tokens += "AUTO_COMPLETE"
         }
         // IME_MULTI_LINE only means the IME may use a multiline editor. Firefox sets it on
-        // single-line web inputs, so the chip only shows MULTILINE for the real text flag.
+        // single-line web inputs, so compact output only shows MULTILINE for the real text flag.
         if (inputType has InputType.TYPE_TEXT_FLAG_MULTI_LINE) tokens += "MULTILINE"
         if (verbose && inputType has InputType.TYPE_TEXT_FLAG_IME_MULTI_LINE) tokens += "IME_MULTILINE"
         if (verbose && inputType has InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS) tokens += "NO_SUGGESTIONS"
@@ -189,12 +190,38 @@ object EditorInfoDebug {
     private fun appendContent(
         tokens: MutableList<String>,
         contentMimeTypes: Array<out String>?,
+        compact: Boolean,
     ) {
         if (contentMimeTypes.isNullOrEmpty()) return
-        tokens += "CONTENT:${contentMimeTypes.joinToString(",")}"
+        if (compact) {
+            tokens += compactContentMimes(contentMimeTypes)
+        } else {
+            tokens += "CONTENT:${contentMimeTypes.joinToString(",")}"
+        }
     }
 
     private infix fun Int.has(flag: Int): Boolean = this and flag == flag
+}
+
+/** Compact MIME for the debug bar: `image/gif,image/jpeg` -> `[gif, jpeg]`. */
+internal fun compactContentMimes(contentMimeTypes: Array<out String>): String {
+    val parsed =
+        contentMimeTypes.map { mime ->
+            val slash = mime.indexOf('/')
+            if (slash < 0) {
+                mime to mime
+            } else {
+                mime.substring(0, slash) to mime.substring(slash + 1)
+            }
+        }
+    val types = parsed.map { it.first }.distinct()
+    val labels =
+        if (types.size == 1) {
+            parsed.map { (type, subtype) -> if (subtype == "*") type else subtype }
+        } else {
+            parsed.map { (type, subtype) -> if (subtype == "*") type else "$type/$subtype" }
+        }.distinct()
+    return "[${labels.joinToString(", ")}]"
 }
 
 data class EditorInfoDebugLabel(

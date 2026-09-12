@@ -32,7 +32,7 @@ class EditorInfoDebugTest {
     }
 
     @Test
-    fun `IME multiline alone does not count as MULTILINE on the chip`() {
+    fun `IME multiline alone does not count as MULTILINE`() {
         val inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_IME_MULTI_LINE
         assertEquals("EDITABLE . TEXT", EditorInfoDebug.describe(inputType))
         assertTrue(EditorInfoDebug.verbose(inputType).contains("IME_MULTILINE"))
@@ -48,11 +48,19 @@ class EditorInfoDebugTest {
     @Test
     fun `content mime types are orthogonal to class`() {
         val label =
-            EditorInfoDebug.describe(
+            EditorInfoDebug.label(
                 inputType = InputType.TYPE_CLASS_TEXT,
-                contentMimeTypes = arrayOf("image/*"),
+                contentMimeTypes = arrayOf("image/gif", "image/jpeg"),
             )
-        assertEquals("EDITABLE . TEXT . CONTENT:image/*", label)
+        assertEquals("EDITABLE . TEXT . [gif, jpeg]", label.compact)
+        assertTrue(label.verbose.contains("CONTENT:image/gif,image/jpeg"))
+    }
+
+    @Test
+    fun `compact mime drops image type and CONTENT prefix`() {
+        assertEquals("[gif, jpeg]", compactContentMimes(arrayOf("image/gif", "image/jpeg")))
+        assertEquals("[image]", compactContentMimes(arrayOf("image/*")))
+        assertEquals("[image/gif, text/plain]", compactContentMimes(arrayOf("image/gif", "text/plain")))
     }
 
     @Test
@@ -62,7 +70,7 @@ class EditorInfoDebugTest {
     }
 
     @Test
-    fun `Firefox web login chip drops default IME noise`() {
+    fun `Firefox web login drops default IME noise`() {
         val inputType =
             InputType.TYPE_CLASS_TEXT or
                 InputType.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT or

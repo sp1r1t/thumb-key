@@ -18,16 +18,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -467,7 +460,7 @@ fun EngineKeyboardScreen(
         if (showDebugBar) {
             // Install timestamp comes from PackageManager at runtime (Gradle config-time
             // Date() went stale whenever the configuration cache reused a previous run).
-            // The editor chip lists orthogonal EditorInfo facts, not a fake field class.
+            // The second line lists orthogonal EditorInfo facts, not a fake field class.
             val installTime =
                 remember {
                     val info = ime.packageManager.getPackageInfo(ime.packageName, 0)
@@ -909,9 +902,10 @@ private fun EditorDebugBar(
             Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.error)
+                .clickable { onCopy(verbose) }
                 .padding(horizontal = 8.dp, vertical = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
             text = meta,
@@ -921,32 +915,13 @@ private fun EditorDebugBar(
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
         )
-        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-            Row(
-                modifier =
-                    Modifier
-                        .background(
-                            color = onError.copy(alpha = 0.16f),
-                            shape = RoundedCornerShape(50),
-                        ).clickable { onCopy(verbose) }
-                        .padding(start = 12.dp, top = 3.dp, end = 8.dp, bottom = 3.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text(
-                    text = compact,
-                    color = onError,
-                    fontSize = 10.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Icon(
-                    imageVector = Icons.Outlined.ContentCopy,
-                    contentDescription = "Copy editor info",
-                    tint = onError,
-                    modifier = Modifier.size(12.dp),
-                )
-            }
-        }
+        Text(
+            text = compact,
+            color = onError,
+            fontSize = 9.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
     }
 }
