@@ -2,6 +2,7 @@ package com.suave.s12.ime
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class InlineAutofillTest {
@@ -29,10 +30,13 @@ class InlineAutofillTest {
     }
 
     @Test
-    fun `inflate wrap content matches Android WRAP_CONTENT`() {
-        assertEquals(-2, INLINE_INFLATE_WRAP)
-        assertEquals(0, INLINE_PRESENTATION_MIN_PX)
-        assertEquals(Int.MAX_VALUE, INLINE_PRESENTATION_MAX_PX)
+    fun `presentation sizes match Gboard-style strip height`() {
+        assertEquals(INLINE_PRESENTATION_MIN_WIDTH_PX, 100)
+        assertEquals(INLINE_PRESENTATION_MAX_WIDTH_PX, 740)
+        assertEquals(INLINE_PRESENTATION_MAX_WIDTH_PX, inlinePresentationMaxWidthPx(1080))
+        assertTrue(inlinePresentationMaxWidthPx(2640) > INLINE_PRESENTATION_MAX_WIDTH_PX)
+        assertEquals(6, INLINE_SUGGESTION_MAX_COUNT)
+        assertEquals(6, INLINE_SUGGESTION_SPEC_COUNT)
     }
 
     @Test
@@ -40,7 +44,7 @@ class InlineAutofillTest {
         val host = InlineAutofillHost()
         assertEquals(false, host.offerEmptyResponse())
         assertEquals(INLINE_STATUS_IDLE, host.status.value)
-        host.markWaiting()
+        host.markWaiting(40)
         assertEquals(INLINE_STATUS_WAIT, host.status.value)
         assertEquals(true, host.offerEmptyResponse())
         assertEquals(INLINE_STATUS_EMPTY, host.status.value)
@@ -50,7 +54,7 @@ class InlineAutofillTest {
     @Test
     fun `clear after wait makes the AOSP empty ping a no-op`() {
         val host = InlineAutofillHost()
-        host.markWaiting()
+        host.markWaiting(40)
         host.clear()
         assertEquals(false, host.offerEmptyResponse())
         assertEquals(INLINE_STATUS_IDLE, host.status.value)

@@ -108,11 +108,13 @@ class IMEService :
         restarting: Boolean,
     ) {
         super.onStartInput(attribute, restarting)
-        if (!restarting) {
-            inlineAutofill.clear()
-        }
         refreshCurrentKeyboardDefinition()
         bumpInputEpoch()
+    }
+
+    override fun onFinishInput() {
+        inlineAutofill.clear()
+        super.onFinishInput()
     }
 
     override fun onStartInputView(
@@ -229,7 +231,6 @@ class IMEService :
         if (!(settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()) {
             return null
         }
-        inlineAutofill.markWaiting()
         val heightDp = settings?.inlineSuggestionHeight ?: DEFAULT_INLINE_SUGGESTION_HEIGHT
         val heightPx =
             TypedValue
@@ -239,6 +240,7 @@ class IMEService :
                     resources.displayMetrics,
                 ).toInt()
                 .coerceAtLeast(1)
+        inlineAutofill.markWaiting(heightPx)
         return createInlineSuggestionsRequest(this, heightPx, uiExtras)
     }
 
@@ -253,7 +255,7 @@ class IMEService :
         val pinned = items.count { it.info.isPinned }
         Log.d(TAG, "inline suggestions response count=${items.size} pinned=$pinned")
         inlineAutofill.show(this, items)
-        return true
+        return items.isNotEmpty()
     }
 
     fun acceptTopInlineSuggestion(): Boolean = inlineAutofill.acceptTop()
