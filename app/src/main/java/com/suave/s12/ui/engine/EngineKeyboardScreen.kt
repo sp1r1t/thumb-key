@@ -24,7 +24,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
@@ -89,9 +88,15 @@ import com.suave.s12.engine.output.OutputExecutor
 import com.suave.s12.layout.BuiltinLayouts
 import com.suave.s12.layout.DEFAULT_LAYER_HEIGHTS
 import com.suave.s12.layout.LayerContent
+import com.suave.s12.layout.LayerSession
 import com.suave.s12.layout.LayoutLayer
 import com.suave.s12.layout.NamedLayout
+import com.suave.s12.layout.enterOverlay
+import com.suave.s12.layout.leaveOverlay
 import com.suave.s12.layout.parseLayerHeightOverrides
+import com.suave.s12.layout.selectBaseLayer
+import com.suave.s12.layout.toggleClipboard
+import com.suave.s12.layout.toggleEmoji
 import com.suave.s12.ui.components.keyboard.ClipboardHistoryScreen
 import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.isPasswordField
@@ -126,8 +131,8 @@ fun EngineKeyboardScreen(
     val view = LocalView.current
 
     val modifierState = remember { mutableStateOf(ModifierState()) }
-    var layer by remember { mutableStateOf(LayoutLayer.MAIN) }
-    var clipboardOrigin by remember { mutableStateOf(LayoutLayer.MAIN) }
+    val layerSessionState = remember { mutableStateOf(LayerSession()) }
+    val layer = layerSessionState.value.layer
     val clipboardScope = rememberCoroutineScope()
     val emptyClipboardItems = remember { MutableLiveData(emptyList<ClipboardItem>()) }
     val clipboardItems by
@@ -209,8 +214,7 @@ fun EngineKeyboardScreen(
     val capabilities = remember { EditorCapabilityResolver.resolve(ime.currentInputEditorInfo) }
 
     LaunchedEffect(namedLayout.id) {
-        layer = LayoutLayer.MAIN
-        clipboardOrigin = LayoutLayer.MAIN
+        layerSessionState.value = LayerSession()
     }
     LaunchedEffect(layer) {
         if (layer == LayoutLayer.CLIPBOARD) {
@@ -226,7 +230,7 @@ fun EngineKeyboardScreen(
             enabled = clipboardHistoryEnabled && clipboardRepository != null,
             onPasteAndLeave = { item ->
                 ime.currentInputConnection?.commitText(item.text, 1)
-                layer = clipboardOrigin
+                layerSessionState.value = layerSessionState.value.leaveOverlay()
             },
             onPasteAndStay = { item ->
                 ime.currentInputConnection?.commitText(item.text, 1)
@@ -237,7 +241,7 @@ fun EngineKeyboardScreen(
             onPin = { item ->
                 clipboardScope.launch { clipboardRepository?.togglePin(item) }
             },
-            onBack = { layer = clipboardOrigin },
+            onBack = { layerSessionState.value = layerSessionState.value.leaveOverlay() },
             onClearAll = {
                 clipboardScope.launch { clipboardRepository?.clearUnpinned() }
             },
@@ -258,52 +262,50 @@ fun EngineKeyboardScreen(
             AppCommandHost(
                 onToggleHideLetters = { onToggleHideLettersState.value() },
                 onSwitchLanguage = {
-                    layer = LayoutLayer.MAIN
-                    clipboardOrigin = LayoutLayer.MAIN
+                    layerSessionState.value = LayerSession()
                     onSwitchLanguageState.value()
                 },
                 onChangePosition = { f -> onChangePositionState.value(f) },
                 onSelectLayer = { requested ->
                     val current = namedLayoutState.value
-                    layer =
+                    val session = layerSessionState.value
+                    layerSessionState.value =
                         when (requested) {
-                            LayoutLayer.NUMERIC -> if (current.numericLayout != null) LayoutLayer.NUMERIC else layer
-                            LayoutLayer.EMOJI -> if (current.emojiBottomRow != null) LayoutLayer.EMOJI else layer
-                            LayoutLayer.MAIN -> LayoutLayer.MAIN
-                            LayoutLayer.CLIPBOARD ->
-                                if (current.layerContent[LayoutLayer.CLIPBOARD] != null) {
-                                    if (layer != LayoutLayer.CLIPBOARD) {
-                                        clipboardOrigin =
-                                            if (layer == LayoutLayer.NUMERIC) {
-                                                LayoutLayer.NUMERIC
-                                            } else {
-                                                LayoutLayer.MAIN
-                                            }
-                                    }
-                                    LayoutLayer.CLIPBOARD
+                            LayoutLayer.NUMERIC ->
+                                if (current.numericLayout != null) {
+                                    session.selectBaseLayer(LayoutLayer.NUMERIC)
                                 } else {
-                                    layer
+                                    session
+                                }
+                            LayoutLayer.MAIN -> session.selectBaseLayer(LayoutLayer.MAIN)
+                            LayoutLayer.EMOJI ->
+                                if (current.emojiBottomRow != null) {
+                                    session.enterOverlay(LayoutLayer.EMOJI)
+                                } else {
+                                    session
+                                }
+                            LayoutLayer.CLIPBOARD ->
+                                if (current.clipboardBottomRow != null ||
+                                    current.layerContent[LayoutLayer.CLIPBOARD] != null
+                                ) {
+                                    session.enterOverlay(LayoutLayer.CLIPBOARD)
+                                } else {
+                                    session
                                 }
                         }
                 },
                 onToggleEmojiLayer = {
                     val current = namedLayoutState.value
-                    layer =
-                        when {
-                            layer == LayoutLayer.EMOJI -> LayoutLayer.MAIN
-                            current.emojiBottomRow != null -> LayoutLayer.EMOJI
-                            else -> layer
-                        }
+                    layerSessionState.value =
+                        layerSessionState.value.toggleEmoji(current.emojiBottomRow != null)
                 },
                 onToggleClipboardHistory = {
                     val current = namedLayoutState.value
-                    if (layer == LayoutLayer.CLIPBOARD) {
-                        layer = clipboardOrigin
-                    } else if (current.layerContent[LayoutLayer.CLIPBOARD] != null) {
-                        clipboardOrigin =
-                            if (layer == LayoutLayer.NUMERIC) LayoutLayer.NUMERIC else LayoutLayer.MAIN
-                        layer = LayoutLayer.CLIPBOARD
-                    }
+                    layerSessionState.value =
+                        layerSessionState.value.toggleClipboard(
+                            current.clipboardBottomRow != null ||
+                                current.layerContent[LayoutLayer.CLIPBOARD] != null,
+                        )
                 },
             )
         }
@@ -355,7 +357,6 @@ fun EngineKeyboardScreen(
                 modifier = panelModifier,
                 namedLayout = namedLayout,
                 layer = layer,
-                clipboardOrigin = clipboardOrigin,
                 clipboardSession = clipboardSession,
                 keyHeight = keyHeight,
                 layerHeightOverrides = layerHeightOverrides,
@@ -437,7 +438,6 @@ private fun EngineKeyboardPanel(
     modifier: Modifier,
     namedLayout: NamedLayout,
     layer: LayoutLayer,
-    clipboardOrigin: LayoutLayer,
     clipboardSession: ClipboardLayerSession,
     keyHeight: Dp,
     layerHeightOverrides: Map<LayoutLayer, Int>,
@@ -458,12 +458,7 @@ private fun EngineKeyboardPanel(
     isPasswordField: Boolean,
     distinctLetterControlColors: Boolean,
 ) {
-    val grid =
-        if (layer == LayoutLayer.CLIPBOARD) {
-            namedLayout.gridForClipboard(clipboardOrigin)
-        } else {
-            namedLayout.gridFor(layer)
-        }
+    val grid = namedLayout.gridFor(layer)
     val overrideRows = layerHeightOverrides[layer] ?: 0
     val contentRows = namedLayout.contentRows(layer, overrideRows)
     Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {

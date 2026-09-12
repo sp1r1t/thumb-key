@@ -155,9 +155,11 @@ private val SUAVE_SPACE =
         slideBehavior = SlideBehavior.MOVE_CURSOR,
     )
 private val SUAVE_CTRL = key("ctrl", right = "alt", top = "esc", gesture = FOUR_WAY_KEY)
-private val SUAVE_EMOJI_KEY =
+
+/** Settings / IME / language / move stay reachable on overlay layers that drop the letter grid. */
+private fun overlayUtilityKey(center: String) =
     key(
-        "emoji",
+        center,
         top = "settings",
         topLeft = "hide",
         bottom = "ime",
@@ -165,6 +167,9 @@ private val SUAVE_EMOJI_KEY =
         left = "lang",
         right = "move",
     )
+
+private val SUAVE_EMOJI_KEY = overlayUtilityKey("emoji")
+private val SUAVE_CLIPBOARD_KEY = overlayUtilityKey("clipboard")
 private val SUAVE_NUMERIC_KEY =
     key(
         "numeric",
@@ -308,15 +313,20 @@ val SUAVE_NUMERIC_LAYOUT: Layout =
     )
 
 /**
- * Functional row shown under the system emoji picker. Ctrl is replaced by Backspace (the
- * letter grid is gone, so delete still has to live here) and the 123 cluster is replaced by
- * the spacebar with arrow swipes so cursor movement and spaces work while picking emoji.
- * Positions are a single row 0 so [layoutRows] yields one row.
+ * Functional row under an overlay (emoji picker, clipboard history). Ctrl is replaced by
+ * Backspace (the letter grid is gone, so delete still has to live here) and the 123 cluster
+ * is replaced by the spacebar with arrow swipes so cursor movement and spaces work. Positions
+ * are a single row 0 so [layoutRows] yields one row. The second key is the overlay's own
+ * toggle so tapping it returns to the letter or number layer you came from.
  */
-val SUAVE_EMOJI_BOTTOM_ROW: Layout =
+private fun overlayBottomRow(utilityKey: KeyMapping): Layout =
     mapOf(
         KeyPosition(0, 0) to SUAVE_BACKSPACE,
-        KeyPosition(0, 1) to SUAVE_EMOJI_KEY,
+        KeyPosition(0, 1) to utilityKey,
         KeyPosition(0, 2) to SUAVE_SPACE,
         KeyPosition(0, 3) to SUAVE_ENTER,
     )
+
+val SUAVE_EMOJI_BOTTOM_ROW: Layout = overlayBottomRow(SUAVE_EMOJI_KEY)
+
+val SUAVE_CLIPBOARD_BOTTOM_ROW: Layout = overlayBottomRow(SUAVE_CLIPBOARD_KEY)

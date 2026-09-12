@@ -129,6 +129,7 @@ class SuaveLayoutTest {
 
         assertEquals(SUAVE_NUMERIC_LAYOUT, suave.numericLayout)
         assertEquals(SUAVE_EMOJI_BOTTOM_ROW, suave.emojiBottomRow)
+        assertEquals(SUAVE_CLIPBOARD_BOTTOM_ROW, suave.clipboardBottomRow)
         assertEquals(SUAVE_LAYOUT, suave.gridFor(LayoutLayer.MAIN))
         assertEquals(SUAVE_NUMERIC_LAYOUT, suave.gridFor(LayoutLayer.NUMERIC))
         assertEquals(SUAVE_EMOJI_BOTTOM_ROW, suave.gridFor(LayoutLayer.EMOJI))
@@ -140,28 +141,26 @@ class SuaveLayoutTest {
     }
 
     @Test
-    fun `clipboard keeps the origin bottom row remapped to row 0`() {
+    fun `clipboard layer is a history slot plus the functional bottom row, with space instead of 123`() {
         val suave = BuiltinLayouts.SUAVE
-        val fromMain = suave.gridForClipboard(LayoutLayer.MAIN)
-        val fromNumeric = suave.gridForClipboard(LayoutLayer.NUMERIC)
-        val fromEmoji = suave.gridForClipboard(LayoutLayer.EMOJI)
+        val bottom = SUAVE_CLIPBOARD_BOTTOM_ROW
+        val space = bottom.getValue(KeyPosition(0, 2))
 
+        assertEquals(bottom, suave.gridFor(LayoutLayer.CLIPBOARD))
+        assertEquals(setOf(KeyPosition(0, 0), KeyPosition(0, 1), KeyPosition(0, 2), KeyPosition(0, 3)), bottom.keys)
+        assertEquals(KeyIntent.Command(CommandId.BACKSPACE), bottom.getValue(KeyPosition(0, 0)).intents[Zone.Center])
         assertEquals(
-            KeyIntent.Command(CommandId.TOGGLE_NUMERIC_MODE),
-            fromMain.getValue(KeyPosition(0, 2)).intents[Zone.Center],
+            KeyIntent.Command(CommandId.TOGGLE_CLIPBOARD_HISTORY),
+            bottom.getValue(KeyPosition(0, 1)).intents[Zone.Center],
         )
-        assertEquals(
-            SUAVE_LAYOUT.getValue(KeyPosition(3, 0)).intents,
-            fromMain.getValue(KeyPosition(0, 0)).intents,
-        )
-        assertEquals(
-            KeyIntent.Command(CommandId.TOGGLE_ABC_MODE),
-            fromNumeric.getValue(KeyPosition(0, 2)).intents[Zone.Center],
-        )
-        assertEquals(fromMain, fromEmoji)
-        assertEquals(fromMain, suave.gridFor(LayoutLayer.CLIPBOARD))
-        assertEquals(setOf(KeyPosition(0, 0), KeyPosition(0, 1), KeyPosition(0, 2), KeyPosition(0, 3)), fromMain.keys)
-        assertEquals(2, fromMain.getValue(KeyPosition(0, 3)).columnSpan)
+        assertEquals(KeyIntent.Text(" "), space.intents[Zone.Center])
+        assertEquals(KeyIntent.Command(CommandId.ARROW_LEFT), space.intents[Zone.Directional(Direction.LEFT)])
+        assertEquals(KeyIntent.Command(CommandId.ARROW_RIGHT), space.intents[Zone.Directional(Direction.RIGHT)])
+        assertEquals(KeyIntent.Command(CommandId.ARROW_UP), space.intents[Zone.Directional(Direction.UP)])
+        assertEquals(KeyIntent.Command(CommandId.ARROW_DOWN), space.intents[Zone.Directional(Direction.DOWN)])
+        assertEquals(SlideBehavior.MOVE_CURSOR, space.slideBehavior)
+        assertEquals(2, bottom.getValue(KeyPosition(0, 3)).columnSpan)
+        assertEquals(5, bottom.values.sumOf { it.columnSpan })
     }
 
     @Test

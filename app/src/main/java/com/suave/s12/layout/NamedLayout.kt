@@ -34,8 +34,8 @@ sealed class LayerContent {
  * [BuiltinLayouts.ALL], not a privileged singleton - additional layouts join the same list
  * without a second rendering path. The in-app editor (later) should produce this type.
  *
- * [numericLayout] and [emojiBottomRow] are optional layers of this layout, not separate
- * registry entries (language switch still walks [BuiltinLayouts.ALL]).
+ * [numericLayout], [emojiBottomRow], and [clipboardBottomRow] are optional layers of this
+ * layout, not separate registry entries (language switch still walks [BuiltinLayouts.ALL]).
  *
  * [layerHeights] is the default total height in key-height units per layer. Missing entries
  * use the grid's row count. Extra rows sit above the keys and show [layerContent] (emoji
@@ -47,6 +47,7 @@ data class NamedLayout(
     val layout: Layout,
     val numericLayout: Layout? = null,
     val emojiBottomRow: Layout? = null,
+    val clipboardBottomRow: Layout? = null,
     val shiftMappings: Map<String, String> = emptyMap(),
     val layerHeights: Map<LayoutLayer, Int> = emptyMap(),
     val layerContent: Map<LayoutLayer, LayerContent> = emptyMap(),
@@ -56,28 +57,17 @@ data class NamedLayout(
             LayoutLayer.MAIN -> layout
             LayoutLayer.NUMERIC -> numericLayout ?: layout
             LayoutLayer.EMOJI -> emojiBottomRow ?: layout
-            LayoutLayer.CLIPBOARD -> layout.bottomRow()
+            LayoutLayer.CLIPBOARD -> clipboardBottomRow ?: layout.bottomRow()
         }
-
-    /**
-     * Clipboard keeps the bottom row of the layer you opened it from (123 vs ABC) so those
-     * keys do not jump. Emoji/clipboard themselves fall back to the letter bottom row.
-     */
-    fun gridForClipboard(from: LayoutLayer): Layout {
-        val source =
-            when (from) {
-                LayoutLayer.NUMERIC -> numericLayout ?: layout
-                else -> layout
-            }
-        return source.bottomRow()
-    }
 
     fun availableLayers(): List<LayoutLayer> =
         buildList {
             add(LayoutLayer.MAIN)
             if (numericLayout != null) add(LayoutLayer.NUMERIC)
             if (emojiBottomRow != null) add(LayoutLayer.EMOJI)
-            if (layerContent[LayoutLayer.CLIPBOARD] != null) add(LayoutLayer.CLIPBOARD)
+            if (clipboardBottomRow != null || layerContent[LayoutLayer.CLIPBOARD] != null) {
+                add(LayoutLayer.CLIPBOARD)
+            }
         }
 
     fun gridRowCount(layer: LayoutLayer): Int = layoutRows(gridFor(layer)).size.coerceAtLeast(1)
@@ -111,6 +101,7 @@ object BuiltinLayouts {
             layout = SUAVE_LAYOUT,
             numericLayout = SUAVE_NUMERIC_LAYOUT,
             emojiBottomRow = SUAVE_EMOJI_BOTTOM_ROW,
+            clipboardBottomRow = SUAVE_CLIPBOARD_BOTTOM_ROW,
             shiftMappings = SUAVE_SHIFT_MAPPINGS,
             layerHeights =
                 mapOf(
