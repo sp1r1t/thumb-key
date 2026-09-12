@@ -57,12 +57,9 @@ private fun token(text: String): KeyIntent =
 
         "backspace" -> KeyIntent.Command(CommandId.BACKSPACE)
 
-        // "return" (center, submits/newline) and "enter" (swipe, forces a literal newline) are
-        // deliberately merged into one Command - see FORK_CHANGES / the engine rewrite plan for
-        // why: there's no KeyEvent-level primitive for "smart submit", only a real Enter
-        // KeyEvent, which well-behaved single-line vs. multiline fields already interpret
-        // correctly on their own. Both positions stay on the layout for spatial stability even
-        // though they now do the same thing.
+        // "return" and "enter" are the same Command: there is no KeyEvent-level primitive for
+        // "smart submit" vs a literal newline. Well-behaved single-line vs multiline fields
+        // already interpret one Enter KeyEvent correctly on their own.
         "return", "enter" -> KeyIntent.Command(CommandId.ENTER)
 
         "tab" -> KeyIntent.Command(CommandId.TAB)
@@ -190,7 +187,7 @@ private val SUAVE_ABC_KEY =
         bottomRight = "redo",
         bottom = "paste",
     )
-private val SUAVE_ENTER = key("return", top = "tab", left = "enter", gesture = FOUR_WAY_KEY, columnSpan = 2)
+private val SUAVE_ENTER = key("return", top = "tab", gesture = FOUR_WAY_KEY, columnSpan = 2)
 
 /**
  * Suave, ported to pure data: position + gesture -> intent, nothing else. Compare to the

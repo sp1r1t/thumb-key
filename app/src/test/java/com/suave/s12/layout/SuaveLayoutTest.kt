@@ -112,6 +112,8 @@ class SuaveLayoutTest {
 
         assertEquals(2, enter.columnSpan)
         assertEquals(KeyIntent.Command(CommandId.ENTER), enter.intents[Zone.Center])
+        assertEquals(KeyIntent.Command(CommandId.TAB), enter.intents[Zone.Directional(Direction.UP)])
+        assertEquals(null, enter.intents[Zone.Directional(Direction.LEFT)])
 
         val spansByRow =
             SUAVE_LAYOUT.entries
