@@ -5,6 +5,7 @@ import com.suave.s12.db.DEFAULT_VIBRATE_MODIFIER_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_SLIDE_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_SWIPE_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_TAP_TYPE
+import com.suave.s12.engine.feedback.HAPTIC_TYPE_BY_FEEL
 import com.suave.s12.engine.gesture.Direction
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.modifier.ActivationMode
@@ -34,6 +35,12 @@ class FeedbackDispatcherTest {
     private fun on(type: HapticType) = HapticChannel(enabled = true, type = type)
 
     private fun off(type: HapticType = HapticType.KEYBOARD_TAP) = HapticChannel(enabled = false, type = type)
+
+    @Test
+    fun `feel catalog lists every haptic type once`() {
+        assertEquals(HapticType.entries.size, HAPTIC_TYPE_BY_FEEL.size)
+        assertEquals(HapticType.entries.toSet(), HAPTIC_TYPE_BY_FEEL.toSet())
+    }
 
     @Test
     fun `unknown stored ordinal falls back to keyboard tap`() {

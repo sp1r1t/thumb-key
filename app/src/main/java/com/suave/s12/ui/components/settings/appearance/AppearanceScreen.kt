@@ -927,108 +927,97 @@ fun AppearanceScreen(
                         }
                     }
 
-                    SettingsSection(
-                        title = stringResource(R.string.settings_section_feedback)                    ) {
-                    HapticChannelPreference(
-                        enabled = vibrateOnTapState,
-                        type = vibrateTapTypeState,
-                        onEnabledChange = {
-                            vibrateOnTapState = it
-                            updateAppearance()
-                        },
-                        onTypeChange = {
-                            vibrateTapTypeState = it
-                            updateAppearance()
-                        },
-                        defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_TAP_TYPE),
-                        title = R.string.vibrate_on_tap,
-                        onSummary = R.string.vibrate_on_tap_on,
-                        offSummary = R.string.vibrate_on_tap_off,
-                        info = R.string.vibrate_on_tap_info,
-                        typeTitle = R.string.vibrate_tap_type,
-                        typeSummary = R.string.vibrate_tap_type_summary,
-                        icon = Icons.Outlined.Vibration,
-                    )
-                    HapticChannelPreference(
-                        enabled = vibrateOnSwipeState,
-                        type = vibrateSwipeTypeState,
-                        onEnabledChange = {
-                            vibrateOnSwipeState = it
-                            updateAppearance()
-                        },
-                        onTypeChange = {
-                            vibrateSwipeTypeState = it
-                            updateAppearance()
-                        },
-                        defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_SWIPE_TYPE),
-                        title = R.string.vibrate_on_swipe,
-                        onSummary = R.string.vibrate_on_swipe_on,
-                        offSummary = R.string.vibrate_on_swipe_off,
-                        info = R.string.vibrate_on_swipe_info,
-                        typeTitle = R.string.vibrate_swipe_type,
-                        typeSummary = R.string.vibrate_swipe_type_summary,
-                        icon = Icons.Outlined.Swipe,
-                    )
-                    HapticChannelPreference(
-                        enabled = vibrateOnSlideState,
-                        type = vibrateSlideTypeState,
-                        onEnabledChange = {
-                            vibrateOnSlideState = it
-                            updateAppearance()
-                        },
-                        onTypeChange = {
-                            vibrateSlideTypeState = it
-                            updateAppearance()
-                        },
-                        defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_SLIDE_TYPE),
-                        title = R.string.vibrate_on_slide,
-                        onSummary = R.string.vibrate_on_slide_on,
-                        offSummary = R.string.vibrate_on_slide_off,
-                        info = R.string.vibrate_on_slide_info,
-                        typeTitle = R.string.vibrate_slide_type,
-                        typeSummary = R.string.vibrate_slide_type_summary,
-                        icon = Icons.Outlined.LinearScale,
-                    )
-                    HapticChannelPreference(
-                        enabled = vibrateOnHoldRepeatState,
-                        type = vibrateHoldRepeatTypeState,
-                        onEnabledChange = {
-                            vibrateOnHoldRepeatState = it
-                            updateAppearance()
-                        },
-                        onTypeChange = {
-                            vibrateHoldRepeatTypeState = it
-                            updateAppearance()
-                        },
-                        defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_HOLD_REPEAT_TYPE),
-                        title = R.string.vibrate_on_hold_repeat,
-                        onSummary = R.string.vibrate_on_hold_repeat_on,
-                        offSummary = R.string.vibrate_on_hold_repeat_off,
-                        info = R.string.vibrate_on_hold_repeat_info,
-                        typeTitle = R.string.vibrate_hold_repeat_type,
-                        typeSummary = R.string.vibrate_hold_repeat_type_summary,
-                        icon = Icons.Outlined.Repeat,
-                    )
-                    HapticChannelPreference(
-                        enabled = vibrateOnModifierState,
-                        type = vibrateModifierTypeState,
-                        onEnabledChange = {
-                            vibrateOnModifierState = it
-                            updateAppearance()
-                        },
-                        onTypeChange = {
-                            vibrateModifierTypeState = it
-                            updateAppearance()
-                        },
-                        defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_MODIFIER_TYPE),
-                        title = R.string.vibrate_on_modifier,
-                        onSummary = R.string.vibrate_on_modifier_on,
-                        offSummary = R.string.vibrate_on_modifier_off,
-                        info = R.string.vibrate_on_modifier_info,
-                        typeTitle = R.string.vibrate_modifier_type,
-                        typeSummary = R.string.vibrate_modifier_type_summary,
-                        icon = Icons.Outlined.KeyboardCapslock,
-                    )
+                    SettingsSection(title = stringResource(R.string.settings_section_feedback)) {
+                        HapticChannelPreference(
+                            enabled = vibrateOnTapState,
+                            type = vibrateTapTypeState,
+                            onEnabledChange = {
+                                vibrateOnTapState = it
+                                updateAppearance()
+                            },
+                            onTypeChange = {
+                                vibrateTapTypeState = it
+                                updateAppearance()
+                            },
+                            defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_TAP_TYPE),
+                            title = R.string.vibrate_on_tap,
+                            onSummary = R.string.vibrate_on_tap_on,
+                            offSummary = R.string.vibrate_on_tap_off,
+                            info = R.string.vibrate_on_tap_info,
+                            icon = Icons.Outlined.Vibration,
+                        )
+                        HapticChannelPreference(
+                            enabled = vibrateOnSwipeState,
+                            type = vibrateSwipeTypeState,
+                            onEnabledChange = {
+                                vibrateOnSwipeState = it
+                                updateAppearance()
+                            },
+                            onTypeChange = {
+                                vibrateSwipeTypeState = it
+                                updateAppearance()
+                            },
+                            defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_SWIPE_TYPE),
+                            title = R.string.vibrate_on_swipe,
+                            onSummary = R.string.vibrate_on_swipe_on,
+                            offSummary = R.string.vibrate_on_swipe_off,
+                            info = R.string.vibrate_on_swipe_info,
+                            icon = Icons.Outlined.Swipe,
+                        )
+                        HapticChannelPreference(
+                            enabled = vibrateOnSlideState,
+                            type = vibrateSlideTypeState,
+                            onEnabledChange = {
+                                vibrateOnSlideState = it
+                                updateAppearance()
+                            },
+                            onTypeChange = {
+                                vibrateSlideTypeState = it
+                                updateAppearance()
+                            },
+                            defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_SLIDE_TYPE),
+                            title = R.string.vibrate_on_slide,
+                            onSummary = R.string.vibrate_on_slide_on,
+                            offSummary = R.string.vibrate_on_slide_off,
+                            info = R.string.vibrate_on_slide_info,
+                            icon = Icons.Outlined.LinearScale,
+                        )
+                        HapticChannelPreference(
+                            enabled = vibrateOnHoldRepeatState,
+                            type = vibrateHoldRepeatTypeState,
+                            onEnabledChange = {
+                                vibrateOnHoldRepeatState = it
+                                updateAppearance()
+                            },
+                            onTypeChange = {
+                                vibrateHoldRepeatTypeState = it
+                                updateAppearance()
+                            },
+                            defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_HOLD_REPEAT_TYPE),
+                            title = R.string.vibrate_on_hold_repeat,
+                            onSummary = R.string.vibrate_on_hold_repeat_on,
+                            offSummary = R.string.vibrate_on_hold_repeat_off,
+                            info = R.string.vibrate_on_hold_repeat_info,
+                            icon = Icons.Outlined.Repeat,
+                        )
+                        HapticChannelPreference(
+                            enabled = vibrateOnModifierState,
+                            type = vibrateModifierTypeState,
+                            onEnabledChange = {
+                                vibrateOnModifierState = it
+                                updateAppearance()
+                            },
+                            onTypeChange = {
+                                vibrateModifierTypeState = it
+                                updateAppearance()
+                            },
+                            defaultType = hapticTypeFromDb(DEFAULT_VIBRATE_MODIFIER_TYPE),
+                            title = R.string.vibrate_on_modifier,
+                            onSummary = R.string.vibrate_on_modifier_on,
+                            offSummary = R.string.vibrate_on_modifier_off,
+                            info = R.string.vibrate_on_modifier_info,
+                            icon = Icons.Outlined.KeyboardCapslock,
+                        )
                     }
 
                     SettingsSection(
