@@ -2,7 +2,7 @@ package com.suave.s12.engine.output
 
 /**
  * MIME matching for IME commitContent: editor contentMimeTypes may be wildcards
- * (`image/*`) while the clipboard offers a concrete type (`image/png`).
+ * (image star) while the clipboard offers a concrete type (image/png).
  */
 object MimeTypeMatcher {
     fun editorAccepts(
@@ -31,8 +31,8 @@ object MimeTypeMatcher {
 
     /**
      * Pick the MIME string to put on InputContentInfo. Concrete clipboard types must match
-     * the editor; a clipboard wildcard (`image/*`) may use the editor's first accepted image
-     * type. A concrete mismatch (`image/png` vs `image/jpeg`) is not remapped.
+     * the editor; a clipboard image wildcard may use the editor's first accepted image type.
+     * A concrete mismatch (image/png vs image/jpeg) is not remapped.
      */
     fun chooseOfferedMime(
         accepted: Array<out String>?,
@@ -47,8 +47,8 @@ object MimeTypeMatcher {
     }
 
     /**
-     * InputContentInfo wants a concrete type. `image/*` becomes `image/png` so the editor
-     * receives a real MIME string rather than a pattern.
+     * InputContentInfo wants a concrete type. An image wildcard becomes image/png so the
+     * editor receives a real MIME string rather than a pattern.
      */
     fun concreteType(mime: String): String {
         val parts = parse(mime) ?: return mime
