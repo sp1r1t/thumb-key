@@ -135,7 +135,7 @@ import com.suave.s12.layout.selectBaseLayer
 import com.suave.s12.layout.splitColumnRanges
 import com.suave.s12.layout.toggleClipboard
 import com.suave.s12.layout.toggleEmoji
-import com.suave.s12.ui.components.keyboard.ClipboardHistoryScreen
+import com.suave.s12.ui.components.clipboard.ClipboardHistoryScreen
 import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.isPasswordField
 import com.suave.s12.utils.toBool

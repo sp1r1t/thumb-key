@@ -1,4 +1,4 @@
-package com.suave.s12.ui.components.keyboard
+package com.suave.s12.ui.components.clipboard
 
 import android.content.Context
 import android.graphics.Bitmap

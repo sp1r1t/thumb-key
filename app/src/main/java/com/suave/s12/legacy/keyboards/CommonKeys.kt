@@ -1,16 +1,17 @@
 @file:Suppress("ktlint:standard:no-wildcard-imports")
 
-package com.suave.s12.keyboards
+package com.suave.s12.legacy.keyboards
 
 import android.view.KeyEvent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.*
 import androidx.compose.material.icons.outlined.*
+import com.suave.s12.legacy.utils.*
 import com.suave.s12.utils.*
 import com.suave.s12.utils.ColorVariant.*
 import com.suave.s12.utils.FontSizeVariant.*
-import com.suave.s12.utils.KeyAction.*
-import com.suave.s12.utils.SwipeNWay.*
+import com.suave.s12.legacy.utils.KeyAction.*
+import com.suave.s12.legacy.utils.SwipeNWay.*
 
 val COPY_KEYC =
     KeyC(

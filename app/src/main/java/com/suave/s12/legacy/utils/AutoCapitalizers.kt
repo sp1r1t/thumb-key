@@ -1,4 +1,4 @@
-package com.suave.s12.utils
+package com.suave.s12.legacy.utils
 
 import com.suave.s12.IMEService
 

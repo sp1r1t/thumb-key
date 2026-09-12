@@ -42,8 +42,8 @@ import com.suave.s12.engine.output.LiveClipboardImage
 import com.suave.s12.ime.InlineAutofillHost
 import com.suave.s12.ime.createInlineSuggestionsRequest
 import com.suave.s12.ime.inlineChipSlotHeightDp
-import com.suave.s12.utils.KeyboardDefinition
-import com.suave.s12.utils.KeyboardLayout
+import com.suave.s12.legacy.utils.KeyboardDefinition
+import com.suave.s12.legacy.KeyboardLayout
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.ThumbKeyClipboardManager
 import com.suave.s12.utils.toBool
