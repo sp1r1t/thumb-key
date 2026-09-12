@@ -30,6 +30,7 @@ import kotlinx.coroutines.delay
 
 internal data class ImeNoticeDraw(
     val text: String,
+    val detail: String?,
     val alpha: Float,
     val background: Color,
     val foreground: Color,
@@ -52,11 +53,12 @@ internal fun rememberImeNoticeDraw(ime: IMEService): ImeNoticeDraw? {
         delay(1100)
         ime.clearNotice(current.seq)
     }
-    val text = (notice ?: fading)?.text ?: return null
+    val shown = notice ?: fading ?: return null
     if (alpha == 0f && !visible) return null
     val colors = MaterialTheme.colorScheme
     return ImeNoticeDraw(
-        text = text,
+        text = shown.text,
+        detail = shown.detail,
         alpha = alpha,
         background = colors.inverseSurface,
         foreground = colors.inverseOnSurface,
@@ -78,22 +80,55 @@ internal fun Modifier.drawImeNotice(
         val topPad = 8.dp.toPx()
         val hPad = 16.dp.toPx()
         val vPad = 8.dp.toPx()
+        val detailGap = 6.dp.toPx()
         val maxTextWidth = (size.width - 2 * hPad).toInt().coerceAtLeast(0)
-        val layout =
+        val mainStyle =
+            TextStyle(
+                color = notice.foreground,
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+            )
+        val detailStyle =
+            TextStyle(
+                color = notice.foreground.copy(alpha = notice.foreground.alpha * 0.65f),
+                fontSize = 10.sp,
+                textAlign = TextAlign.Center,
+            )
+        val detail = notice.detail
+        val detailLayout =
+            if (detail.isNullOrBlank()) {
+                null
+            } else {
+                textMeasurer.measure(
+                    text = detail,
+                    style = detailStyle,
+                    maxLines = 1,
+                    overflow = TextOverflow.Clip,
+                    constraints = Constraints(),
+                )
+            }
+        val detailReserve =
+            if (detailLayout != null) {
+                (detailGap + detailLayout.size.width).toInt()
+            } else {
+                0
+            }
+        val mainMaxWidth = (maxTextWidth - detailReserve).coerceAtLeast(0)
+        val mainLayout =
             textMeasurer.measure(
                 text = notice.text,
-                style =
-                    TextStyle(
-                        color = notice.foreground,
-                        fontSize = 14.sp,
-                        textAlign = TextAlign.Center,
-                    ),
+                style = mainStyle,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                constraints = Constraints(maxWidth = maxTextWidth),
+                constraints = Constraints(maxWidth = mainMaxWidth),
             )
-        val pillWidth = layout.size.width + 2 * hPad
-        val pillHeight = layout.size.height + 2 * vPad
+        val contentWidth =
+            mainLayout.size.width +
+                (if (detailLayout != null) detailGap + detailLayout.size.width else 0f)
+        val contentHeight =
+            maxOf(mainLayout.size.height, detailLayout?.size?.height ?: 0).toFloat()
+        val pillWidth = contentWidth + 2 * hPad
+        val pillHeight = contentHeight + 2 * vPad
         val left = (size.width - pillWidth) / 2f
         val top = topPad
         drawRoundRect(
@@ -102,10 +137,19 @@ internal fun Modifier.drawImeNotice(
             size = Size(pillWidth, pillHeight),
             cornerRadius = CornerRadius(pillHeight / 2f),
         )
+        val mainTop = top + vPad + (contentHeight - mainLayout.size.height) / 2f
         drawText(
-            textLayoutResult = layout,
-            topLeft = Offset(left + hPad, top + vPad),
+            textLayoutResult = mainLayout,
+            topLeft = Offset(left + hPad, mainTop),
             alpha = notice.alpha,
         )
+        if (detailLayout != null) {
+            val detailTop = top + vPad + (contentHeight - detailLayout.size.height) / 2f
+            drawText(
+                textLayoutResult = detailLayout,
+                topLeft = Offset(left + hPad + mainLayout.size.width + detailGap, detailTop),
+                alpha = notice.alpha,
+            )
+        }
     }
 }

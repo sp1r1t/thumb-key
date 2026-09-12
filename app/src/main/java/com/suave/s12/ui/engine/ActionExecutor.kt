@@ -99,7 +99,12 @@ object ActionExecutor {
             if (ime.clipboardUsePrivate()) {
                 val text = ic.getSelectedText(0) ?: return
                 ime.clipboardAddPrivateClip(text.toString())?.let {
-                    showActionNotice(ime, ime.showToastOnCopy(), R.string.copy)
+                    showActionNotice(
+                        ime,
+                        ime.showToastOnCopy(),
+                        R.string.copy,
+                        detailRes = R.string.clipboard_private_badge,
+                    )
                 }
             } else {
                 ic.performContextMenuAction(android.R.id.copy)
@@ -123,7 +128,12 @@ object ActionExecutor {
                 val text = ic.getSelectedText(0) ?: return
                 ime.clipboardAddPrivateClip(text.toString())?.let {
                     ic.commitText("", 1)
-                    showActionNotice(ime, ime.showToastOnCut(), R.string.cut)
+                    showActionNotice(
+                        ime,
+                        ime.showToastOnCut(),
+                        R.string.cut,
+                        detailRes = R.string.clipboard_private_badge,
+                    )
                 }
             } else {
                 ic.performContextMenuAction(android.R.id.cut)
@@ -202,9 +212,13 @@ object ActionExecutor {
         ime: IMEService,
         enabled: Boolean,
         textRes: Int,
+        detailRes: Int? = null,
     ) {
         if (shouldShowActionNotice(enabled, succeeded = true)) {
-            ime.showNotice(ime.getString(textRes))
+            ime.showNotice(
+                text = ime.getString(textRes),
+                detail = detailRes?.let { ime.getString(it) },
+            )
         }
     }
 }

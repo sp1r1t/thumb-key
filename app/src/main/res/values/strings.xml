@@ -160,6 +160,7 @@
     <string name="finish_setup">Finish setup</string>
     <string name="copy">Copied selected text</string>
     <string name="cut">Cut selected text</string>
+    <string name="clipboard_private_badge">private</string>
     <string name="paste_image_failed">Couldn\'t paste the clipboard image</string>
     <string name="paste_image_not_accepted">This field doesn\'t accept images</string>
     <string name="hide_letters">Hide letters</string>

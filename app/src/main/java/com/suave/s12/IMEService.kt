@@ -89,8 +89,11 @@ class IMEService :
     val notice = MutableStateFlow<ImeNotice?>(null)
     private val noticeSeq = AtomicInteger(0)
 
-    fun showNotice(text: String) {
-        notice.value = ImeNotice(text = text, seq = noticeSeq.incrementAndGet())
+    fun showNotice(
+        text: String,
+        detail: String? = null,
+    ) {
+        notice.value = ImeNotice(text = text, seq = noticeSeq.incrementAndGet(), detail = detail)
     }
 
     fun clearNotice(seq: Int) {
@@ -367,4 +370,6 @@ class IMEService :
 data class ImeNotice(
     val text: String,
     val seq: Int,
+    /** Optional small secondary label drawn beside [text] (e.g. "private" on a private copy). */
+    val detail: String? = null,
 )
