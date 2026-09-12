@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imeAnimationTarget
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -26,16 +28,20 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.suave.s12.R
+import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -47,6 +53,7 @@ fun TestOutTextField() {
     val focusRequester = remember { FocusRequester() }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
+    val density = LocalDensity.current
     val imeVisible = WindowInsets.isImeVisible
     val hideButton = showField && fieldFocused && imeVisible
 
@@ -95,14 +102,38 @@ fun TestOutTextField() {
                 withFrameNanos { }
                 focusRequester.requestFocus()
                 keyboardController?.show()
+            }
+            LaunchedEffect(fieldFocused, imeVisible) {
+                if (!fieldFocused || !imeVisible) {
+                    return@LaunchedEffect
+                }
+                awaitImeSpawned(density)
+                withFrameNanos { }
                 bringIntoViewRequester.bringIntoView()
             }
-            LaunchedEffect(imeVisible, fieldFocused, hideButton) {
-                if (fieldFocused && imeVisible) {
-                    withFrameNanos { }
-                    bringIntoViewRequester.bringIntoView()
-                }
-            }
         }
+    }
+}
+
+/** Wait until the IME inset has reached its animation target, not just the first non-zero frame. */
+@OptIn(ExperimentalLayoutApi::class)
+private suspend fun awaitImeSpawned(density: Density) {
+    snapshotFlow { WindowInsets.ime.getBottom(density) }.first { it > 0 }
+    val target = WindowInsets.imeAnimationTarget.getBottom(density)
+    if (target > 0) {
+        snapshotFlow { WindowInsets.ime.getBottom(density) }.first { it >= target }
+        return
+    }
+    var last = -1
+    var idleFrames = 0
+    while (idleFrames < 3) {
+        withFrameNanos { }
+        val bottom = WindowInsets.ime.getBottom(density)
+        if (bottom == last) {
+            idleFrames += 1
+        } else {
+            idleFrames = 0
+        }
+        last = bottom
     }
 }
