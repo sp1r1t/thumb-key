@@ -469,8 +469,16 @@ fun EngineKeyboardScreen(
                     !inlineEnabled -> "off"
                     else -> autofillStatus.ifEmpty { INLINE_STATUS_IDLE }
                 }
+            val autofillIdMark =
+                remember(inputEpoch) {
+                    when {
+                        Build.VERSION.SDK_INT < Build.VERSION_CODES.R -> "na"
+                        ime.currentInputEditorInfo?.autofillId != null -> "y"
+                        else -> "n"
+                    }
+                }
             EditorDebugBar(
-                meta = "$installTime | $targetApp | af=$af",
+                meta = "$installTime | $targetApp | af=$af | id=$autofillIdMark",
                 compact = editorDebug.compact,
                 verbose = editorDebug.verbose,
                 onCopy = { text ->

@@ -34,6 +34,8 @@ import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
 import com.suave.s12.db.DEFAULT_INLINE_SUGGESTIONS
 import com.suave.s12.db.DEFAULT_INLINE_SUGGESTION_HEIGHT
 import com.suave.s12.db.DEFAULT_SHOW_ON_SCREEN_KEYBOARD
+import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_COPY
+import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_CUT
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
 import com.suave.s12.db.isCredentialStorageUnlocked
 import com.suave.s12.ime.InlineAutofillHost
@@ -106,6 +108,9 @@ class IMEService :
         restarting: Boolean,
     ) {
         super.onStartInput(attribute, restarting)
+        if (!restarting) {
+            inlineAutofill.clear()
+        }
         refreshCurrentKeyboardDefinition()
         bumpInputEpoch()
     }
@@ -211,9 +216,11 @@ class IMEService :
         selectionEnd = cursorAnchorInfo.selectionEnd
     }
 
-    override fun onFinishInput() {
-        inlineAutofill.clear()
-        super.onFinishInput()
+    override fun onFinishInputView(finishingInput: Boolean) {
+        if (finishingInput) {
+            inlineAutofill.clear()
+        }
+        super.onFinishInputView(finishingInput)
     }
 
     @RequiresApi(Build.VERSION_CODES.R)
@@ -232,8 +239,7 @@ class IMEService :
                     resources.displayMetrics,
                 ).toInt()
                 .coerceAtLeast(1)
-        Log.d(TAG, "inline suggestions request heightPx=$heightPx")
-        return createInlineSuggestionsRequest(this, heightPx)
+        return createInlineSuggestionsRequest(this, heightPx, uiExtras)
     }
 
     @RequiresApi(Build.VERSION_CODES.R)
@@ -243,8 +249,10 @@ class IMEService :
             inlineAutofill.clear()
             return false
         }
-        Log.d(TAG, "inline suggestions response count=${response.inlineSuggestions.size}")
-        inlineAutofill.show(this, response.inlineSuggestions)
+        val items = response.inlineSuggestions
+        val pinned = items.count { it.info.isPinned }
+        Log.d(TAG, "inline suggestions response count=${items.size} pinned=$pinned")
+        inlineAutofill.show(this, items)
         return true
     }
 
@@ -282,6 +290,7 @@ class IMEService :
     }
 
     override fun onWindowHidden() {
+        inlineAutofill.clear()
         currentKeyboardDefinition?.settings?.textProcessor?.handleFinishInput(this)
         super.onWindowHidden()
     }
@@ -305,6 +314,18 @@ class IMEService :
         val clipboardHistoryEnabled = (settings?.clipboardHistoryEnabled ?: DEFAULT_CLIPBOARD_HISTORY_ENABLED).toBool()
         val usePrivateClipboard = (settings?.usePrivateClipboard ?: DEFAULT_USE_PRIVATE_CLIPBOARD).toBool()
         return clipboardHistoryEnabled && usePrivateClipboard
+    }
+
+    fun showToastOnCopy(): Boolean {
+        val settingsRepo = (application as ThumbkeyApplication).appSettingsRepository
+        val settings = settingsRepo.appSettings.getValue()
+        return (settings?.showToastOnCopy ?: DEFAULT_SHOW_TOAST_ON_COPY).toBool()
+    }
+
+    fun showToastOnCut(): Boolean {
+        val settingsRepo = (application as ThumbkeyApplication).appSettingsRepository
+        val settings = settingsRepo.appSettings.getValue()
+        return (settings?.showToastOnCut ?: DEFAULT_SHOW_TOAST_ON_CUT).toBool()
     }
 
     fun clipboardAddPrivateClip(text: String): Unit? = clipboardManager?.addPrivateClip(text)

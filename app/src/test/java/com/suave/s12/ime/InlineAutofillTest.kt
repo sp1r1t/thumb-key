@@ -31,6 +31,28 @@ class InlineAutofillTest {
     @Test
     fun `inflate wrap content matches Android WRAP_CONTENT`() {
         assertEquals(-2, INLINE_INFLATE_WRAP)
-        assertEquals(1, INLINE_PRESENTATION_MIN_PX)
+        assertEquals(0, INLINE_PRESENTATION_MIN_PX)
+        assertEquals(Int.MAX_VALUE, INLINE_PRESENTATION_MAX_PX)
+    }
+
+    @Test
+    fun `empty response is ignored unless waiting`() {
+        val host = InlineAutofillHost()
+        assertEquals(false, host.offerEmptyResponse())
+        assertEquals(INLINE_STATUS_IDLE, host.status.value)
+        host.markWaiting()
+        assertEquals(INLINE_STATUS_WAIT, host.status.value)
+        assertEquals(true, host.offerEmptyResponse())
+        assertEquals(INLINE_STATUS_EMPTY, host.status.value)
+        assertEquals(false, host.offerEmptyResponse())
+    }
+
+    @Test
+    fun `clear after wait makes the AOSP empty ping a no-op`() {
+        val host = InlineAutofillHost()
+        host.markWaiting()
+        host.clear()
+        assertEquals(false, host.offerEmptyResponse())
+        assertEquals(INLINE_STATUS_IDLE, host.status.value)
     }
 }

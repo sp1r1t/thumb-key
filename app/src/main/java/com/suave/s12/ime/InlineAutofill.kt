@@ -45,6 +45,7 @@ class InlineAutofillHost {
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val setterGuard = Mutex()
     private val sequence = AtomicInteger(0)
+    private val waitingAt = AtomicInteger(-1)
     private val _suggestions = MutableStateFlow<List<InflatedInlineSuggestion>>(emptyList())
     val suggestions: StateFlow<List<InflatedInlineSuggestion>> = _suggestions.asStateFlow()
     private val _status = MutableStateFlow(INLINE_STATUS_IDLE)
@@ -59,11 +60,13 @@ class InlineAutofillHost {
     }
 
     fun markWaiting() {
+        waitingAt.set(sequence.get())
         _status.value = INLINE_STATUS_WAIT
     }
 
     fun clear() {
         val id = sequence.incrementAndGet()
+        waitingAt.set(-1)
         _status.value = INLINE_STATUS_IDLE
         scope.launch {
             setterGuard.withLock {
@@ -74,23 +77,40 @@ class InlineAutofillHost {
         }
     }
 
+    /**
+     * AOSP sends an empty inline response on every input start before the real fill
+     * arrives. Applying that ping as af=0 wipes chips and cancels in-flight inflate.
+     * Only a fill that arrives while we are still waiting is a real empty result.
+     */
+    fun offerEmptyResponse(): Boolean {
+        if (_status.value != INLINE_STATUS_WAIT || sequence.get() != waitingAt.get()) {
+            return false
+        }
+        waitingAt.set(-1)
+        _status.value = INLINE_STATUS_EMPTY
+        scope.launch {
+            setterGuard.withLock {
+                if (_status.value == INLINE_STATUS_EMPTY) {
+                    _suggestions.value = emptyList()
+                }
+            }
+        }
+        return true
+    }
+
     @RequiresApi(Build.VERSION_CODES.R)
     fun show(
         context: Context,
         raw: List<InlineSuggestion>,
     ) {
-        val id = sequence.incrementAndGet()
         if (raw.isEmpty()) {
-            _status.value = inlineChipStatus(0, 0)
-            scope.launch {
-                setterGuard.withLock {
-                    if (sequence.get() == id) {
-                        _suggestions.value = emptyList()
-                    }
-                }
+            if (!offerEmptyResponse()) {
+                Log.d(TAG, "skip empty inline response status=${_status.value}")
             }
             return
         }
+        waitingAt.set(-1)
+        val id = sequence.incrementAndGet()
         scope.launch {
             val size = Size(INLINE_INFLATE_WRAP, INLINE_INFLATE_WRAP)
             val slots = arrayOfNulls<InflatedInlineSuggestion>(raw.size)
@@ -138,23 +158,37 @@ fun <T> pickTopFillable(
 fun createInlineSuggestionsRequest(
     context: Context,
     heightPx: Int,
+    uiExtras: Bundle = Bundle(),
     maxCount: Int = INLINE_SUGGESTION_MAX_COUNT,
 ): InlineSuggestionsRequest {
-    val height = heightPx.coerceAtLeast(1)
-    val minEdge = INLINE_PRESENTATION_MIN_PX
-    val maxWidth = context.resources.displayMetrics.widthPixels.coerceAtLeast(minEdge)
+    val extrasVersions = UiVersions.getVersions(uiExtras)
+    if (extrasVersions.isNotEmpty() && !extrasVersions.contains(UiVersions.INLINE_UI_VERSION_1)) {
+        Log.w(TAG, "inline ui extras versions=$extrasVersions omit v1")
+    }
     val spec =
-        InlinePresentationSpec.Builder(Size(minEdge, minEdge), Size(maxWidth, height))
+        InlinePresentationSpec.Builder(inlinePresentationMinSize(), inlinePresentationMaxSize())
             .setStyle(inlineSuggestionStyleBundle(context))
             .build()
     val specs = List(maxCount.coerceAtLeast(1)) { spec }
+    Log.d(
+        TAG,
+        "inline suggestions request heightPx=${heightPx.coerceAtLeast(1)} " +
+            "maxCount=${maxCount.coerceAtLeast(1)} extrasVersions=$extrasVersions",
+    )
     return InlineSuggestionsRequest.Builder(specs)
         .setMaxSuggestionCount(maxCount.coerceAtLeast(1))
         .build()
 }
 
+internal fun inlinePresentationMinSize(): Size =
+    Size(INLINE_PRESENTATION_MIN_PX, INLINE_PRESENTATION_MIN_PX)
+
+internal fun inlinePresentationMaxSize(): Size =
+    Size(INLINE_PRESENTATION_MAX_PX, INLINE_PRESENTATION_MAX_PX)
+
 internal const val INLINE_SUGGESTION_MAX_COUNT = 4
-internal const val INLINE_PRESENTATION_MIN_PX = 1
+internal const val INLINE_PRESENTATION_MIN_PX = 0
+internal const val INLINE_PRESENTATION_MAX_PX = Int.MAX_VALUE
 internal const val INLINE_INFLATE_WRAP = -2
 internal const val INLINE_STATUS_IDLE = "-"
 internal const val INLINE_STATUS_WAIT = "wait"
