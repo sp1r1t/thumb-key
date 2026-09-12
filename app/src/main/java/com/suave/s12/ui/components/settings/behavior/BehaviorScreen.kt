@@ -1,18 +1,11 @@
 package com.suave.s12.ui.components.settings.behavior
 
 import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.Swipe
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -21,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import com.suave.s12.R
@@ -38,8 +30,8 @@ import com.suave.s12.engine.feedback.hapticTypeFromDb
 import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.SettingTitle
+import com.suave.s12.ui.components.common.SettingsScreenBody
 import com.suave.s12.ui.components.common.SettingsSection
-import com.suave.s12.ui.components.common.TestOutTextField
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.toBool
@@ -69,8 +61,6 @@ fun BehaviorScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val scrollState = rememberScrollState()
-
     fun updateBehavior() {
         appSettingsViewModel.updateBehavior(
             BehaviorUpdate(
@@ -93,14 +83,7 @@ fun BehaviorScreen(
             )
         },
         content = { padding ->
-            Column(
-                modifier =
-                    Modifier
-                        .padding(padding)
-                        .verticalScroll(scrollState)
-                        .background(color = MaterialTheme.colorScheme.surface)
-                        .imePadding(),
-            ) {
+            SettingsScreenBody(padding = padding) {
                 ProvidePreferenceTheme {
                     SettingsSection(title = stringResource(R.string.settings_section_gestures)) {
                     SettingRow(
@@ -184,7 +167,6 @@ fun BehaviorScreen(
                         },
                     )
                     }
-                    TestOutTextField()
                 }
             }
         },

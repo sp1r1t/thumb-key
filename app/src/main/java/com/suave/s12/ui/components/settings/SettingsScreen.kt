@@ -1,12 +1,6 @@
 package com.suave.s12.ui.components.settings
 
 import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Build
 import androidx.compose.material.icons.outlined.ContentPaste
@@ -18,20 +12,17 @@ import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
-import com.suave.s12.ui.components.common.TestOutTextField
-import com.suave.s12.ui.components.settings.about.SettingsDivider
+import com.suave.s12.ui.components.common.SettingsScreenBody
 import com.suave.s12.utils.TAG
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
@@ -48,8 +39,6 @@ fun SettingsScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val scrollState = rememberScrollState()
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -58,14 +47,7 @@ fun SettingsScreen(
             )
         },
         content = { padding ->
-            Column(
-                modifier =
-                    Modifier
-                        .padding(padding)
-                        .verticalScroll(scrollState)
-                        .background(color = MaterialTheme.colorScheme.surface)
-                        .imePadding(),
-            ) {
+            SettingsScreenBody(padding = padding) {
                 ProvidePreferenceTheme {
                     if (!(thumbkeyEnabled || thumbkeySelected)) {
                         Preference(
@@ -143,8 +125,6 @@ fun SettingsScreen(
                         },
                         onClick = { navController.navigate("about") },
                     )
-                    SettingsDivider()
-                    TestOutTextField()
                 }
             }
         },

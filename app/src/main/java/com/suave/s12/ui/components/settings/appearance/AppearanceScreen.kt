@@ -1,12 +1,10 @@
 package com.suave.s12.ui.components.settings.appearance
 
 import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -128,8 +126,8 @@ import com.suave.s12.layout.toggleKeyboardPositionSelection
 import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.SettingTitle
+import com.suave.s12.ui.components.common.SettingsScreenBody
 import com.suave.s12.ui.components.common.SettingsSection
-import com.suave.s12.ui.components.common.TestOutTextField
 import com.suave.s12.ui.engine.HIDE_KEY_GROUP_ORDER
 import com.suave.s12.ui.engine.LegendCategory
 import com.suave.s12.ui.engine.formatHideKeyCategories
@@ -260,22 +258,13 @@ fun AppearanceScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
-    val scrollState = rememberScrollState()
-
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             SimpleTopAppBar(text = stringResource(R.string.appearance), navController = navController)
         },
         content = { padding ->
-            Column(
-                modifier =
-                    Modifier
-                        .padding(padding)
-                        .verticalScroll(scrollState)
-                        .background(color = MaterialTheme.colorScheme.surface)
-                        .imePadding(),
-            ) {
+            SettingsScreenBody(padding = padding) {
                 ProvidePreferenceTheme {
                     SettingsSection(title = stringResource(R.string.theme)) {
                     SettingRow(onReset = {
@@ -1114,7 +1103,6 @@ fun AppearanceScreen(
                         )
                     }
 
-                    TestOutTextField()
                 }
             }
         },

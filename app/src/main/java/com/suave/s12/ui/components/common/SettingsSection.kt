@@ -1,12 +1,18 @@
 package com.suave.s12.ui.components.common
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
@@ -70,5 +76,35 @@ fun SettingsSection(
         AnimatedVisibility(visible = expanded) {
             Column(content = content)
         }
+    }
+}
+
+/**
+ * Settings options scroll in the remaining space; the test-out control stays pinned to the
+ * bottom of the screen instead of sitting directly under the last option.
+ */
+@Composable
+fun SettingsScreenBody(
+    padding: PaddingValues,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier =
+            modifier
+                .fillMaxSize()
+                .padding(padding)
+                .imePadding()
+                .background(MaterialTheme.colorScheme.surface),
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+            content = content,
+        )
+        TestOutTextField()
     }
 }
