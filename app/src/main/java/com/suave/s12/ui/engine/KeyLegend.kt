@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.ViewColumn
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.Dp
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.ModifierId
@@ -128,12 +129,26 @@ fun keyLegend(
         }
     }
 
-/** Same size/color roles Thumb-Key used: center is LARGE/PRIMARY, swipes are SMALL/SECONDARY. */
+/** Same color roles Thumb-Key used: center is PRIMARY, swipes are SECONDARY. */
 fun legendFontSizeVariant(isCenter: Boolean): FontSizeVariant =
     if (isCenter) FontSizeVariant.LARGE else FontSizeVariant.SMALL
 
 fun legendColorVariant(isCenter: Boolean): ColorVariant =
     if (isCenter) ColorVariant.PRIMARY else ColorVariant.SECONDARY
+
+/** Center ~31% of the keycap, swipes ~15%. Thumb-Key LARGE/SMALL (40%/20%) crowded this grid. */
+internal const val LEGEND_CENTER_DIV = 3.25f
+internal const val LEGEND_SWIPE_DIV = 6.5f
+
+fun legendFontSize(
+    isCenter: Boolean,
+    keySize: Dp,
+    isUpperCase: Boolean,
+): Dp {
+    val upperCaseFactor = if (isUpperCase) 0.8f else 1f
+    val divFactor = if (isCenter) LEGEND_CENTER_DIV else LEGEND_SWIPE_DIV
+    return keySize.times(upperCaseFactor).div(divFactor)
+}
 
 internal fun classifyText(shown: String): LegendCategory =
     when {

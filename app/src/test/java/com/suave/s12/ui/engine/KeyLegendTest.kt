@@ -13,6 +13,7 @@ import androidx.compose.material.icons.outlined.KeyboardCapslock
 import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.ViewColumn
+import androidx.compose.ui.unit.dp
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.ModifierId
@@ -21,8 +22,10 @@ import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.layout.SUAVE_SHIFT_MAPPINGS
 import com.suave.s12.utils.ColorVariant
 import com.suave.s12.utils.FontSizeVariant
+import com.suave.s12.utils.fontSizeVariantToFontSize
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class KeyLegendTest {
@@ -149,6 +152,16 @@ class KeyLegendTest {
         assertEquals(ColorVariant.SECONDARY, legendColorVariant(isCenter = false))
         assertEquals(FontSizeVariant.LARGE, legendFontSizeVariant(isCenter = true))
         assertEquals(FontSizeVariant.SMALL, legendFontSizeVariant(isCenter = false))
+    }
+
+    @Test
+    fun `engine legends are smaller than Thumb-Key LARGE and SMALL`() {
+        val key = 64.dp
+        val center = legendFontSize(isCenter = true, key, isUpperCase = false)
+        val swipe = legendFontSize(isCenter = false, key, isUpperCase = false)
+        assertTrue(center < fontSizeVariantToFontSize(FontSizeVariant.LARGE, key, false))
+        assertTrue(swipe < fontSizeVariantToFontSize(FontSizeVariant.SMALL, key, false))
+        assertTrue(center > swipe)
     }
 
     @Test

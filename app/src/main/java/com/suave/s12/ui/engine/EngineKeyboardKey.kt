@@ -54,7 +54,6 @@ import com.suave.s12.engine.modifier.ModifierBehavior
 import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.utils.ColorVariant
 import com.suave.s12.utils.colorVariantToColor
-import com.suave.s12.utils.fontSizeVariantToFontSize
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 
@@ -150,7 +149,8 @@ fun EngineKeyboardKey(
             colorVariantToColor(legendColorVariant(isCenter = true))
         }
     val density = LocalDensity.current
-    val swipeSize = fontSizeVariantToFontSize(legendFontSizeVariant(isCenter = false), keyHeight, isUpperCase = false)
+    val legendKeySize = (keyHeight - (keyPaddingVertical * 2).dp).coerceAtLeast(1.dp)
+    val swipeSize = legendFontSize(isCenter = false, legendKeySize, isUpperCase = false)
     val swipeFontSize = with(density) { swipeSize.toSp() }
 
     Box(
@@ -311,7 +311,7 @@ fun EngineKeyboardKey(
                 val isUpperCase =
                     (centerLegend as? KeyLegend.Text)?.text?.firstOrNull()?.isUpperCase() == true
                 val centerSize =
-                    fontSizeVariantToFontSize(legendFontSizeVariant(isCenter = true), keyHeight, isUpperCase)
+                    legendFontSize(isCenter = true, legendKeySize, isUpperCase)
                 KeyLegendMark(
                     legend = centerLegend,
                     fontSize = with(density) { centerSize.toSp() },
@@ -375,7 +375,7 @@ private fun KeyReleaseEffects(
             Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                 glyph?.let { shown ->
                     val dropSize =
-                        fontSizeVariantToFontSize(legendFontSizeVariant(isCenter = true), keyHeight, isUpperCase = false)
+                        legendFontSize(isCenter = true, keyHeight, isUpperCase = false)
                     val density = LocalDensity.current
                     Text(
                         text = shown.text,
@@ -399,7 +399,14 @@ private fun KeyLegendMark(
 ) {
     when (legend) {
         is KeyLegend.Text -> {
-            Text(legend.text, modifier = modifier, fontSize = fontSize, color = color)
+            Text(
+                legend.text,
+                modifier = modifier,
+                fontSize = fontSize,
+                fontWeight = FontWeight.Bold,
+                lineHeight = fontSize,
+                color = color,
+            )
         }
         is KeyLegend.Icon -> {
             Icon(
