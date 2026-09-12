@@ -54,6 +54,8 @@ fun TestOutTextField() {
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val density = LocalDensity.current
+    val ime = WindowInsets.ime
+    val imeTarget = WindowInsets.imeAnimationTarget
     val imeVisible = WindowInsets.isImeVisible
     val hideButton = showField && fieldFocused && imeVisible
 
@@ -107,7 +109,7 @@ fun TestOutTextField() {
                 if (!fieldFocused || !imeVisible) {
                     return@LaunchedEffect
                 }
-                awaitImeSpawned(density)
+                awaitImeSpawned(density, ime, imeTarget)
                 withFrameNanos { }
                 bringIntoViewRequester.bringIntoView()
             }
@@ -116,19 +118,22 @@ fun TestOutTextField() {
 }
 
 /** Wait until the IME inset has reached its animation target, not just the first non-zero frame. */
-@OptIn(ExperimentalLayoutApi::class)
-private suspend fun awaitImeSpawned(density: Density) {
-    snapshotFlow { WindowInsets.ime.getBottom(density) }.first { it > 0 }
-    val target = WindowInsets.imeAnimationTarget.getBottom(density)
+private suspend fun awaitImeSpawned(
+    density: Density,
+    ime: WindowInsets,
+    imeTarget: WindowInsets,
+) {
+    snapshotFlow { ime.getBottom(density) }.first { it > 0 }
+    val target = imeTarget.getBottom(density)
     if (target > 0) {
-        snapshotFlow { WindowInsets.ime.getBottom(density) }.first { it >= target }
+        snapshotFlow { ime.getBottom(density) }.first { it >= target }
         return
     }
     var last = -1
     var idleFrames = 0
     while (idleFrames < 3) {
         withFrameNanos { }
-        val bottom = WindowInsets.ime.getBottom(density)
+        val bottom = ime.getBottom(density)
         if (bottom == last) {
             idleFrames += 1
         } else {
