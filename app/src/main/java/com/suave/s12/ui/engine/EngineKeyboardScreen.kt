@@ -1,5 +1,6 @@
 package com.suave.s12.ui.engine
 
+import android.content.Intent
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,8 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,12 +36,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.suave.s12.IMEService
+import com.suave.s12.MainActivity
 import com.suave.s12.db.AppSettings
+import com.suave.s12.db.ClipboardRepository
 import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_ANIMATION_LETTER_DROP
 import com.suave.s12.db.DEFAULT_ANIMATION_PRESS_HIGHLIGHT
 import com.suave.s12.db.DEFAULT_ANIMATION_RELEASE_FLASH
 import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
+import com.suave.s12.db.DEFAULT_CLIPBOARD_HISTORY_ENABLED
 import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_HIDE_EDITING
@@ -80,9 +87,11 @@ import com.suave.s12.layout.LayerContent
 import com.suave.s12.layout.LayoutLayer
 import com.suave.s12.layout.NamedLayout
 import com.suave.s12.layout.parseLayerHeightOverrides
+import com.suave.s12.ui.components.keyboard.ClipboardHistoryScreen
 import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.isPasswordField
 import com.suave.s12.utils.toBool
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -105,6 +114,7 @@ fun EngineKeyboardScreen(
     onToggleHideLetters: () -> Unit,
     onSwitchLanguage: () -> Unit,
     onChangePosition: ((old: KeyboardPosition) -> KeyboardPosition) -> Unit,
+    clipboardRepository: ClipboardRepository? = null,
 ) {
     val ctx = LocalContext.current
     val ime = ctx as IMEService
@@ -112,6 +122,10 @@ fun EngineKeyboardScreen(
 
     var modifierState by remember { mutableStateOf(ModifierState()) }
     var layer by remember { mutableStateOf(LayoutLayer.MAIN) }
+    var showClipboardHistory by remember { mutableStateOf(false) }
+    val clipboardScope = rememberCoroutineScope()
+    val clipboardItems =
+        clipboardRepository?.allClipboardItems?.observeAsState(emptyList())?.value.orEmpty()
 
     val vibrateOnTap = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
     val vibrateOnSlide = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
@@ -185,16 +199,26 @@ fun EngineKeyboardScreen(
     val capabilities = remember { EditorCapabilityResolver.resolve(ime.currentInputEditorInfo) }
 
     LaunchedEffect(namedLayout.id) { layer = LayoutLayer.MAIN }
+    LaunchedEffect(showClipboardHistory) {
+        if (showClipboardHistory) {
+            clipboardRepository?.clearExpired()
+        }
+    }
+
+    val clipboardHistoryEnabled =
+        (settings?.clipboardHistoryEnabled ?: DEFAULT_CLIPBOARD_HISTORY_ENABLED).toBool()
 
     val appHost =
         AppCommandHost(
             onToggleHideLetters = onToggleHideLetters,
             onSwitchLanguage = {
+                showClipboardHistory = false
                 layer = LayoutLayer.MAIN
                 onSwitchLanguage()
             },
             onChangePosition = onChangePosition,
             onSelectLayer = { requested ->
+                showClipboardHistory = false
                 layer =
                     when (requested) {
                         LayoutLayer.NUMERIC -> if (namedLayout.numericLayout != null) LayoutLayer.NUMERIC else layer
@@ -203,6 +227,7 @@ fun EngineKeyboardScreen(
                     }
             },
             onToggleEmojiLayer = {
+                showClipboardHistory = false
                 layer =
                     when {
                         layer == LayoutLayer.EMOJI -> LayoutLayer.MAIN
@@ -210,6 +235,7 @@ fun EngineKeyboardScreen(
                         else -> layer
                     }
             },
+            onToggleClipboardHistory = { showClipboardHistory = !showClipboardHistory },
         )
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -301,7 +327,50 @@ fun EngineKeyboardScreen(
                         .padding(bottom = pushupSize)
                         .then(if (backdropEnabled) Modifier.padding(top = 6.dp) else Modifier),
             ) {
-                if (keyboardPosition == KeyboardPosition.Dual) {
+                if (showClipboardHistory) {
+                    val keyboardHeight =
+                        keyHeight * namedLayout.heightRows(layer, layerHeightOverrides[layer] ?: 0)
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(keyboardHeight),
+                    ) {
+                        ClipboardHistoryScreen(
+                            clipboardItems = clipboardItems,
+                            isEnabled = clipboardHistoryEnabled && clipboardRepository != null,
+                            onItemClick = { item ->
+                                ime.currentInputConnection?.commitText(item.text, 1)
+                                showClipboardHistory = false
+                            },
+                            onItemPaste = { item ->
+                                ime.currentInputConnection?.commitText(item.text, 1)
+                            },
+                            onItemDelete = { item ->
+                                clipboardScope.launch { clipboardRepository?.deleteItem(item) }
+                            },
+                            onItemTogglePin = { item ->
+                                clipboardScope.launch { clipboardRepository?.togglePin(item) }
+                            },
+                            onBack = { showClipboardHistory = false },
+                            onClearAll = {
+                                clipboardScope.launch { clipboardRepository?.clearUnpinned() }
+                            },
+                            onGoToClipboardSettings = {
+                                showClipboardHistory = false
+                                val intent = Intent(ime, MainActivity::class.java)
+                                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                                intent.putExtra("startRoute", "clipboardSettings")
+                                ime.startActivity(intent)
+                            },
+                            keyHeight = keyHeight.value,
+                            keyPadding = keyPadding,
+                            cornerRadius = keyCornerRadius.value,
+                            vibrateOnTap = vibrateOnTap,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                } else if (keyboardPosition == KeyboardPosition.Dual) {
                     Row(modifier = Modifier.fillMaxWidth()) {
                         renderPanel(Modifier.weight(1f))
                         renderPanel(Modifier.weight(1f))

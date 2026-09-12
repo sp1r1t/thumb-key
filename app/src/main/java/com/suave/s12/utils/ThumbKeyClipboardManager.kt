@@ -38,8 +38,14 @@ class ThumbKeyClipboardManager(
             val clip = systemClipboardManager.primaryClip
             if (clip == null || clip.itemCount == 0) return@OnPrimaryClipChangedListener
             val text = clip.getItemAt(0).coerceToText(context).toString()
-            addToClipboardRepo(text)
-            wasLastCopyOperationDoneViaSystem = true
+            if (text.isBlank() || text == lastClipText) return@OnPrimaryClipChangedListener
+            scope.launch {
+                if (!clipboardRepository.shouldCaptureSystemClipboard()) return@launch
+                lastClipText = text
+                Log.d(TAG, "Adding clipboard item: $text")
+                clipboardRepository.addItem(text)
+                wasLastCopyOperationDoneViaSystem = true
+            }
         }
 
     fun startListening() {

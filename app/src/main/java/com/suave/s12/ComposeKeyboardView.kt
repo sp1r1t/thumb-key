@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.lifecycle.lifecycleScope
 import com.suave.s12.db.AppSettingsRepository
+import com.suave.s12.db.isCredentialStorageUnlocked
 import com.suave.s12.layout.BuiltinLayouts
 import com.suave.s12.ui.engine.EngineKeyboardScreen
 import com.suave.s12.ui.engine.toggleHideLabels
@@ -30,6 +31,12 @@ class ComposeKeyboardView(
         val settingsState = settingsRepo.appSettings.observeAsState()
         val settings by settingsState
         val ctx = context as IMEService
+        val clipboardRepository =
+            if (isCredentialStorageUnlocked(ctx.applicationContext)) {
+                (ctx.applicationContext as ThumbkeyApplication).clipboardRepository
+            } else {
+                null
+            }
 
         ThumbkeyTheme(
             settings = settings,
@@ -75,6 +82,7 @@ class ComposeKeyboardView(
                             }
                         }
                     },
+                    clipboardRepository = clipboardRepository,
                 )
             }
         }

@@ -31,6 +31,7 @@ data class AppCommandHost(
     val onChangePosition: ((old: KeyboardPosition) -> KeyboardPosition) -> Unit,
     val onSelectLayer: (LayoutLayer) -> Unit,
     val onToggleEmojiLayer: () -> Unit,
+    val onToggleClipboardHistory: () -> Unit,
 )
 
 /**
@@ -81,6 +82,7 @@ object ActionExecutor {
             CommandId.TOGGLE_EMOJI_MODE -> host.onToggleEmojiLayer()
             CommandId.TOGGLE_NUMERIC_MODE -> host.onSelectLayer(LayoutLayer.NUMERIC)
             CommandId.TOGGLE_ABC_MODE -> host.onSelectLayer(LayoutLayer.MAIN)
+            CommandId.TOGGLE_CLIPBOARD_HISTORY -> host.onToggleClipboardHistory()
             else -> {}
         }
     }

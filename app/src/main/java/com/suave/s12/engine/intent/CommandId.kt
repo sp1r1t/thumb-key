@@ -35,6 +35,7 @@ enum class CommandId {
     TOGGLE_EMOJI_MODE,
     TOGGLE_NUMERIC_MODE,
     TOGGLE_ABC_MODE,
+    TOGGLE_CLIPBOARD_HISTORY,
     ;
 
     /**
@@ -74,6 +75,7 @@ enum class CommandId {
             TOGGLE_EMOJI_MODE,
             TOGGLE_NUMERIC_MODE,
             TOGGLE_ABC_MODE,
+            TOGGLE_CLIPBOARD_HISTORY,
             -> false
         }
 

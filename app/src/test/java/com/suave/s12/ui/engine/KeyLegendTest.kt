@@ -7,6 +7,7 @@ import androidx.compose.material.icons.outlined.Abc
 import androidx.compose.material.icons.outlined.ArrowDropUp
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.EmojiEmotions
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.KeyboardCapslock
 import androidx.compose.material.icons.outlined.Numbers
@@ -138,6 +139,7 @@ class KeyLegendTest {
         assertEquals(KeyLegend.Icon(Icons.Outlined.Abc), legend(KeyIntent.Command(CommandId.TOGGLE_ABC_MODE)))
         assertEquals(KeyLegend.Icon(Icons.Outlined.SwapHoriz), legend(KeyIntent.Command(CommandId.SWITCH_LANGUAGE)))
         assertEquals(KeyLegend.Icon(Icons.Outlined.ViewColumn), legend(KeyIntent.Command(CommandId.MOVE_KEYBOARD)))
+        assertEquals(KeyLegend.Icon(Icons.Outlined.History), legend(KeyIntent.Command(CommandId.TOGGLE_CLIPBOARD_HISTORY)))
         assertNull(legend(KeyIntent.Text(" ")))
     }
 

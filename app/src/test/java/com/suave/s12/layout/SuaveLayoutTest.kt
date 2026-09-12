@@ -75,6 +75,7 @@ class SuaveLayoutTest {
         assertEquals(KeyIntent.Command(CommandId.SELECT_ALL), clipboardKey.intents[Zone.Directional(Direction.UP_LEFT)])
         assertEquals(KeyIntent.Command(CommandId.CUT), clipboardKey.intents[Zone.Directional(Direction.UP_RIGHT)])
         assertEquals(KeyIntent.Command(CommandId.PASTE), clipboardKey.intents[Zone.Directional(Direction.DOWN)])
+        assertEquals(KeyIntent.Command(CommandId.TOGGLE_CLIPBOARD_HISTORY), clipboardKey.intents[Zone.Directional(Direction.LEFT)])
         assertEquals(KeyIntent.Command(CommandId.UNDO), clipboardKey.intents[Zone.Directional(Direction.DOWN_LEFT)])
         assertEquals(KeyIntent.Command(CommandId.REDO), clipboardKey.intents[Zone.Directional(Direction.DOWN_RIGHT)])
     }
@@ -141,6 +142,7 @@ class SuaveLayoutTest {
 
         assertEquals(KeyIntent.Command(CommandId.TOGGLE_ABC_MODE), abc.intents[Zone.Center])
         assertEquals(KeyIntent.Command(CommandId.COPY), abc.intents[Zone.Directional(Direction.UP)])
+        assertEquals(KeyIntent.Command(CommandId.TOGGLE_CLIPBOARD_HISTORY), abc.intents[Zone.Directional(Direction.LEFT)])
         assertEquals(2, enter.columnSpan)
         assertEquals(KeyIntent.Text("1"), SUAVE_NUMERIC_LAYOUT.getValue(KeyPosition(0, 0)).intents[Zone.Center])
 

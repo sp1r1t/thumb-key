@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CleaningServices
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.DataArray
+import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.DiscFull
 import androidx.compose.material.icons.outlined.HourglassTop
 import androidx.compose.material.icons.outlined.VisibilityOff
@@ -40,6 +41,7 @@ import com.suave.s12.db.DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES
 import com.suave.s12.db.DEFAULT_CLIPBOARD_HISTORY_ENABLED
 import com.suave.s12.db.DEFAULT_CLIPBOARD_MAX_SIZE
 import com.suave.s12.db.DEFAULT_CLIPBOARD_SIZE_LIMIT_ENABLED
+import com.suave.s12.db.DEFAULT_CAPTURE_SYSTEM_CLIPBOARD
 import com.suave.s12.db.DEFAULT_USE_PRIVATE_CLIPBOARD
 import com.suave.s12.db.MAX_CLIPBOARD_MAX_SIZE
 import com.suave.s12.db.MIN_CLIPBOARD_MAX_SIZE
@@ -103,6 +105,8 @@ fun ClipboardSettingsScreen(
     var clipboardMaxSizeState = settings?.clipboardMaxSize ?: DEFAULT_CLIPBOARD_MAX_SIZE
     var usePrivateClipboardState =
         (settings?.usePrivateClipboard ?: DEFAULT_USE_PRIVATE_CLIPBOARD).toBool()
+    var captureSystemClipboardState =
+        (settings?.captureSystemClipboard ?: DEFAULT_CAPTURE_SYSTEM_CLIPBOARD).toBool()
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
@@ -117,6 +121,7 @@ fun ClipboardSettingsScreen(
                 clipboardSizeLimitEnabled = clipboardSizeLimitEnabledState.toInt(),
                 clipboardMaxSize = clipboardMaxSizeState,
                 usePrivateClipboard = usePrivateClipboardState.toInt(),
+                captureSystemClipboard = captureSystemClipboardState.toInt(),
             ),
         )
         // Enforce size limit after updating settings
@@ -173,6 +178,37 @@ fun ClipboardSettingsScreen(
                             },
                         )
                     }
+                    SwitchPreference(
+                        value = captureSystemClipboardState,
+                        onValueChange = {
+                            captureSystemClipboardState = it
+                            updateClipboardSettings()
+                        },
+                        enabled = clipboardHistoryEnabledState,
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.capture_system_clipboard),
+                                infoText = stringResource(R.string.capture_system_clipboard_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                stringResource(
+                                    if (captureSystemClipboardState) {
+                                        R.string.capture_system_clipboard_on
+                                    } else {
+                                        R.string.capture_system_clipboard_off
+                                    },
+                                ),
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Devices,
+                                contentDescription = null,
+                            )
+                        },
+                    )
                     SwitchPreference(
                         value = usePrivateClipboardState,
                         onValueChange = {

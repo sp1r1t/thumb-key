@@ -201,6 +201,16 @@
     <string name="clipboard_history">Zwischenablagenverlauf</string>
     <string name="clipboard_cleanup_after">Aufräumen nach %1$s</string>
     <string name="clipboard_history_enabled">Zwischenablagenverlauf aktivieren</string>
+    <string name="clipboard_history_enabled_on">An - kopierter Text wird für schnellen Zugriff gespeichert</string>
+    <string name="clipboard_history_enabled_off">Aus - kopierter Text wird nicht für später gespeichert</string>
+    <string name="use_private_clipboard">Private Zwischenablage verwenden</string>
+    <string name="use_private_clipboard_on">An - Kopien gehen in Suaves interne Zwischenablage statt in die System-Zwischenablage</string>
+    <string name="use_private_clipboard_off">Aus - Kopien gehen in die normale System-Zwischenablage, geteilt mit jeder App</string>
+    <string name="use_private_clipboard_info">Die System-Zwischenablage ist auf dem Gerät geteilt, und manche Apps oder Bedienungshilfen können sie lesen. Suaves private Zwischenablage ist nur von dieser Tastatur erreichbar, dafür kannst du hier Kopiertes nicht in einer anderen Tastatur oder einem anderen Verlauf einfügen.</string>
+    <string name="capture_system_clipboard">System-Zwischenablagenverlauf verwenden</string>
+    <string name="capture_system_clipboard_on">An - Kopien aus anderen Apps werden in Suaves Verlauf gespeichert</string>
+    <string name="capture_system_clipboard_off">Aus - nur Kopien von dieser Tastatur werden gespeichert</string>
+    <string name="capture_system_clipboard_info">Suave kann Samsungs vorhandenes Zwischenablage-Panel nicht auslesen. Solange das an ist und Suave die Tastatur ist, werden neue System-Kopien aufgezeichnet. Wische auf der 123- oder ABC-Taste nach links, um die Liste zu öffnen und einen älteren Eintrag einzufügen.</string>
     <string name="other">Erweitert</string>
     <string name="show_debug_bar">Debug-Leiste anzeigen</string>
     <string name="show_debug_bar_on">An - eine Leiste über der Tastatur zeigt die letzte Installationszeit, die fokussierte App und deren Editor-Fähigkeiten</string>

@@ -73,4 +73,9 @@ class ClipboardRepository(
         if (!settings.clipboardSizeLimitEnabled.toBool()) return
         enforceSizeLimit(settings.clipboardMaxSize)
     }
+
+    fun shouldCaptureSystemClipboard(): Boolean {
+        val settings = appSettingsDao.getSettingsSync() ?: return false
+        return settings.clipboardHistoryEnabled.toBool() && settings.captureSystemClipboard.toBool()
+    }
 }

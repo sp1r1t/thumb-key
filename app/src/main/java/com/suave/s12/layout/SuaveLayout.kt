@@ -93,6 +93,8 @@ private fun token(text: String): KeyIntent =
 
         "paste" -> KeyIntent.Command(CommandId.PASTE)
 
+        "clipboard" -> KeyIntent.Command(CommandId.TOGGLE_CLIPBOARD_HISTORY)
+
         "settings" -> KeyIntent.Command(CommandId.GOTO_SETTINGS)
 
         "hide" -> KeyIntent.Command(CommandId.TOGGLE_HIDE_LETTERS)
@@ -172,6 +174,7 @@ private val SUAVE_NUMERIC_KEY =
         top = "copy",
         topLeft = "selectAll",
         topRight = "cut",
+        left = "clipboard",
         bottomLeft = "undo",
         bottomRight = "redo",
         bottom = "paste",
@@ -182,6 +185,7 @@ private val SUAVE_ABC_KEY =
         top = "copy",
         topLeft = "selectAll",
         topRight = "cut",
+        left = "clipboard",
         bottomLeft = "undo",
         bottomRight = "redo",
         bottom = "paste",

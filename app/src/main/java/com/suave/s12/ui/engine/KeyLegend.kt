@@ -15,6 +15,7 @@ import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.material.icons.outlined.ContentPaste
 import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.HideImage
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
@@ -179,6 +180,7 @@ internal fun CommandId.legendCategory(): LegendCategory =
         CommandId.SWITCH_IME_VOICE,
         CommandId.SWITCH_LANGUAGE,
         CommandId.MOVE_KEYBOARD,
+        CommandId.TOGGLE_CLIPBOARD_HISTORY,
         -> LegendCategory.SPECIAL
     }
 
@@ -205,6 +207,7 @@ private fun commandLegend(id: CommandId): KeyLegend? =
         CommandId.REDO -> KeyLegend.Icon(Icons.AutoMirrored.Outlined.Redo)
         CommandId.GOTO_SETTINGS -> KeyLegend.Icon(Icons.Outlined.Settings)
         CommandId.TOGGLE_HIDE_LETTERS -> KeyLegend.Icon(Icons.Outlined.HideImage)
+        CommandId.TOGGLE_CLIPBOARD_HISTORY -> KeyLegend.Icon(Icons.Outlined.History)
         CommandId.SWITCH_IME -> KeyLegend.Icon(Icons.Outlined.Keyboard)
         CommandId.SWITCH_IME_VOICE -> KeyLegend.Icon(Icons.Outlined.Mic)
         CommandId.SWITCH_LANGUAGE -> KeyLegend.Icon(Icons.Outlined.SwapHoriz)

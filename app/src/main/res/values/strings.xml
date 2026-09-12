@@ -254,6 +254,10 @@
     <string name="use_private_clipboard_on">On - copies go to Suave\'s internal clipboard instead of the system clipboard</string>
     <string name="use_private_clipboard_off">Off - copies go to the normal system clipboard, shared with every app</string>
     <string name="use_private_clipboard_info">The system clipboard is shared across every app on the device, and some apps or accessibility services can read it. Suave\'s private clipboard is only ever accessible from this keyboard, at the cost of not being able to paste what you copied here into another keyboard or clipboard manager.</string>
+    <string name="capture_system_clipboard">Use system clipboard history</string>
+    <string name="capture_system_clipboard_on">On - copies from other apps are stored in Suave\'s history</string>
+    <string name="capture_system_clipboard_off">Off - only copies made from this keyboard are stored</string>
+    <string name="capture_system_clipboard_info">Suave cannot read Samsung\'s existing clipboard panel. While this is on and Suave is the keyboard, new system copies are recorded. Swipe left on the 123 or ABC key to open the list and paste an older entry.</string>
     <!-- Advanced -->
     <string name="other">Advanced</string>
     <string name="show_on_screen_keyboard">Show on-screen keyboard</string>

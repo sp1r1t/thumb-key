@@ -561,3 +561,12 @@ val MIGRATION_37_38 =
             db.execSQL("UPDATE AppSettings SET key_padding_vertical = key_padding")
         }
     }
+
+val MIGRATION_38_39 =
+    object : Migration(38, 39) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN capture_system_clipboard INTEGER NOT NULL DEFAULT $DEFAULT_CAPTURE_SYSTEM_CLIPBOARD",
+            )
+        }
+    }
