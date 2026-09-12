@@ -1,9 +1,12 @@
 package com.suave.s12.utils
 
+import android.content.ClipData
+import android.content.ClipDescription
 import android.content.ClipboardManager
 import android.content.Context
 import android.util.Log
 import com.suave.s12.db.ClipboardRepository
+import com.suave.s12.engine.output.MimeTypeMatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,9 +22,8 @@ class ThumbKeyClipboardManager(
     private var isListening = false
     private var lastClipText: String? = null
 
-// Used to manage data with a non-text MEME type, when private clipboard is enabled
-// When copying data with a MIME type different than a text, e.g. a picture, it is not added to the history, as it’s not a text. With standard paste it’s not an issue as the paste will still paste it.
-// However if we paste from the internal clipboard, it will paste the latest string in the history, and not the picture that was only in the system clipboard.
+    // Image clips stay on the system clipboard (history is text-only). This flag tells Paste
+    // to read the system clip so it does not insert the last stored string instead of the image.
     private var wasLastCopyOperationDoneViaSystem: Boolean = true
 
     private fun addToClipboardRepo(text: String) {
@@ -37,6 +39,10 @@ class ThumbKeyClipboardManager(
         ClipboardManager.OnPrimaryClipChangedListener {
             val clip = systemClipboardManager.primaryClip
             if (clip == null || clip.itemCount == 0) return@OnPrimaryClipChangedListener
+            if (clipIsImageOnly(clip)) {
+                wasLastCopyOperationDoneViaSystem = true
+                return@OnPrimaryClipChangedListener
+            }
             val text = clip.getItemAt(0).coerceToText(context).toString()
             if (text.isBlank() || text == lastClipText) return@OnPrimaryClipChangedListener
             scope.launch {
@@ -76,4 +82,16 @@ class ThumbKeyClipboardManager(
     fun wasLastCopyOperationDoneViaSystem(): Boolean = wasLastCopyOperationDoneViaSystem
 
     fun getLastClip(): String? = lastClipText
+
+    private fun clipIsImageOnly(clip: ClipData): Boolean {
+        val desc = clip.description ?: return false
+        var hasImage = false
+        for (i in 0 until desc.mimeTypeCount) {
+            if (MimeTypeMatcher.isImage(desc.getMimeType(i))) hasImage = true
+        }
+        val hasText =
+            desc.hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN) ||
+                desc.hasMimeType(ClipDescription.MIMETYPE_TEXT_HTML)
+        return hasImage && !hasText
+    }
 }

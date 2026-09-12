@@ -15,6 +15,7 @@ import com.suave.s12.engine.capability.EditorCapabilities
 import com.suave.s12.engine.capability.EditorCapabilityLevel
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.ModifierId
+import com.suave.s12.engine.output.ClipboardPaste
 import com.suave.s12.engine.output.OutputExecutor
 import com.suave.s12.layout.LayoutLayer
 import com.suave.s12.utils.KeyboardPosition
@@ -67,7 +68,7 @@ object ActionExecutor {
         when (id) {
             CommandId.COPY -> copy(ime, capabilities)
             CommandId.CUT -> cut(ime, capabilities)
-            CommandId.PASTE -> paste(ime, capabilities)
+            CommandId.PASTE -> ClipboardPaste.execute(ime, capabilities)
             CommandId.SELECT_ALL -> selectAll(ime)
             CommandId.UNDO -> sendEditorShortcut(ime, capabilities, "z", setOf(ModifierId.CTRL))
             CommandId.REDO -> sendEditorShortcut(ime, capabilities, "z", setOf(ModifierId.CTRL, ModifierId.SHIFT))
@@ -130,29 +131,6 @@ object ActionExecutor {
             }
         }
         withSelectionOrAll(ime, ::performCut)
-    }
-
-    private fun paste(
-        ime: IMEService,
-        capabilities: EditorCapabilities,
-    ) {
-        // Termux binds paste to Ctrl+Alt+V, not the Ctrl+Shift+V most other terminal emulators
-        // use (see termux-app discussion #3928).
-        if (capabilities.level == EditorCapabilityLevel.RAW) {
-            sendEditorShortcut(ime, capabilities, "v", setOf(ModifierId.CTRL, ModifierId.ALT))
-            return
-        }
-        val ic = ime.currentInputConnection ?: return
-        if (!ime.clipboardUsePrivate()) {
-            ic.performContextMenuAction(android.R.id.paste)
-            return
-        }
-        if (ime.clipboardWasLastCopyDoneViaSystem()) {
-            ic.performContextMenuAction(android.R.id.paste)
-        } else {
-            val text = ime.clipboardGetLastClip()
-            if (!text.isNullOrEmpty()) ic.commitText(text, 1)
-        }
     }
 
     private fun selectAll(ime: IMEService) {

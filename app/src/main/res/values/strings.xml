@@ -160,6 +160,7 @@
     <string name="finish_setup">Finish setup</string>
     <string name="copy">Copied selected text</string>
     <string name="cut">Cut selected text</string>
+    <string name="paste_image_failed">Couldn\'t paste the clipboard image</string>
     <string name="hide_letters">Hide letters</string>
     <string name="hide_letters_on">On - keys show no letter labels</string>
     <string name="hide_letters_off">Off - keys show their letter labels</string>

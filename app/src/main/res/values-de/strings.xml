@@ -252,6 +252,7 @@
     <string name="slide_enable">Schiebegesten</string>
     <string name="copy">Kopierter ausgewählter Text</string>
     <string name="cut">Ausgewählten Text ausgeschnitten</string>
+    <string name="paste_image_failed">Bild aus der Zwischenablage konnte nicht eingefügt werden</string>
     <string name="backup_database">Datenbank sichern</string>
     <string name="slide_cursor_acceleration_linear">Lineare Beschleunigung</string>
     <string name="restore_database_warning">Warnung: Dadurch wird Deine aktuelle Datenbank gelöscht</string>

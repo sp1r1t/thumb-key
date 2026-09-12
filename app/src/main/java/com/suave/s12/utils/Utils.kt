@@ -44,6 +44,8 @@ import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
 import com.suave.s12.db.DEFAULT_KEYBOARD_LAYOUT
 import com.suave.s12.db.LayoutsUpdate
+import com.suave.s12.engine.capability.EditorCapabilityResolver
+import com.suave.s12.engine.output.ClipboardPaste
 import com.suave.s12.ui.engine.shouldShowActionNotice
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -1381,24 +1383,7 @@ fun performKeyAction(
 
         KeyAction.Paste -> {
             keyboardSettings.textProcessor?.handleFinishInput(ime)
-            if (!ime.clipboardUsePrivate()) {
-                // Standard clipboard behavior
-                ime.currentInputConnection.performContextMenuAction(android.R.id.paste)
-            } else { // Private clipboard
-                // Here, `clipboardWasLastCopyDoneViaSystem` is used to manage data with a non-text MEME type.
-                // When copying data with a MEME type different than a text, e.g. a picture, it is not added to the history, as it’s not a text. With standard paste it’s not an issue as the paste will still paste it.
-                // However if we paste from the internal clipboard, it will paste the latest string in the history, and not the picture that was only in the system clipboard.
-                if (ime.clipboardWasLastCopyDoneViaSystem()) {
-                    // Latest clip is present in the system clipboard, might be absent from internal clipboard
-                    ime.currentInputConnection.performContextMenuAction(android.R.id.paste)
-                } else {
-                    // Latest clip is in the internal clipboard
-                    val text = ime.clipboardGetLastClip()
-                    if (!text.isNullOrEmpty()) {
-                        ime.currentInputConnection.commitText(text, 1)
-                    }
-                }
-            }
+            ClipboardPaste.execute(ime, EditorCapabilityResolver.resolve(ime.currentInputEditorInfo))
         }
 
         KeyAction.Undo -> {
