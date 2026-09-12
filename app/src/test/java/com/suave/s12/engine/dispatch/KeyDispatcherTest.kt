@@ -474,4 +474,52 @@ class KeyDispatcherTest {
         assertFalse(KeyIntent.Command(CommandId.COPY).repeatsOnHold())
         assertTrue(KeyIntent.Command(CommandId.ENTER).repeatsOnHold())
     }
+
+    @Test
+    fun `tapping a letter consumes one-shot Shift`() {
+        val shiftKey = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.ModifierPress(ModifierId.SHIFT)))
+        val shiftDispatcher = KeyDispatcher(shiftKey)
+        val letterDispatcher = KeyDispatcher(LETTER_KEY)
+        val executed = mutableListOf<SemanticAction>()
+
+        var state = shiftDispatcher.handle(Gesture.Pressed, ModifierState())
+        state = shiftDispatcher.handle(Gesture.Tap(Zone.Center), state)
+        state = shiftDispatcher.handle(Gesture.Released, state)
+        assertEquals(ActivationMode.ONE_SHOT, state.active.getValue(ModifierId.SHIFT).mode)
+
+        state = letterDispatcher.handle(Gesture.Tap(Zone.Center), state, executed::add)
+
+        assertEquals(listOf(SemanticAction.TypeText("S")), executed)
+        assertFalse("a typed letter must consume one-shot Shift", state.isActive(ModifierId.SHIFT))
+    }
+
+    @Test
+    fun `holding Shift until caps lock fires a second ModifierActivated buzz`() {
+        val shiftKey = KeyMapping(CONFIG, mapOf(Zone.Center to KeyIntent.ModifierPress(ModifierId.SHIFT)))
+        val dispatcher = KeyDispatcher(shiftKey)
+        val feedback = mutableListOf<FeedbackEvent>()
+
+        var state = dispatcher.handle(Gesture.Pressed, ModifierState(), {}, feedback::add)
+        state = dispatcher.handle(Gesture.Hold(Zone.Center), state, {}, feedback::add)
+
+        assertEquals(ActivationMode.LOCKED, state.active.getValue(ModifierId.SHIFT).mode)
+        assertEquals(
+            listOf(
+                FeedbackEvent.TapRecognized,
+                FeedbackEvent.ModifierActivated(ModifierId.SHIFT, ActivationMode.LOCKED),
+            ),
+            feedback,
+        )
+    }
+
+    @Test
+    fun `holding Ctrl does not fire a second activation buzz because Pressed already put it in HELD`() {
+        val dispatcher = KeyDispatcher(CTRL_ALT_ESC_KEY)
+        val feedback = mutableListOf<FeedbackEvent>()
+
+        var state = dispatcher.handle(Gesture.Pressed, ModifierState(), {}, feedback::add)
+        dispatcher.handle(Gesture.Hold(Zone.Center), state, {}, feedback::add)
+
+        assertEquals(listOf(FeedbackEvent.TapRecognized), feedback)
+    }
 }

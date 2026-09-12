@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
@@ -75,7 +76,6 @@ import com.suave.s12.engine.capability.EditorCapabilityResolver
 import com.suave.s12.engine.feedback.FeedbackDispatcher
 import com.suave.s12.engine.feedback.FeedbackEvent
 import com.suave.s12.engine.feedback.FeedbackSettings
-import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.Layout
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.intent.layoutRows
@@ -122,7 +122,7 @@ fun EngineKeyboardScreen(
     val ime = ctx as IMEService
     val view = LocalView.current
 
-    var modifierState by remember { mutableStateOf(ModifierState()) }
+    val modifierState = remember { mutableStateOf(ModifierState()) }
     var layer by remember { mutableStateOf(LayoutLayer.MAIN) }
     var showClipboardHistory by remember { mutableStateOf(false) }
     val clipboardScope = rememberCoroutineScope()
@@ -251,25 +251,21 @@ fun EngineKeyboardScreen(
                 onToggleClipboardHistory = { showClipboardHistory = !showClipboardHistory },
             )
         }
-    val onModifierStateChange =
-        remember {
-            { next: ModifierState -> modifierState = next }
-        }
-    val onExecute =
-        remember(capabilities, ime, appHost) {
-            { action: SemanticAction ->
-                ActionExecutor.execute(
-                    action = action,
-                    capabilities = capabilities,
-                    ime = ime,
-                    host = appHost,
-                )
+        val onExecute =
+            remember(capabilities, ime, appHost) {
+                { action: SemanticAction ->
+                    ActionExecutor.execute(
+                        action = action,
+                        capabilities = capabilities,
+                        ime = ime,
+                        host = appHost,
+                    )
+                }
             }
-        }
-    val onFeedback =
-        remember(feedbackSettings, hapticPlayer) {
-            { event: FeedbackEvent -> FeedbackDispatcher.dispatch(event, feedbackSettings, hapticPlayer) }
-        }
+        val onFeedback =
+            remember(feedbackSettings, hapticPlayer) {
+                { event: FeedbackEvent -> FeedbackDispatcher.dispatch(event, feedbackSettings, hapticPlayer) }
+            }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         if (showDebugBar) {
@@ -306,7 +302,6 @@ fun EngineKeyboardScreen(
                 keyHeight = keyHeight,
                 layerHeightOverrides = layerHeightOverrides,
                 modifierState = modifierState,
-                onModifierStateChange = onModifierStateChange,
                 onExecute = onExecute,
                 onFeedback = onFeedback,
                 minSwipeDistancePx = minSwipeDistancePx,
@@ -416,8 +411,7 @@ private fun EngineKeyboardPanel(
     layer: LayoutLayer,
     keyHeight: Dp,
     layerHeightOverrides: Map<LayoutLayer, Int>,
-    modifierState: ModifierState,
-    onModifierStateChange: (ModifierState) -> Unit,
+    modifierState: MutableState<ModifierState>,
     onExecute: (SemanticAction) -> Unit,
     onFeedback: (FeedbackEvent) -> Unit,
     minSwipeDistancePx: Float,
@@ -451,7 +445,6 @@ private fun EngineKeyboardPanel(
             namedLayout = namedLayout,
             keyHeight = keyHeight,
             modifierState = modifierState,
-            onModifierStateChange = onModifierStateChange,
             onExecute = onExecute,
             onFeedback = onFeedback,
             minSwipeDistancePx = minSwipeDistancePx,
@@ -518,8 +511,7 @@ private fun LayoutGrid(
     layout: Layout,
     namedLayout: NamedLayout,
     keyHeight: Dp,
-    modifierState: ModifierState,
-    onModifierStateChange: (ModifierState) -> Unit,
+    modifierState: MutableState<ModifierState>,
     onExecute: (SemanticAction) -> Unit,
     onFeedback: (FeedbackEvent) -> Unit,
     minSwipeDistancePx: Float,
@@ -533,21 +525,16 @@ private fun LayoutGrid(
     isPasswordField: Boolean,
 ) {
     val rows = remember(layout) { layoutRows(layout) }
+    val shiftActive = modifierState.value.isActive(ModifierId.SHIFT)
     for (row in rows) {
         Row(modifier = Modifier.fillMaxWidth().height(keyHeight)) {
             for (position in row) {
                 val mapping = layout[position] ?: continue
-                val keyModifierState =
-                    if (mapping.intents.values.any { it is KeyIntent.ModifierPress }) {
-                        modifierState
-                    } else {
-                        modifierState.forLetterLegends()
-                    }
                 key(position) {
                     EngineKeyboardKey(
                         mapping = mapping,
-                        modifierState = keyModifierState,
-                        onModifierStateChange = onModifierStateChange,
+                        modifierState = modifierState,
+                        shiftActive = shiftActive,
                         onExecute = onExecute,
                         onFeedback = onFeedback,
                         shiftMappings = namedLayout.shiftMappings,

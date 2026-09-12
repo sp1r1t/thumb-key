@@ -79,8 +79,8 @@ private const val TICK_INTERVAL_MS = 30L
 @Composable
 fun EngineKeyboardKey(
     mapping: KeyMapping,
-    modifierState: ModifierState,
-    onModifierStateChange: (ModifierState) -> Unit,
+    modifierState: MutableState<ModifierState>,
+    shiftActive: Boolean,
     onExecute: (SemanticAction) -> Unit,
     onFeedback: (FeedbackEvent) -> Unit,
     shiftMappings: Map<String, String>,
@@ -103,9 +103,7 @@ fun EngineKeyboardKey(
     // rememberUpdatedState. The loop itself restarts when [mapping] changes: numeric/main
     // reuse the same composed key slots, and a loop keyed on Unit would keep dispatching the
     // letter-key intents after the labels had already switched.
-    val currentModifierState by rememberUpdatedState(modifierState)
     val currentMinSwipeDistancePx by rememberUpdatedState(minSwipeDistancePx)
-    val currentOnModifierStateChange by rememberUpdatedState(onModifierStateChange)
     val currentOnExecute by rememberUpdatedState(onExecute)
     val currentOnFeedback by rememberUpdatedState(onFeedback)
     val currentDispatcher by rememberUpdatedState(dispatcher)
@@ -118,9 +116,22 @@ fun EngineKeyboardKey(
     // hold-repeat threshold as two characters.
     val isPressed = remember { mutableStateOf(false) }
     val releasedGlyph = remember { mutableStateOf<ReleasedGlyph?>(null) }
+    val hasModifierIntent = mapping.intents.values.any { it is KeyIntent.ModifierPress }
+    // Letter keys must not read modifierState.value here: that would resubscribe them on
+    // HELD -> ONE_SHOT and they would dispatch from a display-only copy. They take
+    // [shiftActive] for legends and read the live state only inside the pointer loop.
+    val legendModifierState =
+        if (hasModifierIntent) {
+            modifierState.value
+        } else if (shiftActive) {
+            ModifierState.SHIFT_ON_FOR_LEGENDS
+        } else {
+            ModifierState.NONE
+        }
 
     val isModifierKeyActive =
-        mapping.intents.values.any { it is KeyIntent.ModifierPress && modifierState.isActive(it.modifier) }
+        hasModifierIntent &&
+            mapping.intents.values.any { it is KeyIntent.ModifierPress && modifierState.value.isActive(it.modifier) }
     val restingColor =
         if (isModifierKeyActive) {
             MaterialTheme.colorScheme.primary
@@ -178,18 +189,18 @@ fun EngineKeyboardKey(
                             )
                         val recognizer = GestureRecognizer(config)
 
-                        // Seeded fresh per press from the latest cross-key state, then tracked
-                        // locally for the rest of THIS press - not re-read from
-                        // currentModifierState on every call. A single press can emit several
-                        // gestures in one synchronous batch (onRelease returns [Tap, Released]
-                        // together), and Compose's snapshot-state write from the first call's
-                        // onModifierStateChange doesn't reach currentModifierState until the
-                        // next recomposition, which hasn't happened yet by the time the second
-                        // gesture in the same batch runs. Re-reading the stale value there let
-                        // Released (which passes a non-modifier key's input state straight
-                        // through unchanged) silently resurrect whatever Tap had just cleared a
-                        // microsecond earlier - this was the actual "Ctrl gets stuck" bug.
-                        var localState = currentModifierState
+                        // Seeded fresh per press from the live shared modifier state, then
+                        // tracked locally for the rest of THIS press - not re-read on every
+                        // call. A single press can emit several gestures in one synchronous
+                        // batch (onRelease returns [Tap, Released] together), and Compose's
+                        // snapshot-state write from the first call doesn't reach other
+                        // readers until the next recomposition, which hasn't happened yet by
+                        // the time the second gesture in the same batch runs. Re-reading the
+                        // stale value there let Released (which passes a non-modifier key's
+                        // input state straight through unchanged) silently resurrect whatever
+                        // Tap had just cleared a microsecond earlier - this was the actual
+                        // "Ctrl gets stuck" bug.
+                        var localState = modifierState.value
 
                         fun handle(gesture: Gesture) {
                             if (gesture is Gesture.Pressed && currentAnimations.pressHighlight) {
@@ -214,7 +225,7 @@ fun EngineKeyboardKey(
                                 )
                             localState = newState
                             if (newState != before) {
-                                currentOnModifierStateChange(newState)
+                                modifierState.value = newState
                             }
                             if (gesture is Gesture.Released || gesture is Gesture.Cancelled) {
                                 isPressed.value = false
@@ -276,7 +287,7 @@ fun EngineKeyboardKey(
                     keyLegend(
                         mapping.intents[Zone.Directional(direction)],
                         legendVisibility,
-                        modifierState,
+                        legendModifierState,
                         shiftMappings,
                     )
                 if (legend != null) {
@@ -293,7 +304,7 @@ fun EngineKeyboardKey(
                 keyLegend(
                     mapping.intents[Zone.Center],
                     legendVisibility,
-                    modifierState,
+                    legendModifierState,
                     shiftMappings,
                 )
             if (centerLegend != null) {

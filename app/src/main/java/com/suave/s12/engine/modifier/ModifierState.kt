@@ -42,9 +42,9 @@ data class ModifierState(
     fun deactivate(id: ModifierId): ModifierState = copy(active = active - id)
 
     /**
-     * Letter keys only care whether Shift is on, not HELD vs ONE_SHOT. Returning a shared
-     * instance lets Compose skip their recomposition when Shift merely changes mode (the
-     * extra frame that used to restyle every letter while a tap was still in flight).
+     * Display-only view for letter-key legends: whether Shift is on, not HELD vs ONE_SHOT.
+     * Never pass this into dispatch - LOCKED is not consumed after a typed letter, so a
+     * one-shot Shift would stick.
      */
     fun forLetterLegends(): ModifierState = if (isActive(ModifierId.SHIFT)) SHIFT_ON_FOR_LEGENDS else NONE
 

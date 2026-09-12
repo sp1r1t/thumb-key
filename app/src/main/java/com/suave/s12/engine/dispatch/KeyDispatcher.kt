@@ -185,13 +185,25 @@ class KeyDispatcher(
                     onExecute(SemanticAction.TypeCommand(intent.modifier.standaloneCommand))
                     return ModifierEngine.consumeOneShots(modifierState.deactivate(intent.modifier))
                 }
-                ModifierEngine.applyModifierGesture(
-                    modifierState,
-                    intent.modifier,
-                    gesture,
-                    behaviors = modifierBehaviors,
-                    freshlyActivatedByPressed = freshlyActivatedByPressed,
-                )
+                val next =
+                    ModifierEngine.applyModifierGesture(
+                        modifierState,
+                        intent.modifier,
+                        gesture,
+                        behaviors = modifierBehaviors,
+                        freshlyActivatedByPressed = freshlyActivatedByPressed,
+                    )
+                // Pressed already buzzed TapRecognized. A later Hold that actually changes
+                // mode (Shift HELD -> LOCKED caps lock) is a second, distinct moment and
+                // gets the longer ModifierActivated buzz. Ctrl/Alt stay HELD, so they don't.
+                if (gesture is Gesture.Hold) {
+                    val beforeMode = modifierState.active[intent.modifier]?.mode
+                    val afterMode = next.active[intent.modifier]?.mode
+                    if (afterMode != null && afterMode != beforeMode) {
+                        onFeedback(FeedbackEvent.ModifierActivated(intent.modifier, afterMode))
+                    }
+                }
+                next
             }
 
             is KeyIntent.Text, is KeyIntent.Command, KeyIntent.Noop -> {
