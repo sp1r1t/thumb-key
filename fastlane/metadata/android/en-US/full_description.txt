@@ -1,12 +1,15 @@
-Suave is a privacy-conscious Android keyboard built around large keys and directional swipes.
+Suave is a fully customizable, free and open-source Android keyboard with a T9 poweruser soul.
 
-S12 is the flagship layout. Typing uses predictable key positions and swipe gestures instead of cloud-backed prediction.
+The core is the engine: layouts are data, gestures are recognized and dispatched on purpose, and the map stays stable enough to learn by feel - touch-typing on a phone instead of hunting and pecking. Meta keys and RAW IME are first-class for terminals and other apps that expect real key events.
+
+Build any layout you want on that engine: T9-style pads, a Hacker Keyboard-style board (planned), even a Copy/Paste-only utility layout. S12 is the default Suave letter layout on top; it is not the ceiling.
 
 Features:
-- Large keys sized for thumbs
-- Directional swipes for less common characters
+- Customizable layout data and gesture engine
+- Large keys and directional swipes for muscle memory
+- Meta keys and RAW IME for hacker / terminal use
 - Local clipboard history (optional)
 - Themes and appearance controls
 - No account, no telemetry baked into the product identity
 
-Suave is libre software under the GNU Affero General Public License v3.0. It grew out of a Thumb-Key fork and now ships its own keyboard engine.
+Libre software under the GNU Affero General Public License v3.0.

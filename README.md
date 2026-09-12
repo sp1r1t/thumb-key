@@ -1,29 +1,65 @@
 # Suave
 
-A fully customizable, free and open-source keyboard with T9 soul.
+A fully customizable, free and open-source keyboard with T9 poweruser soul.
 
-Suave grew out of [Thumb-Key](https://github.com/dessalines/thumb-key) and now ships its own
-keyboard engine. The product idea is older than either app: large, predictable keys you can
-learn by feel, so your eyes stay on the text.
+Customizable. Built for [touch-typing](https://en.wikipedia.org/wiki/Touch_typing) on a phone.
+Serious about hacker input (modifiers, terminals, RAW IME). Libre under AGPL-3.0.
+
+## The engine
+
+Suave is first an **engine**: layouts are data (keys, swipe zones, intents), and typing goes
+through a dedicated gesture recognizer and dispatcher. That is what makes the keyboard
+customizable without baking one alphabet into the code path.
+
+The idea is that you can build **any** layout on that engine - not only letter boards. A classic
+T9-style pad. A full [Hacker Keyboard](https://github.com/klausw/hackerskeyboard) clone (planned).
+Even a silly Copy/Paste-only board, if that is what you need today. S12 is one layout; the point
+of Suave is that it is not the only shape the product can take.
+
+What the engine is for:
+
+- **Any board you invent** - letter grids, hacker/meta boards, utility pads, experiments. If it
+  is keys and gestures, it should be expressible as layout data.
+- **Predictable geometry** - large keys in known places, directional swipes for the rest, so you
+  can keep your eyes on the text instead of
+  [hunting and pecking](https://www.keyboardingonline.com/hunting-and-pecking/).
+- **Stable maps** - layers should not wildly reshuffle the board; muscle memory needs a map that
+  stays put.
+- **Real key events when it matters** - meta keys and **RAW IME** for terminal emulators and other
+  apps that expect Ctrl, Alt, Esc, and friends - not only committed text.
+- **Local by default** - accuracy from geometry and practice, not from shipping keystrokes to a
+  cloud predictor.
+
+How layouts are authored, shared, and shipped is still evolving. The product bet is the engine;
+layouts plug into it.
+
+## S12 and the Suave layout
+
+On top of that engine sits **S12**, the default Suave layout: a split board with a shared middle
+column, tuned for two alternating thumbs.
+
+Design ideas behind S12:
+
+- **[Dvorak](https://en.wikipedia.org/wiki/Dvorak_keyboard_layout) alternation** - sequences that
+  bounce between sides map cleanly to left thumb / right thumb.
+- **[Workman](https://workmanlayout.org/)** - same-hand *chords* are a poor fit when each "hand"
+  is a single thumb; S12 prefers clear side ownership and alternation.
+- **Shared middle column** - better reach and thumb coordination on a phone than a cramped single
+  grid or a miniature desk QWERTY.
+
+S12 is the layout you get out of the box. It is not the whole product - the engine is.
 
 ## Why this exists
 
-Full-size keyboard layouts were designed for ten fingers on a desk. Phones leave you with one or two
-thumbs. [QWERTY](https://en.wikipedia.org/wiki/QWERTY) is not even a good design for those ten
-fingers: it is a historical accident that soft keyboards still shrink onto a phone. Layouts like
-[Dvorak](https://en.wikipedia.org/wiki/Dvorak_keyboard_layout) and
-[Workman](https://workmanlayout.org/) exist because people kept trying to fix what QWERTY gets
-wrong for real hands (S12 borrows from both, later). Most phone keyboards then compensate with
-denser keys and aggressive word prediction, often by shipping keystrokes to a server. That is the
-opposite of how good physical typing works: fixed positions, muscle memory, and
-[touch-typing](https://en.wikipedia.org/wiki/Touch_typing) with your eyes on the words, not
-[hunting and pecking](https://www.keyboardingonline.com/hunting-and-pecking/) for the next letter.
-
-Suave (and Thumb-Key before it) take the other path: fewer, larger keys in known places, with
-directional swipes for the less common characters. Accuracy comes from geometry and practice,
-not from a model that has to see what you type.
+Full-size keyboard layouts were designed for ten fingers on a desk. Phones leave you with one or
+two thumbs. [QWERTY](https://en.wikipedia.org/wiki/QWERTY) is not even a good design for those ten
+fingers, yet soft keyboards usually shrink it onto a phone and paper over the mess with denser
+keys and aggressive prediction. Suave takes the other path: fewer, larger keys, swipes, and an
+engine you can shape.
 
 ## Lineage
+
+Ideas Suave stands on. None of these is Suave itself - they are the shoulders nearby.
 
 ### MessagEase
 
@@ -37,16 +73,9 @@ not.
 
 ### Thumb-Key
 
-[Thumb-Key](https://github.com/dessalines/thumb-key) revived that approach as libre software
-(AGPL): a privacy-conscious 3x3 hub with swipes, letter placement from English frequency, and
-explicit left/right thumb roles (consonants one side, vowels the other) so digrams naturally
-alternate.
-
-Thumb-Key also introduced **split** layouts for phones held in both hands: two thumb beds that
-**share a common column in the middle**. That matches how a phone is actually held. Each thumb
-owns a side, the center column is reachable by either, and you get better key placement and
-thumb coordination than a single cramped grid or a tiny full QWERTY. Split typing is what Suave
-carries forward as **S12**.
+[Thumb-Key](https://github.com/dessalines/thumb-key) kept the large-key, swipe-first,
+privacy-conscious approach alive as libre software, and showed how a **split** phone layout can
+share a middle column between two thumbs. S12 continues that split idea.
 
 ### Unexpected Keyboard
 
@@ -54,43 +83,15 @@ carries forward as **S12**.
 first clicked as a daily typing habit: characters live on the corners of keys, and you slide
 toward them instead of hunting a denser grid. That made it possible to skip layer switches and
 still keep symbols in reach - one stable board, more of the alphabet and punctuation under the
-same thumbs. That gesture language feeds directly into how Suave thinks about zones and motion.
-Unexpected also lent Suave its haptic feedback feel - short, useful confirmation when a gesture
-lands, not decorative buzz.
+same thumbs. That gesture language feeds how Suave thinks about zones and motion. Unexpected
+also lent Suave its haptic feedback feel - short, useful confirmation when a gesture lands, not
+decorative buzz.
 
 ### Hacker Keyboard
 
 [Hacker Keyboard](https://github.com/klausw/hackerskeyboard) treated the soft keyboard like a
 real computer input device: proper modifier / meta keys, and sober behavior in terminal
-emulators. Suave leans hard into that lineage. Meta keys and **RAW IME** handling for terminal
-environments are first-class concerns here, not afterthoughts - Suave aims to improve on what
-Hacker Keyboard made possible when you need Ctrl, Alt, Esc, and friends to reach apps that
-expect key events rather than committed text.
-
-### Suave and S12
-
-Suave is that split idea as a first-class product, with S12 as the default layout and a rewritten
-engine underneath (layouts as data, dedicated gesture recognition, not the old per-key Compose
-stack). It sits at the intersection of MessagEase / Thumb-Key geometry, Unexpected's swipe
-habits and haptics, and Hacker Keyboard's seriousness about modifiers and terminals.
-
-S12 is designed from principles learned from desktop layouts that already cared about hand
-roles, and from what soft keyboards usually get wrong:
-
-- **[Dvorak](https://en.wikipedia.org/wiki/Dvorak_keyboard_layout) alternation** - favor
-  sequences that bounce between sides. On a phone that maps cleanly to left thumb / right thumb.
-  Alternation is a strong fit for two-thumb typing.
-- **[Workman](https://workmanlayout.org/)** - Workman optimizes for *same-hand chords*: letter
-  runs struck in one motion by one hand. That is a poor fit when each "hand" is a single thumb.
-  S12 does not chase same-side runs; it prefers clear side ownership and alternation.
-- **Visual stability** - many software keyboards wildly reshuffle the board between letter,
-  symbol, and number layers. That is a cognitive mess: muscle memory never settles when the
-  map keeps moving. S12 keeps geometry stable across layers so your thumbs can trust where
-  things live.
-
-The shared middle column is the structural trick: it improves reach, keeps the layout balanced
-on a phone's form factor, and gives both thumbs a place to meet without collapsing back into a
-miniature desk keyboard.
+emulators. That is the bar Suave aims to clear and raise for RAW IME and meta keys.
 
 ## Using it
 
@@ -104,6 +105,5 @@ For contributors and build steps, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 GNU Affero General Public License v3.0. See [LICENSE](LICENSE).
 
-Suave includes history from Thumb-Key (AGPL-3.0). Credit for upstream Thumb-Key remains on the
-About screen. MessagEase, Unexpected Keyboard, and Hacker Keyboard remain important inspirations
-for the large-key, swipe-first, terminal-capable phone keyboard.
+Credit for MessagEase, Thumb-Key, Unexpected Keyboard, and Hacker Keyboard lives on the About
+screen and in the lineage notes above.

@@ -5,7 +5,6 @@ import android.os.UserManager
 import java.io.File
 
 const val APP_SETTINGS_DB_NAME = "suave"
-const val LEGACY_APP_SETTINGS_DB_NAME = "thumbkey"
 
 private val SQLITE_SIDECARS = arrayOf("", "-wal", "-shm", "-journal")
 
@@ -21,21 +20,6 @@ fun migrateSettingsDbToDeviceProtected(
     credentialDb: File,
     deviceProtectedDb: File,
 ): Boolean = moveDatabaseFiles(credentialDb, deviceProtectedDb)
-
-/**
- * Move a leftover Thumb-Key-era `thumbkey` file onto `suave`. If `suave` is already there,
- * delete the leftover so the two names cannot drift apart.
- */
-fun renameLegacySettingsDb(
-    legacyDb: File,
-    currentDb: File,
-): Boolean {
-    if (currentDb.exists()) {
-        if (legacyDb.exists()) deleteDatabaseFiles(legacyDb)
-        return false
-    }
-    return moveDatabaseFiles(legacyDb, currentDb)
-}
 
 internal fun moveDatabaseFiles(
     from: File,

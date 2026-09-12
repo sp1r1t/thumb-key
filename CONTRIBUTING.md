@@ -2,7 +2,7 @@
 
 ## Scope
 
-Suave is developed as its own keyboard. S12 is the primary layout. Prefer changes that the live
+Suave is developed as its own keyboard. S12 is the default layout. Prefer changes that the live
 engine actually uses; do not leave dead settings in the UI (see `CLAUDE.md`).
 
 ## Code
@@ -27,9 +27,10 @@ settings.
 
 Edit `app/src/main/res/values/strings.xml` (English) and `values-de/strings.xml` (German) first.
 Other locale files are incomplete leftovers; prefer adding keys to EN/DE and falling back rather
-than inventing Thumb-Key-era copy.
+than carrying stale product copy.
 
-## Upstream
+## Lineage
 
-Architectural history comes from [Thumb-Key](https://github.com/dessalines/thumb-key). Link it for
-credit when relevant; do not treat upstream release notes or layouts as Suave product docs.
+MessagEase, [Thumb-Key](https://github.com/dessalines/thumb-key), Unexpected Keyboard, and Hacker
+Keyboard are part of the story. Link them for credit when relevant; do not treat their release
+notes or layouts as Suave product docs.

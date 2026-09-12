@@ -55,9 +55,9 @@
     <string name="follow_me_mastodon">Folge mir auf Mastodon</string>
     <string name="open_source">Open Source</string>
     <string name="source_code">Quellcode</string>
-    <string name="source_code_subtitle">Suave ist libre Open-Source-Software (ein Fork von Thumb-Key), lizenziert unter der GNU Affero General Public License v3.0</string>
-    <string name="built_on_thumb_key">Basiert auf Thumb-Key</string>
-    <string name="built_on_thumb_key_subtitle">Öffnet das Upstream-Projekt Thumb-Key, auf dem diese Tastatur basiert</string>
+    <string name="source_code_subtitle">Suave ist libre Open-Source-Software, lizenziert unter der GNU Affero General Public License v3.0</string>
+    <string name="inspired_by_thumb_key">Inspiriert von Thumb-Key</string>
+    <string name="inspired_by_thumb_key_subtitle">Öffnet das Thumb-Key-Projekt</string>
     <string name="buy_me_a_coffee">Kauf mir einen Kaffee</string>
     <string name="buy_me_a_coffee_subtitle">Öffnet Buy Me a Coffee, wenn du das Suave-Projekt unterstützen möchtest</string>
     <string name="appearance">Erscheinungsbild</string>

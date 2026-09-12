@@ -18,8 +18,7 @@ android {
     compileSdk = 36
 
     defaultConfig {
-        // Distinct from upstream Thumb-Key's com.dessalines.thumbkey namespace so the Suave keyboard can be
-        // installed side-by-side with a stock Thumb-Key build during the engine rewrite.
+        // Distinct package so Suave can sit next to other keyboards (including Thumb-Key) on one device.
         applicationId = "com.suave.keyboard"
         minSdk = 24
         targetSdk = 36

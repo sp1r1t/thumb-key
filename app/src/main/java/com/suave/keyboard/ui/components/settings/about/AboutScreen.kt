@@ -109,14 +109,14 @@ fun AboutScreen(navController: NavController) {
                         },
                     )
                     Preference(
-                        title = { Text(stringResource(R.string.built_on_thumb_key)) },
+                        title = { Text(stringResource(R.string.inspired_by_thumb_key)) },
                         summary = {
-                            Text(stringResource(R.string.built_on_thumb_key_subtitle))
+                            Text(stringResource(R.string.inspired_by_thumb_key_subtitle))
                         },
                         icon = {
                             Icon(
                                 imageVector = Icons.Outlined.Favorite,
-                                contentDescription = stringResource(R.string.built_on_thumb_key),
+                                contentDescription = stringResource(R.string.inspired_by_thumb_key),
                             )
                         },
                         onClick = {

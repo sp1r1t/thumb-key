@@ -1,6 +1,6 @@
 # Suave
 
-Suave is the keyboard app. S12 is the flagship layout inside it.
+Suave is the keyboard app. S12 is the default layout inside it.
 
 ## UI Principles
 

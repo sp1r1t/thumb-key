@@ -60,10 +60,10 @@
     <string name="version">Version %1$s</string>
     <string name="open_source">Open source</string>
     <string name="source_code">Source code</string>
-    <string name="source_code_subtitle">Suave is libre open-source software (a fork of Thumb-Key), licensed under the GNU Affero General Public License v3.0</string>
+    <string name="source_code_subtitle">Suave is libre open-source software, licensed under the GNU Affero General Public License v3.0</string>
     <string name="issue_tracker">Issue tracker</string>
-    <string name="built_on_thumb_key">Built on Thumb-Key</string>
-    <string name="built_on_thumb_key_subtitle">Opens the upstream Thumb-Key project this keyboard is based on</string>
+    <string name="inspired_by_thumb_key">Inspired by Thumb-Key</string>
+    <string name="inspired_by_thumb_key_subtitle">Opens the Thumb-Key project</string>
     <string name="support">Support</string>
     <string name="buy_me_a_coffee">Buy me a coffee</string>
     <string name="buy_me_a_coffee_subtitle">Opens Buy Me a Coffee if you want to tip the Suave project</string>

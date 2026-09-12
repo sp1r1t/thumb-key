@@ -1,1 +1,1 @@
-A privacy-conscious swipe keyboard. S12 is the flagship layout.
+Customizable open-source keyboard for touch-typing - with a real hacker IME.

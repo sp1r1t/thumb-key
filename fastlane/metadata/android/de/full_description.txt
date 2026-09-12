@@ -1,12 +1,15 @@
-Suave ist eine Privatsphären-respektierende Android-Tastatur mit großen Tasten und Wischgesten.
+Suave ist eine voll anpassbare, freie und Open-Source-Android-Tastatur mit T9-Poweruser-Seele.
 
-S12 ist das Hauptlayout. Tippen läuft über feste Tastenpositionen und Richtungs-Wisches statt über cloudbasierte Vorhersage.
+Der Kern ist die Engine: Layouts sind Daten, Gesten werden gezielt erkannt und ausgeführt, und die Karte bleibt stabil genug zum Lernen aus dem Gefühl - Blindschreiben auf dem Telefon statt Suchen und Tippen. Meta-Tasten und RAW IME sind erstklassig für Terminals und andere Apps, die echte Key-Events erwarten.
+
+Darauf kannst du jedes Layout bauen, das du willst: T9-artige Pads, ein Hacker-Keyboard-artiges Board (geplant), sogar ein reines Copy/Paste-Nutzlayout. S12 ist das Standard-Buchstabenlayout von Suave darüber - nicht die Decke.
 
 Funktionen:
-- Große Tasten für den Daumen
-- Wischgesten für seltener genutzte Zeichen
+- Anpassbare Layout-Daten und Gesten-Engine
+- Große Tasten und Richtungs-Wisches für Muskelgedächtnis
+- Meta-Tasten und RAW IME für Hacker- / Terminal-Nutzung
 - Lokale Zwischenablage-Historie (optional)
 - Themes und Darstellungsoptionen
 - Kein Konto, keine Telemetrie als Produktkern
 
-Suave ist freie Software unter der GNU Affero General Public License v3.0. Es entstand als Fork von Thumb-Key und bringt inzwischen eine eigene Tastatur-Engine mit.
+Freie Software unter der GNU Affero General Public License v3.0.

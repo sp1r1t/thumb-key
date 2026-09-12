@@ -1,1 +1,1 @@
-Eine Privatsphären-respektierende Wisch-Tastatur. S12 ist das Hauptlayout.
+Anpassbare Open-Source-Tastatur zum Blindschreiben - mit ernstem Hacker-IME.
