@@ -139,17 +139,18 @@ object OutputExecutor {
         }
 
     /**
-     * Moves the cursor (or extends the selection) left/right, preferring `setSelection` over a
-     * raw arrow [KeyEvent] whenever the editor has a real selection concept to move within.
+     * Moves the cursor (or extends the selection), preferring `setSelection` over a raw arrow
+     * [KeyEvent] whenever the editor has a real selection concept to move within.
      * This matters beyond style: sending an arrow KeyEvent the field can't consume (cursor
-     * already at the start/end of the text) is unhandled input, and Android's default View
-     * focus-navigation treats an unhandled DPAD key as "move focus to the next view" - which
-     * pulls focus off the text field entirely and dismisses the keyboard. `setSelection` is
-     * clamped to the text's actual bounds here, so it can never produce that unhandled edge
-     * case in the first place. Only a RAW editor (e.g. Termux, no InputConnection selection
-     * semantics at all) falls back to the raw KeyEvent this always used to send - the exact
-     * primitive the pre-rewrite app's cursor-slide was deliberately rewritten to use for
-     * Termux compatibility, just no longer applied unconditionally to every editor.
+     * already at the start/end of the text, or on the first/last line for up/down) is unhandled
+     * input, and Android's default View focus-navigation treats an unhandled DPAD key as "move
+     * focus to the next view" - which pulls focus off the text field entirely and dismisses the
+     * keyboard. `setSelection` is clamped here, so it can never produce that unhandled edge case
+     * in the first place. Vertical movement follows logical newlines (not soft-wrapped visual
+     * lines) because InputConnection does not expose layout. Only a RAW editor (e.g. Termux, no
+     * InputConnection selection semantics at all) falls back to the raw KeyEvent this always used
+     * to send - the exact primitive the pre-rewrite app's cursor-slide was deliberately rewritten
+     * to use for Termux compatibility, just no longer applied unconditionally to every editor.
      */
     private fun moveCursor(
         direction: CursorDirection,
@@ -158,20 +159,17 @@ object OutputExecutor {
         capabilities: EditorCapabilities,
         ic: InputConnection,
     ) {
-        val delta =
-            when (direction) {
-                CursorDirection.LEFT -> -1
-
-                CursorDirection.RIGHT -> 1
-
-                // Vertical slides have no simple selection-relative equivalent without knowing
-                // line-wrap layout, so they always fall through to the KeyEvent path below.
-                CursorDirection.UP, CursorDirection.DOWN -> null
-            }
+        if (capabilities.level == EditorCapabilityLevel.RAW) {
+            sendArrow(direction, extend, ic)
+            return
+        }
         val handled =
-            delta != null &&
-                capabilities.level != EditorCapabilityLevel.RAW &&
-                stepSelection(ic, resetAnchor, delta, extend)
+            when (direction) {
+                CursorDirection.LEFT -> stepSelection(ic, resetAnchor, delta = -1, extend)
+                CursorDirection.RIGHT -> stepSelection(ic, resetAnchor, delta = 1, extend)
+                CursorDirection.UP, CursorDirection.DOWN ->
+                    stepSelectionVertical(ic, resetAnchor, direction, extend)
+            }
         if (!handled) sendArrow(direction, extend, ic)
     }
 
@@ -180,6 +178,7 @@ object OutputExecutor {
         val cursor: Int,
         val lowerBound: Int,
         val upperBound: Int,
+        val text: CharSequence,
     )
 
     /** Returns false (caller falls back to a KeyEvent) if the editor didn't expose extracted text. */
@@ -191,8 +190,37 @@ object OutputExecutor {
     ): Boolean {
         val base = (if (resetAnchor) null else cachedExtent) ?: queryExtent(ic) ?: return false
         val newCursor = (base.cursor + delta).coerceIn(base.lowerBound, base.upperBound)
+        return applySelection(ic, base, newCursor, extend)
+    }
+
+    /**
+     * Same clamp-via-setSelection idea as [stepSelection], but one logical line up/down (column
+     * preserved when the neighbour line is long enough). Staying put on the first/last line still
+     * counts as handled so we never emit an unhandled DPAD that would dismiss the IME.
+     */
+    private fun stepSelectionVertical(
+        ic: InputConnection,
+        resetAnchor: Boolean,
+        direction: CursorDirection,
+        extend: Boolean,
+    ): Boolean {
+        val base = (if (resetAnchor) null else cachedExtent) ?: queryExtent(ic) ?: return false
+        val localCursor = (base.cursor - base.lowerBound).coerceIn(0, base.text.length)
+        val localTarget = verticalCursorOffset(base.text, localCursor, direction) ?: return false
+        val newCursor = base.lowerBound + localTarget
+        return applySelection(ic, base, newCursor, extend)
+    }
+
+    private fun applySelection(
+        ic: InputConnection,
+        base: SelectionExtent,
+        newCursor: Int,
+        extend: Boolean,
+    ): Boolean {
         val newAnchor = if (extend) base.anchor else newCursor
-        ic.setSelection(newAnchor, newCursor)
+        if (newCursor != base.cursor || newAnchor != base.anchor) {
+            ic.setSelection(newAnchor, newCursor)
+        }
         cachedExtent = base.copy(anchor = newAnchor, cursor = newCursor)
         return true
     }
@@ -207,6 +235,7 @@ object OutputExecutor {
             cursor = base + extracted.selectionEnd.coerceIn(0, length),
             lowerBound = base,
             upperBound = base + length,
+            text = text,
         )
     }
 

@@ -17,3 +17,6 @@ app/schemas
 .classpath
 .kotlin
 build.sh
+.claude/docs/session-notes.md
+gradle/gradle-daemon-jvm.properties
+thumbkey.keystore
