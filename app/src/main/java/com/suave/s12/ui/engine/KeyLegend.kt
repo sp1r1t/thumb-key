@@ -30,8 +30,10 @@ import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.ViewColumn
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
+import com.suave.s12.engine.gesture.Zone
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.KeyIntent
+import com.suave.s12.engine.intent.KeyMapping
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.modifier.ActivationMode
 import com.suave.s12.engine.modifier.ModifierEngine
@@ -241,6 +243,27 @@ private fun modifierLegend(
         ModifierId.CTRL -> KeyLegend.Icon(Icons.Outlined.KeyboardControlKey)
         ModifierId.ALT -> KeyLegend.Icon(Icons.Outlined.KeyboardOptionKey)
         ModifierId.ESC -> KeyLegend.Text("esc")
+    }
+
+/**
+ * Control keys (space, modifiers, 123, Enter, and similar) use the theme's surfaceVariant
+ * fill when letter/control colors are split. Letter, number, and symbol keys use surface.
+ * Classification follows the center intent only: a letter with a command on a swipe is still
+ * a letter key.
+ */
+fun KeyMapping.usesControlKeyFill(): Boolean {
+    val center = intents[Zone.Center]
+    return when (center) {
+        is KeyIntent.Text -> center.text.isBlank()
+        else -> true
+    }
+}
+
+fun KeyMapping.restingFillVariant(distinctLetterControlColors: Boolean): ColorVariant =
+    if (distinctLetterControlColors && !usesControlKeyFill()) {
+        ColorVariant.SURFACE
+    } else {
+        ColorVariant.SURFACE_VARIANT
     }
 
 private fun shiftIcon(modifierState: ModifierState): ImageVector =

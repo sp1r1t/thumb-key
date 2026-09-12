@@ -33,6 +33,10 @@
     <string name="settings_section_labels">Labels</string>
     <string name="settings_section_keyboard">Keyboard</string>
     <string name="settings_section_keys">Keys</string>
+    <string name="letter_and_control_colors">Letter and control colors</string>
+    <string name="letter_and_control_colors_on">On - letter keys and control keys use different background colors</string>
+    <string name="letter_and_control_colors_off">Off - every key uses the same background color</string>
+    <string name="letter_and_control_colors_info">Letters, numbers, and symbols use the theme surface. Space, modifiers, 123, Enter, and similar controls use the variant fill.</string>
     <string name="settings_section_layers">Layers</string>
     <string name="settings_section_feedback">Feedback</string>
     <string name="settings_section_animations">Animations</string>

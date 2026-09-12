@@ -93,6 +93,7 @@ fun EngineKeyboardKey(
     keyCornerRadius: Dp,
     animations: KeyAnimationSettings = KeyAnimationSettings(),
     isPasswordField: Boolean = false,
+    distinctLetterControlColors: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val dispatcher =
@@ -135,7 +136,7 @@ fun EngineKeyboardKey(
         if (isModifierKeyActive) {
             MaterialTheme.colorScheme.primary
         } else {
-            colorVariantToColor(ColorVariant.SURFACE_VARIANT)
+            colorVariantToColor(mapping.restingFillVariant(distinctLetterControlColors))
         }
     val pressHighlightColor = MaterialTheme.colorScheme.inversePrimary
     val pressHighlightEnabled = animations.pressHighlight

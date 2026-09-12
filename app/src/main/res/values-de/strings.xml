@@ -32,6 +32,10 @@
     <string name="settings_section_labels">Beschriftungen</string>
     <string name="settings_section_keyboard">Tastatur</string>
     <string name="settings_section_keys">Tasten</string>
+    <string name="letter_and_control_colors">Farben für Buchstaben und Steuertasten</string>
+    <string name="letter_and_control_colors_on">An - Buchstaben- und Steuertasten nutzen unterschiedliche Hintergrundfarben</string>
+    <string name="letter_and_control_colors_off">Aus - jede Taste nutzt dieselbe Hintergrundfarbe</string>
+    <string name="letter_and_control_colors_info">Buchstaben, Zahlen und Symbole nutzen die Theme-Fläche. Leertaste, Modifikatoren, 123, Enter und ähnliche Steuertasten nutzen die Variantenfüllung.</string>
     <string name="settings_section_layers">Ebenen</string>
     <string name="settings_section_feedback">Feedback</string>
     <string name="settings_section_animations">Animationen</string>

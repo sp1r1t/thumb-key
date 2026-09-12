@@ -19,6 +19,7 @@ import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Crop75
 import androidx.compose.material.icons.outlined.EmojiEmotions
+import androidx.compose.material.icons.outlined.FormatColorFill
 import androidx.compose.material.icons.outlined.Height
 import androidx.compose.material.icons.outlined.Highlight
 import androidx.compose.material.icons.outlined.HideImage
@@ -71,6 +72,7 @@ import com.suave.s12.db.DEFAULT_ANIMATION_PRESS_HIGHLIGHT
 import com.suave.s12.db.DEFAULT_ANIMATION_RELEASE_FLASH
 import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
+import com.suave.s12.db.DEFAULT_DISTINCT_LETTER_CONTROL_COLORS
 import com.suave.s12.db.DEFAULT_HIDE_EDITING
 import com.suave.s12.db.DEFAULT_HIDE_KEY_CATEGORIES
 import com.suave.s12.db.DEFAULT_HIDE_LAYER_SWITCHES
@@ -135,6 +137,8 @@ fun AppearanceScreen(
     var themeState = ThemeMode.entries[settings?.theme ?: DEFAULT_THEME]
     var themeColorState = ThemeColor.entries[settings?.themeColor ?: DEFAULT_THEME_COLOR]
     var keyHeightState = settings?.keyHeight ?: DEFAULT_KEY_HEIGHT
+    var distinctLetterControlColorsState =
+        (settings?.distinctLetterControlColors ?: DEFAULT_DISTINCT_LETTER_CONTROL_COLORS).toBool()
 
     var vibrateOnTapState = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
     var vibrateOnSlideState = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
@@ -198,6 +202,7 @@ fun AppearanceScreen(
                 animationPressHighlight = animationPressHighlightState.toInt(),
                 animationReleaseFlash = animationReleaseFlashState.toInt(),
                 animationLetterDrop = animationLetterDropState.toInt(),
+                distinctLetterControlColors = distinctLetterControlColorsState.toInt(),
             ),
         )
     }
@@ -508,6 +513,39 @@ fun AppearanceScreen(
                     }
 
                     SettingsSection(title = stringResource(R.string.settings_section_keys)) {
+                    SettingRow {
+                        SwitchPreference(
+                            value = distinctLetterControlColorsState,
+                            onValueChange = {
+                                distinctLetterControlColorsState = it
+                                updateAppearance()
+                            },
+                            title = {
+                                SettingTitle(
+                                    text = stringResource(R.string.letter_and_control_colors),
+                                    infoText = stringResource(R.string.letter_and_control_colors_info),
+                                )
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (distinctLetterControlColorsState) {
+                                            R.string.letter_and_control_colors_on
+                                        } else {
+                                            R.string.letter_and_control_colors_off
+                                        },
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.FormatColorFill,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
+
                     SettingRow(
                         onReset = {
                             keyHeightState = DEFAULT_KEY_HEIGHT

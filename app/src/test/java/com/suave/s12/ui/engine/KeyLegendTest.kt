@@ -14,8 +14,11 @@ import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.ViewColumn
 import androidx.compose.ui.unit.dp
+import com.suave.s12.engine.gesture.GestureConfig
+import com.suave.s12.engine.gesture.Zone
 import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.KeyIntent
+import com.suave.s12.engine.intent.KeyMapping
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.modifier.ActivationMode
 import com.suave.s12.engine.modifier.ModifierState
@@ -24,6 +27,7 @@ import com.suave.s12.utils.ColorVariant
 import com.suave.s12.utils.FontSizeVariant
 import com.suave.s12.utils.fontSizeVariantToFontSize
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -31,6 +35,9 @@ import org.junit.Test
 class KeyLegendTest {
     private val idle = ModifierState()
     private val shown = LegendVisibility()
+    private val config = GestureConfig(minSwipeDistancePx = 64f)
+
+    private fun mapping(center: KeyIntent) = KeyMapping(config, mapOf(Zone.Center to center))
 
     @Test
     fun `letter keys preview the shift mapping while Shift is active`() {
@@ -157,6 +164,33 @@ class KeyLegendTest {
         assertEquals(ColorVariant.SECONDARY, legendColorVariant(isCenter = false))
         assertEquals(FontSizeVariant.LARGE, legendFontSizeVariant(isCenter = true))
         assertEquals(FontSizeVariant.SMALL, legendFontSizeVariant(isCenter = false))
+    }
+
+    @Test
+    fun `letter number and symbol centers use letter fill, controls use variant`() {
+        assertFalse(mapping(KeyIntent.Text("s")).usesControlKeyFill())
+        assertFalse(mapping(KeyIntent.Text("1")).usesControlKeyFill())
+        assertFalse(mapping(KeyIntent.Text("+")).usesControlKeyFill())
+        assertFalse(mapping(KeyIntent.Text("sch")).usesControlKeyFill())
+        assertTrue(mapping(KeyIntent.Text(" ")).usesControlKeyFill())
+        assertTrue(mapping(KeyIntent.Text("")).usesControlKeyFill())
+        assertTrue(mapping(KeyIntent.Command(CommandId.BACKSPACE)).usesControlKeyFill())
+        assertTrue(mapping(KeyIntent.Command(CommandId.TOGGLE_NUMERIC_MODE)).usesControlKeyFill())
+        assertTrue(mapping(KeyIntent.Command(CommandId.ENTER)).usesControlKeyFill())
+        assertTrue(mapping(KeyIntent.Command(CommandId.SPACE)).usesControlKeyFill())
+        assertTrue(mapping(KeyIntent.ModifierPress(ModifierId.SHIFT)).usesControlKeyFill())
+        assertTrue(mapping(KeyIntent.Noop).usesControlKeyFill())
+        assertTrue(KeyMapping(config, emptyMap()).usesControlKeyFill())
+    }
+
+    @Test
+    fun `distinct letter control fills pick SURFACE for letters and SURFACE_VARIANT for controls`() {
+        val letter = mapping(KeyIntent.Text("s"))
+        val control = mapping(KeyIntent.Command(CommandId.BACKSPACE))
+        assertEquals(ColorVariant.SURFACE, letter.restingFillVariant(distinctLetterControlColors = true))
+        assertEquals(ColorVariant.SURFACE_VARIANT, control.restingFillVariant(distinctLetterControlColors = true))
+        assertEquals(ColorVariant.SURFACE_VARIANT, letter.restingFillVariant(distinctLetterControlColors = false))
+        assertEquals(ColorVariant.SURFACE_VARIANT, control.restingFillVariant(distinctLetterControlColors = false))
     }
 
     @Test

@@ -44,6 +44,7 @@ import com.suave.s12.db.DEFAULT_CLIPBOARD_MAX_SIZE
 import com.suave.s12.db.DEFAULT_CLIPBOARD_SIZE_LIMIT_ENABLED
 import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_DISABLE_FULLSCREEN_EDITOR
+import com.suave.s12.db.DEFAULT_DISTINCT_LETTER_CONTROL_COLORS
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_HIDE_EDITING
 import com.suave.s12.db.DEFAULT_HIDE_KEY_CATEGORIES
@@ -269,6 +270,7 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             keyBorderWidth = DEFAULT_KEY_BORDER_WIDTH,
             keyRadius = DEFAULT_KEY_RADIUS,
             pushupSize = DEFAULT_PUSHUP_SIZE,
+            distinctLetterControlColors = DEFAULT_DISTINCT_LETTER_CONTROL_COLORS,
         ),
     )
 }

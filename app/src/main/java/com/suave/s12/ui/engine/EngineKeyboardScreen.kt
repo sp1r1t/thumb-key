@@ -69,6 +69,7 @@ import com.suave.s12.db.DEFAULT_POSITION
 import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
+import com.suave.s12.db.DEFAULT_DISTINCT_LETTER_CONTROL_COLORS
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
@@ -186,6 +187,8 @@ fun EngineKeyboardScreen(
             letterDrop = (settings?.animationLetterDrop ?: DEFAULT_ANIMATION_LETTER_DROP).toBool(),
         )
     val passwordField = remember { isPasswordField(ime) }
+    val distinctLetterControlColors =
+        (settings?.distinctLetterControlColors ?: DEFAULT_DISTINCT_LETTER_CONTROL_COLORS).toBool()
 
     val feedbackSettings =
         remember(vibrateOnTap, vibrateOnSlide, vibrateOnHoldRepeat) {
@@ -371,6 +374,7 @@ fun EngineKeyboardScreen(
                 ime = ime,
                 animations = animations,
                 isPasswordField = passwordField,
+                distinctLetterControlColors = distinctLetterControlColors,
             )
         }
         Box(
@@ -452,6 +456,7 @@ private fun EngineKeyboardPanel(
     ime: IMEService,
     animations: KeyAnimationSettings,
     isPasswordField: Boolean,
+    distinctLetterControlColors: Boolean,
 ) {
     val grid =
         if (layer == LayoutLayer.CLIPBOARD) {
@@ -491,6 +496,7 @@ private fun EngineKeyboardPanel(
             keyCornerRadius = keyCornerRadius,
             animations = animations,
             isPasswordField = isPasswordField,
+            distinctLetterControlColors = distinctLetterControlColors,
         )
     }
 }
@@ -580,6 +586,7 @@ private fun LayoutGrid(
     keyCornerRadius: Dp,
     animations: KeyAnimationSettings,
     isPasswordField: Boolean,
+    distinctLetterControlColors: Boolean,
 ) {
     val rows = remember(layout) { layoutRows(layout) }
     val shiftActive = modifierState.value.isActive(ModifierId.SHIFT)
@@ -605,6 +612,7 @@ private fun LayoutGrid(
                         keyCornerRadius = keyCornerRadius,
                         animations = animations,
                         isPasswordField = isPasswordField,
+                        distinctLetterControlColors = distinctLetterControlColors,
                         modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
                     )
                 }

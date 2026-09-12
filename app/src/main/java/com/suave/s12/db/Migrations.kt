@@ -582,3 +582,12 @@ val MIGRATION_39_40 =
             db.execSQL("UPDATE AppSettings SET vibrate_on_hold_repeat = vibrate_on_tap")
         }
     }
+
+val MIGRATION_40_41 =
+    object : Migration(40, 41) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN distinct_letter_control_colors INTEGER NOT NULL DEFAULT $DEFAULT_DISTINCT_LETTER_CONTROL_COLORS",
+            )
+        }
+    }

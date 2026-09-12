@@ -91,6 +91,7 @@ const val DEFAULT_SHOW_DEBUG_BAR = 1
 const val DEFAULT_ANIMATION_PRESS_HIGHLIGHT = 1
 const val DEFAULT_ANIMATION_RELEASE_FLASH = 1
 const val DEFAULT_ANIMATION_LETTER_DROP = 1
+const val DEFAULT_DISTINCT_LETTER_CONTROL_COLORS = 1
 
 // Default true (matches the modifier behavior this engine had before this setting existed): a
 // quick Esc tap queues as a Meta-via-Escape combo prefix for the next key, and Esc+Esc (tapping
@@ -334,6 +335,11 @@ data class AppSettings(
         defaultValue = DEFAULT_ANIMATION_LETTER_DROP.toString(),
     )
     val animationLetterDrop: Int = DEFAULT_ANIMATION_LETTER_DROP,
+    @ColumnInfo(
+        name = "distinct_letter_control_colors",
+        defaultValue = DEFAULT_DISTINCT_LETTER_CONTROL_COLORS.toString(),
+    )
+    val distinctLetterControlColors: Int = DEFAULT_DISTINCT_LETTER_CONTROL_COLORS,
 )
 
 data class LayoutsUpdate(
@@ -404,6 +410,8 @@ data class AppearanceUpdate(
     val animationReleaseFlash: Int,
     @ColumnInfo(name = "animation_letter_drop")
     val animationLetterDrop: Int,
+    @ColumnInfo(name = "distinct_letter_control_colors")
+    val distinctLetterControlColors: Int,
 )
 
 data class BehaviorUpdate(
@@ -543,7 +551,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 40,
+    version = 41,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -628,6 +636,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_37_38,
                             MIGRATION_38_39,
                             MIGRATION_39_40,
+                            MIGRATION_40_41,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(
