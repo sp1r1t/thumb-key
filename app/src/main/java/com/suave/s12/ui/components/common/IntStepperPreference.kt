@@ -1,5 +1,6 @@
 package com.suave.s12.ui.components.common
 
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Row
@@ -13,21 +14,27 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import com.suave.s12.R
 import kotlinx.coroutines.delay
 import me.zhanghai.compose.preference.Preference
 
-private const val INITIAL_REPEAT_DELAY_MS = 400L
-private const val REPEAT_INTERVAL_MS = 70L
+/** Wait this long after press before repeating, so a tap stays a single step. */
+internal const val STEPPER_REPEAT_DELAY_MS = 400L
+
+/** Pause between repeated steps once hold-repeat has started. */
+internal const val STEPPER_REPEAT_INTERVAL_MS = 80L
 
 /**
  * Preference row with minus/plus buttons for an integer setting. One tap moves [step]; holding
- * a button repeats so a wide range (key height, swipe length) is still reachable without a slider.
+ * a button past [STEPPER_REPEAT_DELAY_MS] buzzes once and then repeats so a wide range (key
+ * height, swipe length) is still reachable without a slider.
  */
 @Composable
 fun IntStepperPreference(
@@ -50,13 +57,13 @@ fun IntStepperPreference(
         widgetContainer = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RepeatingIconButton(
-                    onClick = { onValueChange((value - step).coerceIn(valueRange)) },
+                    onClick = { nextStepperValue(value, -step, valueRange)?.let(onValueChange) },
                     enabled = enabled && value > valueRange.first,
                     imageVector = Icons.Outlined.Remove,
                     contentDescription = stringResource(R.string.decrease_value),
                 )
                 RepeatingIconButton(
-                    onClick = { onValueChange((value + step).coerceIn(valueRange)) },
+                    onClick = { nextStepperValue(value, step, valueRange)?.let(onValueChange) },
                     enabled = enabled && value < valueRange.last,
                     imageVector = Icons.Outlined.Add,
                     contentDescription = stringResource(R.string.increase_value),
@@ -64,6 +71,16 @@ fun IntStepperPreference(
             }
         },
     )
+}
+
+/** Next value after [delta], or null when already at the end of [range] (so we do not rewrite). */
+internal fun nextStepperValue(
+    value: Int,
+    delta: Int,
+    range: IntRange,
+): Int? {
+    val next = (value + delta).coerceIn(range)
+    return next.takeIf { it != value }
 }
 
 @Composable
@@ -75,21 +92,30 @@ private fun RepeatingIconButton(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    var repeated by remember { mutableStateOf(false) }
+    val onClickState = rememberUpdatedState(onClick)
+    var repeating by remember { mutableStateOf(false) }
+    val view = LocalView.current
 
     LaunchedEffect(pressed, enabled) {
-        if (!pressed || !enabled) return@LaunchedEffect
-        repeated = false
-        delay(INITIAL_REPEAT_DELAY_MS)
-        repeated = true
+        if (!pressed || !enabled) {
+            repeating = false
+            return@LaunchedEffect
+        }
+        repeating = false
+        delay(STEPPER_REPEAT_DELAY_MS)
+        repeating = true
+        view.performHapticFeedback(
+            HapticFeedbackConstants.KEYBOARD_TAP,
+            HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING,
+        )
         while (true) {
-            onClick()
-            delay(REPEAT_INTERVAL_MS)
+            onClickState.value()
+            delay(STEPPER_REPEAT_INTERVAL_MS)
         }
     }
 
     IconButton(
-        onClick = { if (!repeated) onClick() },
+        onClick = { if (!repeating) onClickState.value() },
         enabled = enabled,
         interactionSource = interactionSource,
     ) {
