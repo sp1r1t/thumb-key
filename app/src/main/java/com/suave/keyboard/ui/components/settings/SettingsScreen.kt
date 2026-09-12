@@ -33,8 +33,8 @@ import me.zhanghai.compose.preference.ProvidePreferenceTheme
 fun SettingsScreen(
     navController: NavController,
     appSettingsViewModel: AppSettingsViewModel,
-    thumbkeyEnabled: Boolean,
-    thumbkeySelected: Boolean,
+    suaveEnabled: Boolean,
+    suaveSelected: Boolean,
 ) {
     Log.d(TAG, "Got to settings activity")
 
@@ -50,7 +50,7 @@ fun SettingsScreen(
         content = { padding ->
             SettingsScreenBody(padding = padding) {
                 ProvidePreferenceTheme {
-                    if (!(thumbkeyEnabled || thumbkeySelected)) {
+                    if (!(suaveEnabled || suaveSelected)) {
                         Preference(
                             title = {
                                 val setupStr = stringResource(R.string.setup)

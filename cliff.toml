@@ -2,8 +2,8 @@
 # https://git-cliff.org/docs/configuration
 
 [remote.github]
-owner = "dessalines"
-repo = "thumb-key"
+owner = "sp1r1t"
+repo = "suave-keyboard"
 # token = ""
 
 [changelog]

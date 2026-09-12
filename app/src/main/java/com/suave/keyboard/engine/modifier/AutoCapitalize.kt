@@ -9,7 +9,7 @@ import com.suave.keyboard.utils.textEndsSentenceForCaps
 
 /**
  * After committing text (or space / spacebar multitap punctuation), put Shift into ONE_SHOT when
- * the editor wants a capital - matching stock ThumbKey auto-capitalize, without the English
+ * the editor wants a capital - matching upstream Thumb-Key auto-capitalize, without the English
  * "i" / "i'll" special capitalizers.
  *
  * Leaves [ActivationMode.LOCKED] and [ActivationMode.HELD] alone. Clears a leftover ONE_SHOT when

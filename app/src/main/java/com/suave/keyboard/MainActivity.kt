@@ -1,7 +1,14 @@
 package com.suave.keyboard
 
 import android.app.Application
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.database.ContentObserver
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -9,11 +16,18 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -33,14 +47,12 @@ import com.suave.keyboard.ui.components.settings.appearance.AppearanceScreen
 import com.suave.keyboard.ui.components.settings.other.OtherSettingsScreen
 import com.suave.keyboard.ui.components.settings.suggestions.SuggestionsSettingsScreen
 import com.suave.keyboard.ui.components.setup.SetupScreen
-import com.suave.keyboard.ui.theme.ThumbkeyTheme
+import com.suave.keyboard.ui.theme.SuaveTheme
 import com.suave.keyboard.utils.ANIMATION_SPEED
 import com.suave.keyboard.utils.getImeNames
-import com.suave.keyboard.utils.getVersionCode
-import org.woheller69.freeDroidWarn.FreeDroidWarn
 import splitties.systemservices.inputMethodManager
 
-class ThumbkeyApplication : Application() {
+class SuaveApplication : Application() {
     // New instance each time so a Direct Boot reopen of AppDB (after first unlock
     // migrates settings out of credential storage) is not stuck on a closed DAO.
     val appSettingsRepository: AppSettingsRepository
@@ -58,21 +70,65 @@ class ThumbkeyApplication : Application() {
 
 class MainActivity : AppCompatActivity() {
     private val appSettingsViewModel: AppSettingsViewModel by viewModels {
-        AppSettingsViewModelFactory((application as ThumbkeyApplication).appSettingsRepository)
+        AppSettingsViewModelFactory((application as SuaveApplication).appSettingsRepository)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        FreeDroidWarn.showWarningOnUpgrade(this, getVersionCode())
-
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
         setContent {
             val settings by appSettingsViewModel.appSettings.observeAsState()
             val ctx = LocalContext.current
-            val imeNames = ctx.getImeNames()
+            val lifecycleOwner = LocalLifecycleOwner.current
+            // Re-read IME state after system settings (ON_RESUME) and after the
+            // in-place keyboard picker (DEFAULT_INPUT_METHOD change; no pause).
+            var imeRefresh by remember { mutableIntStateOf(0) }
+            DisposableEffect(lifecycleOwner, ctx) {
+                val bump = { imeRefresh++ }
+                val lifecycleObserver =
+                    LifecycleEventObserver { _, event ->
+                        if (event == Lifecycle.Event.ON_RESUME) {
+                            bump()
+                        }
+                    }
+                val defaultImeObserver =
+                    object : ContentObserver(Handler(Looper.getMainLooper())) {
+                        override fun onChange(selfChange: Boolean) {
+                            bump()
+                        }
+                    }
+                val inputMethodChangedReceiver =
+                    object : BroadcastReceiver() {
+                        override fun onReceive(
+                            context: Context?,
+                            intent: Intent?,
+                        ) {
+                            bump()
+                        }
+                    }
+                lifecycleOwner.lifecycle.addObserver(lifecycleObserver)
+                ctx.contentResolver.registerContentObserver(
+                    Settings.Secure.getUriFor(Settings.Secure.DEFAULT_INPUT_METHOD),
+                    false,
+                    defaultImeObserver,
+                )
+                ContextCompat.registerReceiver(
+                    ctx,
+                    inputMethodChangedReceiver,
+                    IntentFilter(Intent.ACTION_INPUT_METHOD_CHANGED),
+                    ContextCompat.RECEIVER_NOT_EXPORTED,
+                )
+                onDispose {
+                    lifecycleOwner.lifecycle.removeObserver(lifecycleObserver)
+                    ctx.contentResolver.unregisterContentObserver(defaultImeObserver)
+                    ctx.unregisterReceiver(inputMethodChangedReceiver)
+                }
+            }
 
-            val thumbkeyEnabled =
+            // imeRefresh is read so composition re-runs after IME changes.
+            val imeNames = ctx.getImeNames().also { imeRefresh }
+            val suaveEnabled =
                 inputMethodManager.enabledInputMethodList.any {
                     imeNames.contains(it.id)
                 }
@@ -81,11 +137,11 @@ class MainActivity : AppCompatActivity() {
                     ctx.contentResolver,
                     Settings.Secure.DEFAULT_INPUT_METHOD,
                 )
-            val thumbkeySelected = imeNames.contains(selectedName)
+            val suaveSelected = imeNames.contains(selectedName)
 
             val startDestination by remember {
                 mutableStateOf(
-                    if (!thumbkeyEnabled) {
+                    if (!suaveEnabled) {
                         "setup"
                     } else {
                         intent.extras?.getString("startRoute") ?: "settings"
@@ -93,7 +149,7 @@ class MainActivity : AppCompatActivity() {
                 )
             }
 
-            ThumbkeyTheme(
+            SuaveTheme(
                 settings = settings,
             ) {
                 val navController = rememberNavController()
@@ -135,16 +191,16 @@ class MainActivity : AppCompatActivity() {
                     ) {
                         SetupScreen(
                             navController = navController,
-                            thumbkeyEnabled = thumbkeyEnabled,
-                            thumbkeySelected = thumbkeySelected,
+                            suaveEnabled = suaveEnabled,
+                            suaveSelected = suaveSelected,
                         )
                     }
                     composable(route = "settings") {
                         SettingsScreen(
                             navController = navController,
                             appSettingsViewModel = appSettingsViewModel,
-                            thumbkeyEnabled = thumbkeyEnabled,
-                            thumbkeySelected = thumbkeySelected,
+                            suaveEnabled = suaveEnabled,
+                            suaveSelected = suaveSelected,
                         )
                     }
                     composable(route = "appearance") {
@@ -169,7 +225,7 @@ class MainActivity : AppCompatActivity() {
                         ClipboardSettingsScreen(
                             navController = navController,
                             appSettingsViewModel = appSettingsViewModel,
-                            clipboardRepository = (application as ThumbkeyApplication).clipboardRepository,
+                            clipboardRepository = (application as SuaveApplication).clipboardRepository,
                         )
                     }
                     composable(

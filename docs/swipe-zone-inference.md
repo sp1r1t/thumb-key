@@ -5,7 +5,7 @@ assigned to it, instead of an explicit `swipeType` / `SwipeDirections` config.
 
 ## Problem
 
-ThumbKey-style layouts carry a separate swipe model per key
+Legacy layouts carry a separate swipe model per key
 (`EIGHT_WAY`, `FOUR_WAY_CROSS`, `FOUR_WAY_DIAGONAL`, `TWO_WAY_*`). The live
 gesture engine used to carry a reduced form (`NONE` / `FOUR_WAY` /
 `EIGHT_WAY`) on `GestureConfig`.

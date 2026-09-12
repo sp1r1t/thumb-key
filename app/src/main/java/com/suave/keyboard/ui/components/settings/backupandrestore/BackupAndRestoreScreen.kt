@@ -186,7 +186,7 @@ fun BackupAndRestoreScreen(
                             )
                         },
                         onClick = {
-                            exportDbLauncher.launch("thumb-key")
+                            exportDbLauncher.launch("suave")
                         },
                     )
                     Preference(

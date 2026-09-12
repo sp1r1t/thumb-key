@@ -1372,3 +1372,95 @@ fun neon(): Pair<ColorScheme, ColorScheme> {
         )
     return Pair(light, dark)
 }
+
+/**
+ * Suave brand theme: black-and-white like the launcher mark, with high-contrast
+ * structure eased for long typing sessions (soft charcoal plate, ink legends,
+ * quiet secondary glyphs, gentle press lift instead of a white flash).
+ *
+ * surfaceContainer* is set explicitly so menus and cards stay in our neutral
+ * ladder instead of Material's purple-tinted baseline tokens.
+ */
+fun suave(): Pair<ColorScheme, ColorScheme> {
+    val light =
+        lightColorScheme(
+            primary = Color(0xFF1B1B1B),
+            onPrimary = Color(0xFFF4F4F4),
+            primaryContainer = Color(0xFFE4E4E4),
+            onPrimaryContainer = Color(0xFF1B1B1B),
+            secondary = Color(0xFF5C5C5C),
+            onSecondary = Color(0xFFF4F4F4),
+            secondaryContainer = Color(0xFFE8E8E8),
+            onSecondaryContainer = Color(0xFF2A2A2A),
+            tertiary = Color(0xFF111111),
+            onTertiary = Color(0xFFF4F4F4),
+            tertiaryContainer = Color(0xFFD2D2D2),
+            onTertiaryContainer = Color(0xFF1B1B1B),
+            error = Color(0xFFB33B3B),
+            onError = Color(0xFFFFFFFF),
+            errorContainer = Color(0xFFF5D6D6),
+            onErrorContainer = Color(0xFF3F1010),
+            background = Color(0xFFE6E6E6),
+            onBackground = Color(0xFF1B1B1B),
+            surface = Color(0xFFF3F3F3),
+            onSurface = Color(0xFF1B1B1B),
+            surfaceVariant = Color(0xFFE0E0E0),
+            onSurfaceVariant = Color(0xFF4A4A4A),
+            surfaceDim = Color(0xFFE6E6E6),
+            surfaceBright = Color(0xFFFAFAFA),
+            surfaceContainerLowest = Color(0xFFFAFAFA),
+            surfaceContainerLow = Color(0xFFF0F0F0),
+            surfaceContainer = Color(0xFFEBEBEB),
+            surfaceContainerHigh = Color(0xFFE0E0E0),
+            surfaceContainerHighest = Color(0xFFD6D6D6),
+            outline = Color(0xFFB5B5B5),
+            outlineVariant = Color(0xFFCFCFCF),
+            inverseOnSurface = Color(0xFFF0F0F0),
+            inverseSurface = Color(0xFF2A2A2A),
+            inversePrimary = Color(0xFFCFCFCF),
+            surfaceTint = Color(0xFF1B1B1B),
+            scrim = Color(0xFF000000),
+        )
+
+    val dark =
+        darkColorScheme(
+            primary = Color(0xFFE6E6E6),
+            onPrimary = Color(0xFF141414),
+            primaryContainer = Color(0xFF2A2A2A),
+            onPrimaryContainer = Color(0xFFE6E6E6),
+            secondary = Color(0xFFA3A3A3),
+            onSecondary = Color(0xFF141414),
+            secondaryContainer = Color(0xFF2A2A2A),
+            onSecondaryContainer = Color(0xFFD0D0D0),
+            tertiary = Color(0xFFF5F5F5),
+            onTertiary = Color(0xFF141414),
+            tertiaryContainer = Color(0xFF3A3A3A),
+            onTertiaryContainer = Color(0xFFE6E6E6),
+            error = Color(0xFFFFB4AB),
+            onError = Color(0xFF690005),
+            errorContainer = Color(0xFF93000A),
+            onErrorContainer = Color(0xFFFFDAD6),
+            background = Color(0xFF121212),
+            onBackground = Color(0xFFE6E6E6),
+            surface = Color(0xFF1A1A1A),
+            onSurface = Color(0xFFE6E6E6),
+            surfaceVariant = Color(0xFF242424),
+            onSurfaceVariant = Color(0xFFB0B0B0),
+            surfaceDim = Color(0xFF121212),
+            surfaceBright = Color(0xFF3A3A3A),
+            surfaceContainerLowest = Color(0xFF121212),
+            surfaceContainerLow = Color(0xFF161616),
+            surfaceContainer = Color(0xFF1F1F1F),
+            surfaceContainerHigh = Color(0xFF2A2A2A),
+            surfaceContainerHighest = Color(0xFF333333),
+            outline = Color(0xFF3D3D3D),
+            outlineVariant = Color(0xFF2E2E2E),
+            inverseOnSurface = Color(0xFF1A1A1A),
+            inverseSurface = Color(0xFFE6E6E6),
+            inversePrimary = Color(0xFF2E2E2E),
+            surfaceTint = Color(0xFFE6E6E6),
+            scrim = Color(0xFF000000),
+        )
+
+    return Pair(light, dark)
+}

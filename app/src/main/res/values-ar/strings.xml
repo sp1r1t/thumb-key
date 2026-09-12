@@ -3,13 +3,11 @@
     <string name="counterclockwise_drag_action">إجراء السحب عكس اتجاه عقارب الساعة</string>
     <string name="whats_new">ما الجديد</string>
     <string name="copy">تم نسخ النص المحدد</string>
-    <string name="dynamic">ديناميكي</string>
     <string name="green">أخضر</string>
     <string name="pink">وردي</string>
     <string name="dracula">دراكولا Dracula</string>
     <string name="srcery">سركيري Srcery</string>
     <string name="twilight">الشفق</string>
-    <string name="matrix">ماتريكس-أموليد</string>
     <string name="ancom">ألوان الفوضوية الشيوعية</string>
     <string name="source_code">شفرة المصدر</string>
     <string name="layouts">التخطيطات</string>
@@ -32,9 +30,8 @@
     <string name="database_backed_up">تم نسخ قاعدة البيانات احتياطيًا.</string>
     <string name="backup_and_restore">النسخ الاحتياطي والاستعادة</string>
     <string name="settings">الإعدادات</string>
-    <string name="source_code_subtitle">مفتاح الإبهام هو برنامج حر مفتوح المصدر، مرخص تحت رخصة جنو العمومية أفيرو الإصدار 3.0</string>
-    <string name="donate_to_thumbkey">التبرع لـمفتاح الإبهام</string>
-    <string name="setup_thumbkey">إعداد مفتاح الإبهام</string>
+    <string name="source_code_subtitle">Suave هو برنامج حر مفتوح المصدر، مرخص تحت رخصة جنو العمومية أفيرو الإصدار 3.0</string>
+    <string name="setup_suave">إعداد Suave</string>
     <string name="system">النظام</string>
     <string name="light">فاتح</string>
     <string name="dark">داكن</string>
@@ -51,7 +48,6 @@
     <string name="issue_tracker">متتبع المشكلات</string>
     <string name="developer_matrix_chatroom">غرفة دردشة المطورين على Matrix</string>
     <string name="social">اجتماعي</string>
-    <string name="join_c_thumbkey">انضم إلى c/thumbkey</string>
     <string name="follow_me_mastodon">تابعني على Mastodon</string>
     <string name="open_source">مفتوح المصدر</string>
     <string name="appearance">المظهر والإحساس</string>
@@ -74,7 +70,7 @@
     <string name="reset_to_defaults">إعادة تعيين إلى الإعدادات الافتراضية</string>
     <string name="reset_to_defaults_msg">هل أنت متأكد أنك تريد إعادة تعيين الإعدادات إلى الإعدادات الافتراضية؟</string>
     <string name="cancel">إلغاء</string>
-    <string name="test_out_thumbkey">تجربة مفتاح الإبهام</string>
+    <string name="test_out_suave">تجربة Suave</string>
     <string name="setup">الإعداد</string>
     <string name="user_guide">دليل المستخدم</string>
     <string name="finish_setup">إنهاء الإعداد</string>
@@ -91,8 +87,8 @@
     <string name="backup_database">نسخ احتياطي لقاعدة البيانات</string>
     <string name="restore_database">استعادة قاعدة البيانات</string>
     <string name="restore_database_warning">تحذير: سيؤدي هذا إلى مسح قاعدة البيانات الحالية الخاصة بك</string>
-    <string name="enable_thumbkey">تمكين مفتاح الإبهام</string>
-    <string name="select_thumbkey">تحديد مفتاح الإبهام</string>
+    <string name="enable_suave">تمكين Suave</string>
+    <string name="select_suave">تحديد Suave</string>
     <string name="modify_keys">تعديل المفاتيح</string>
     <string name="key_modification_placeholder">أدخل YAML</string>
     <string name="how_to_modify_keys">كيفية تعديل المفاتيح</string>

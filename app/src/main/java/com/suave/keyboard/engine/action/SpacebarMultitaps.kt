@@ -6,7 +6,7 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 /**
- * Successive spacebar taps within 1s cycle punctuation the same way stock ThumbKey did:
+ * Successive spacebar taps within 1s cycle punctuation the same way upstream Thumb-Key did:
  * space -> ", " -> ". " -> "? " -> "! " -> ": " -> "; " (then wrap).
  *
  * Continuity is time + "last outcome was a space multitap step" only. We deliberately do not

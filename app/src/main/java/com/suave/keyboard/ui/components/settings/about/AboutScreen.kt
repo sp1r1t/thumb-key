@@ -7,6 +7,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Coffee
 import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,10 +37,10 @@ import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.PreferenceCategory
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
 
-// S12 has no public repo of its own yet, so there's nothing to link "Source code" or an
-// issue tracker to for this project. This is the real, original upstream project it's
-// forked from - kept as an honest credit even though S12 has diverged architecturally.
+const val GITHUB_URL = "https://github.com/sp1r1t/suave-keyboard"
+const val ISSUE_TRACKER_URL = "https://github.com/sp1r1t/suave-keyboard/issues"
 const val UPSTREAM_THUMBKEY_URL = "https://github.com/dessalines/thumb-key"
+const val BUY_ME_A_COFFEE_URL = "https://buymeacoffee.com/juliankonrc"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,18 +82,64 @@ fun AboutScreen(navController: NavController) {
                         title = { Text(stringResource(R.string.open_source)) },
                     )
                     Preference(
-                        title = { Text(stringResource(R.string.built_on_thumbkey)) },
+                        title = { Text(stringResource(R.string.source_code)) },
                         summary = {
                             Text(stringResource(R.string.source_code_subtitle))
                         },
                         icon = {
                             Icon(
+                                imageVector = Icons.Outlined.Code,
+                                contentDescription = stringResource(R.string.source_code),
+                            )
+                        },
+                        onClick = {
+                            openLink(GITHUB_URL, ctx)
+                        },
+                    )
+                    Preference(
+                        title = { Text(stringResource(R.string.issue_tracker)) },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.BugReport,
+                                contentDescription = stringResource(R.string.issue_tracker),
+                            )
+                        },
+                        onClick = {
+                            openLink(ISSUE_TRACKER_URL, ctx)
+                        },
+                    )
+                    Preference(
+                        title = { Text(stringResource(R.string.built_on_thumb_key)) },
+                        summary = {
+                            Text(stringResource(R.string.built_on_thumb_key_subtitle))
+                        },
+                        icon = {
+                            Icon(
                                 imageVector = Icons.Outlined.Favorite,
-                                contentDescription = stringResource(R.string.built_on_thumbkey),
+                                contentDescription = stringResource(R.string.built_on_thumb_key),
                             )
                         },
                         onClick = {
                             openLink(UPSTREAM_THUMBKEY_URL, ctx)
+                        },
+                    )
+                    SettingsDivider()
+                    PreferenceCategory(
+                        title = { Text(stringResource(R.string.support)) },
+                    )
+                    Preference(
+                        title = { Text(stringResource(R.string.buy_me_a_coffee)) },
+                        summary = {
+                            Text(stringResource(R.string.buy_me_a_coffee_subtitle))
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Coffee,
+                                contentDescription = stringResource(R.string.buy_me_a_coffee),
+                            )
+                        },
+                        onClick = {
+                            openLink(BUY_ME_A_COFFEE_URL, ctx)
                         },
                     )
                 }

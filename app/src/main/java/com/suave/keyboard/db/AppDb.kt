@@ -42,7 +42,8 @@ const val DEFAULT_PREVENT_NEEDLESS_SPLIT = 1
 const val DEFAULT_AUTO_CAPITALIZE = 1
 const val DEFAULT_KEYBOARD_LAYOUT = 0
 const val DEFAULT_THEME = 0
-const val DEFAULT_THEME_COLOR = 0
+/** Must match [com.suave.keyboard.utils.ThemeColor.Suave] ordinal. */
+const val DEFAULT_THEME_COLOR = 12
 const val DEFAULT_VIBRATE_ON_TAP = 1
 const val DEFAULT_VIBRATE_ON_SLIDE = 1
 const val DEFAULT_VIBRATE_ON_HOLD_REPEAT = 1
@@ -74,7 +75,7 @@ const val DEFAULT_SLIDE_CURSOR_MOVEMENT_MODE = 0
 const val DEFAULT_SLIDE_SPACEBAR_DEADZONE_ENABLED = 1
 const val DEFAULT_SLIDE_BACKSPACE_DEADZONE_ENABLED = 1
 const val DEFAULT_BACKDROP_ENABLED = 0
-const val DEFAULT_KEY_PADDING = 2
+const val DEFAULT_KEY_PADDING = 0
 const val DEFAULT_KEY_PADDING_VERTICAL = DEFAULT_KEY_PADDING
 const val DEFAULT_KEY_BORDER_WIDTH = 1
 const val DEFAULT_KEY_RADIUS = 0
@@ -90,8 +91,8 @@ const val DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH = 1
 const val DEFAULT_SHOW_TOAST_ON_COPY = 1
 const val DEFAULT_SHOW_TOAST_ON_CUT = 1
 const val DEFAULT_DISABLE_FULLSCREEN_EDITOR = 0
-const val DEFAULT_CLIPBOARD_HISTORY_ENABLED = 0
-const val DEFAULT_CLIPBOARD_AUTO_CLEANUP_ENABLED = 1
+const val DEFAULT_CLIPBOARD_HISTORY_ENABLED = 1
+const val DEFAULT_CLIPBOARD_AUTO_CLEANUP_ENABLED = 0
 const val DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES = 120
 const val DEFAULT_CLIPBOARD_SIZE_LIMIT_ENABLED = 1
 const val DEFAULT_CLIPBOARD_MAX_SIZE = 20
@@ -697,14 +698,14 @@ class AppSettingsRepository(
                         .use { it.readText() }
                 _changelog.value = releasesStr
             } catch (e: Exception) {
-                Log.e("thumb-key", "Failed to load changelog: $e")
+                Log.e("suave", "Failed to load changelog: $e")
             }
         }
     }
 }
 
 @Database(
-    version = 48,
+    version = 50,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -797,6 +798,8 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_45_46,
                             MIGRATION_46_47,
                             MIGRATION_47_48,
+                            MIGRATION_48_49,
+                            MIGRATION_49_50,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

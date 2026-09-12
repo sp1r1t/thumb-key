@@ -1,5 +1,9 @@
-## Suave (S12) 0.1.0
+## Suave 0.1.0
 
-Initial checkpoint of the Suave-only, side-by-side engine-rewrite branch. Forked from
-Thumb-Key; see the "Built on Thumb-Key" entry in the About screen for the upstream
-project this is based on. Changelog starts fresh from here.
+Initial Suave checkpoint on the engine-rewrite branch.
+
+- App identity: Suave (`com.suave.keyboard`), flagship layout S12
+- New gesture engine and layout data model
+- Brand B/W theme, flat launcher mark, setup flow polish
+- Clipboard history on by default; auto-cleanup off by default
+- Default key padding 0

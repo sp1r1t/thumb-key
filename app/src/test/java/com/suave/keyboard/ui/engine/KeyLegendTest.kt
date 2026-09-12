@@ -159,7 +159,7 @@ class KeyLegendTest {
     }
 
     @Test
-    fun `function commands use the Thumb-Key icons`() {
+    fun `function commands use the legacy Material icons`() {
         assertEquals(KeyLegend.Icon(Icons.Outlined.EmojiEmotions), legend(KeyIntent.Command(CommandId.TOGGLE_EMOJI_MODE)))
         assertEquals(KeyLegend.Icon(Icons.Outlined.Numbers), legend(KeyIntent.Command(CommandId.TOGGLE_NUMERIC_MODE)))
         assertEquals(KeyLegend.Icon(Icons.Outlined.Abc), legend(KeyIntent.Command(CommandId.TOGGLE_ABC_MODE)))
@@ -198,7 +198,7 @@ class KeyLegendTest {
     }
 
     @Test
-    fun `center legends use Thumb-Key primary large, swipes use secondary small`() {
+    fun `center legends use primary large, swipes use secondary small`() {
         assertEquals(ColorVariant.PRIMARY, legendColorVariant(isCenter = true))
         assertEquals(ColorVariant.SECONDARY, legendColorVariant(isCenter = false))
         assertEquals(FontSizeVariant.LARGE, legendFontSizeVariant(isCenter = true))
@@ -233,7 +233,7 @@ class KeyLegendTest {
     }
 
     @Test
-    fun `engine legends are smaller than Thumb-Key LARGE and SMALL`() {
+    fun `engine legends are smaller than legacy LARGE and SMALL`() {
         val key = 64.dp
         val center = legendFontSize(isCenter = true, key, isUpperCase = false)
         val swipe = legendFontSize(isCenter = false, key, isUpperCase = false)

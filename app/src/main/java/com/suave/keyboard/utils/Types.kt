@@ -40,6 +40,8 @@ enum class ThemeColor(
     Ancom(R.string.ancom),
     Matrix(R.string.matrix),
     Neon(R.string.neon),
+    /** Soft black-and-white brand theme. Keep last so stored ordinals stay stable. */
+    Suave(R.string.theme_color_suave),
 }
 
 enum class KeyboardPosition(

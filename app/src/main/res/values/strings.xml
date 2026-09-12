@@ -8,18 +8,19 @@
     <string name="system">System</string>
     <string name="light">Light</string>
     <string name="dark">Dark</string>
-    <string name="dynamic">Dynamic</string>
+    <string name="dynamic" translatable="false">Thumbkey</string>
     <string name="green">Green</string>
-    <string name="pink">Pink</string>
-    <string name="matrix">Matrix-AMOLED</string>
-    <string name="neon" translatable="false">Neon</string>
+    <string name="pink">Rose</string>
+    <string name="matrix" translatable="false">Neon Green</string>
+    <string name="neon" translatable="false">Neon Blue</string>
     <string name="srcery">Srcery</string>
-    <string name="blue">Blue</string>
+    <string name="blue">Teal</string>
     <string name="dracula">Dracula</string>
     <string name="twilight">Twilight</string>
     <string name="high_contrast">High contrast</string>
-    <string name="high_contrast_colorful">High contrast colorful</string>
-    <string name="ancom">Anarcho-Communist colors</string>
+    <string name="high_contrast_colorful">High contrast color</string>
+    <string name="theme_color_suave">Suave</string>
+    <string name="ancom">Black and red</string>
     <string name="center">Center</string>
     <string name="right">Right</string>
     <string name="left">Left</string>
@@ -58,8 +59,14 @@
     <string name="about">About</string>
     <string name="version">Version %1$s</string>
     <string name="open_source">Open source</string>
-    <string name="built_on_thumbkey">Built on Thumb-Key</string>
+    <string name="source_code">Source code</string>
     <string name="source_code_subtitle">Suave is libre open-source software (a fork of Thumb-Key), licensed under the GNU Affero General Public License v3.0</string>
+    <string name="issue_tracker">Issue tracker</string>
+    <string name="built_on_thumb_key">Built on Thumb-Key</string>
+    <string name="built_on_thumb_key_subtitle">Opens the upstream Thumb-Key project this keyboard is based on</string>
+    <string name="support">Support</string>
+    <string name="buy_me_a_coffee">Buy me a coffee</string>
+    <string name="buy_me_a_coffee_subtitle">Opens Buy Me a Coffee if you want to tip the Suave project</string>
     <string name="appearance">Appearance</string>
     <string name="settings_section_labels">Labels</string>
     <string name="settings_section_keyboard">Keyboard</string>
@@ -156,14 +163,24 @@
     <string name="reset_to_defaults_msg">Are you sure you want to reset settings to defaults?</string>
     <string name="reset_to_defaults_confirm">Reset</string>
     <string name="cancel">Cancel</string>
-    <string name="test_out_thumbkey">Test out Suave</string>
+    <string name="test_out_suave">Test out Suave</string>
     <string name="test_out_placeholder">Type here</string>
     <string name="test_out_hide">Hide test field</string>
     <string name="setup">Setup</string>
     <string name="user_guide">User guide</string>
-    <string name="setup_thumbkey">Setup Suave</string>
-    <string name="enable_thumbkey">Enable Suave</string>
-    <string name="select_thumbkey">Select Suave</string>
+    <string name="setup_suave">Setup Suave</string>
+    <string name="setup_intro">Android needs two quick steps before Suave can type for you.</string>
+    <string name="setup_step_title">%1$d. %2$s</string>
+    <string name="enable_suave">Enable Suave</string>
+    <string name="select_suave">Select Suave</string>
+    <string name="setup_enable_needed">Needed - turn Suave on in system keyboard settings.</string>
+    <string name="setup_enable_done">Done - Suave is in your keyboard list.</string>
+    <string name="setup_select_waiting">Waiting - enable Suave first.</string>
+    <string name="setup_select_needed">Needed - choose Suave as your active keyboard.</string>
+    <string name="setup_select_done">Done - Suave is your active keyboard.</string>
+    <string name="setup_open_ime_settings">Open keyboard settings</string>
+    <string name="setup_choose_keyboard">Choose keyboard</string>
+    <string name="setup_skip_for_now">Skip for now</string>
     <string name="finish_setup">Finish setup</string>
     <string name="copy">Copied selected text</string>
     <string name="cut">Cut selected text</string>
@@ -250,7 +267,7 @@
     <string name="border_thickness">Border thickness</string>
     <string name="border_thickness_summary">Currently %1$sdp outline around each key</string>
     <string name="border_thickness_summary_none">Currently none - keys have no outline</string>
-    <string name="border_thickness_info">Thumb-Key stored this in tenths of a dp, so 10 is a 1dp line. 0 turns the outline off.</string>
+    <string name="border_thickness_info">Stored in tenths of a dp, so 10 is a 1dp line. 0 turns the outline off.</string>
     <string name="key_radius">Key radius: %1$s</string>
     <string name="corner_roundness">Corner roundness</string>
     <string name="corner_roundness_summary">Currently %1$s%% - corners scale with key size</string>

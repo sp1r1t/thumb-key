@@ -6,9 +6,7 @@
     <string name="system">System</string>
     <string name="light">Jasny</string>
     <string name="dark">Ciemny</string>
-    <string name="dynamic">Dynamiczny</string>
     <string name="pink">Różowy</string>
-    <string name="matrix">Matrix-AMOLED</string>
     <string name="blue">Niebieski</string>
     <string name="dracula">Dracula</string>
     <string name="twilight">Zmierzch</string>
@@ -21,13 +19,11 @@
     <string name="about">O aplikacji</string>
     <string name="whats_new">Co nowego</string>
     <string name="releases">Wydania</string>
-    <string name="donate_to_thumbkey">Przekaż darowiznę Thumb-Key</string>
     <string name="social">Media społecznościowe</string>
     <string name="srcery">Srcery</string>
-    <string name="join_c_thumbkey">Dołącz do c/thumbkey</string>
     <string name="follow_me_mastodon">Obserwuj mnie na Mastodonie</string>
     <string name="source_code">Kod źródłowy</string>
-    <string name="source_code_subtitle">Thumb-Key to wolne otwarto źródłowe oprogramowanie, które używa licencji GNU Affero General Public License v3.0</string>
+    <string name="source_code_subtitle">Suave to wolne otwarto źródłowe oprogramowanie, które używa licencji GNU Affero General Public License v3.0</string>
     <string name="appearance">Wygląd</string>
     <string name="behavior">Zachowanie</string>
     <string name="layouts">Układy</string>
@@ -48,7 +44,7 @@
     <string name="auto_capitalize">Zaczynaj wielką literą</string>
     <string name="backup_and_restore">Zapisz kopię zapasową oraz przywróć</string>
     <string name="user_guide">Przewodnik dla użytkownika</string>
-    <string name="select_thumbkey">Wybierz Thumb-Key</string>
+    <string name="select_suave">Wybierz Suave</string>
     <string name="copy">Skopiuj wybrany tekst</string>
     <string name="hide_letters">Ukryj litery</string>
     <string name="hide_symbols">Ukryj symbole</string>
@@ -57,7 +53,7 @@
     <string name="database_restored">Baza danych przywrócona.</string>
     <string name="database_backed_up">Kopia zapasowa bazy danych została wykonana.</string>
     <string name="green">Zielony</string>
-    <string name="test_out_thumbkey">Przetestuj Thumb-Key</string>
+    <string name="test_out_suave">Przetestuj Suave</string>
     <string name="issue_tracker">Śledzenie zgłoszeń</string>
     <string name="setup">Konfiguracja</string>
     <string name="done">Gotowe</string>

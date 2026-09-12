@@ -290,7 +290,9 @@ fun AppearanceScreen(
                                 themeColorState = it
                                 updateAppearance()
                             },
-                            values = ThemeColor.entries,
+                            values =
+                                listOf(ThemeColor.Suave) +
+                                    ThemeColor.entries.filter { it != ThemeColor.Suave },
                             valueToText = {
                                 AnnotatedString(resources.getString(it.resId))
                             },

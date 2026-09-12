@@ -128,7 +128,7 @@ fun TestOutTextField() {
                     contentDescription = null,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(stringResource(R.string.test_out_thumbkey))
+                Text(stringResource(R.string.test_out_suave))
             }
         }
         if (showField) {

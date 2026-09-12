@@ -297,42 +297,45 @@ fun ClipboardSettingsScreen(
                             },
                         )
                     }
-                    SettingRow(
-                        onReset = {
-                            clipboardCleanupDuration = CleanupDuration.fromMinutes(DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES)
-                            updateClipboardSettings()
-                        },
-                    ) {
-                        ListPreference(
-                            type = ListPreferenceType.DROPDOWN_MENU,
-                            value = clipboardCleanupDuration,
-                            onValueChange = {
-                                clipboardCleanupDuration = it
+                    if (clipboardAutoCleanupEnabledState) {
+                        SettingRow(
+                            onReset = {
+                                clipboardCleanupDuration =
+                                    CleanupDuration.fromMinutes(DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES)
                                 updateClipboardSettings()
                             },
-                            values = CleanupDuration.entries,
-                            valueToText = {
-                                AnnotatedString(resources.getString(it.displayNameResId))
-                            },
-                            enabled = clipboardHistoryEnabledState && clipboardAutoCleanupEnabledState,
-                            title = {
-                                Text(stringResource(R.string.clipboard_cleanup_after))
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        R.string.clipboard_cleanup_after_summary,
-                                        stringResource(clipboardCleanupDuration.displayNameResId),
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.HourglassTop,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
+                        ) {
+                            ListPreference(
+                                type = ListPreferenceType.DROPDOWN_MENU,
+                                value = clipboardCleanupDuration,
+                                onValueChange = {
+                                    clipboardCleanupDuration = it
+                                    updateClipboardSettings()
+                                },
+                                values = CleanupDuration.entries,
+                                valueToText = {
+                                    AnnotatedString(resources.getString(it.displayNameResId))
+                                },
+                                enabled = clipboardHistoryEnabledState,
+                                title = {
+                                    Text(stringResource(R.string.clipboard_cleanup_after))
+                                },
+                                summary = {
+                                    Text(
+                                        stringResource(
+                                            R.string.clipboard_cleanup_after_summary,
+                                            stringResource(clipboardCleanupDuration.displayNameResId),
+                                        ),
+                                    )
+                                },
+                                icon = {
+                                    Icon(
+                                        imageVector = Icons.Outlined.HourglassTop,
+                                        contentDescription = null,
+                                    )
+                                },
+                            )
+                        }
                     }
                     SettingRow {
                         SwitchPreference(

@@ -42,7 +42,7 @@ import com.suave.keyboard.ime.InlineAutofillHost
 import com.suave.keyboard.ime.createInlineSuggestionsRequest
 import com.suave.keyboard.ime.inlineChipSlotHeightDp
 import com.suave.keyboard.utils.TAG
-import com.suave.keyboard.utils.ThumbKeyClipboardManager
+import com.suave.keyboard.utils.SuaveClipboardManager
 import com.suave.keyboard.utils.toBool
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicInteger
@@ -55,7 +55,7 @@ class IMEService :
     ViewModelStoreOwner,
     SavedStateRegistryOwner {
     private fun setupView(): ComposeKeyboardView {
-        val app = application as ThumbkeyApplication
+        val app = application as SuaveApplication
         val settingsRepo = app.appSettingsRepository
 
         val view = ComposeKeyboardView(this, settingsRepo)
@@ -74,7 +74,7 @@ class IMEService :
         return view
     }
 
-    private var clipboardManager: ThumbKeyClipboardManager? = null
+    private var clipboardManager: SuaveClipboardManager? = null
     private val noLiveClipboardImage = MutableStateFlow<LiveClipboardImage?>(null)
     private var unlockReceiver: BroadcastReceiver? = null
     val inlineAutofill = InlineAutofillHost()
@@ -172,8 +172,8 @@ class IMEService :
 
     private fun startClipboard() {
         if (clipboardManager != null) return
-        val app = application as ThumbkeyApplication
-        clipboardManager = ThumbKeyClipboardManager(this, app.clipboardRepository)
+        val app = application as SuaveApplication
+        clipboardManager = SuaveClipboardManager(this, app.clipboardRepository)
         clipboardManager?.startListening()
         clipboardManager?.clearExpired()
     }
@@ -253,7 +253,7 @@ class IMEService :
     fun acceptTopInlineSuggestion(): Boolean = inlineAutofill.acceptTop()
 
     override fun onEvaluateInputViewShown(): Boolean {
-        val settingsRepo = (application as ThumbkeyApplication).appSettingsRepository
+        val settingsRepo = (application as SuaveApplication).appSettingsRepository
         val settings = settingsRepo.appSettings.getValue()
         val showOnScreenKeyboard =
             (settings?.showOnScreenKeyboard ?: DEFAULT_SHOW_ON_SCREEN_KEYBOARD).toBool()
@@ -267,7 +267,7 @@ class IMEService :
 
     // Disable the fullscreen text editor if set by the user
     override fun onUpdateExtractingVisibility(ei: EditorInfo) {
-        val settingsRepo = (application as ThumbkeyApplication).appSettingsRepository
+        val settingsRepo = (application as SuaveApplication).appSettingsRepository
         val settings = settingsRepo.appSettings.getValue()
         if ((settings?.disableFullscreenEditor ?: DEFAULT_DISABLE_FULLSCREEN_EDITOR).toBool()) {
             ei.imeOptions =
@@ -337,7 +337,7 @@ class IMEService :
     }
 
     private fun appSettingsOrSync(): AppSettings? {
-        val repo = (application as ThumbkeyApplication).appSettingsRepository
+        val repo = (application as SuaveApplication).appSettingsRepository
         return repo.getSettingsSync()
     }
 

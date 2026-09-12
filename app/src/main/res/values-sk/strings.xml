@@ -4,7 +4,6 @@
     <string name="system">Systém</string>
     <string name="light">Svetlá</string>
     <string name="dark">Tmavá</string>
-    <string name="dynamic">Dynamická</string>
     <string name="green">Zelená</string>
     <string name="pink">Ružová</string>
     <string name="blue">Modrá</string>
@@ -20,11 +19,9 @@
     <string name="support">Podpora</string>
     <string name="issue_tracker">Nahlásiť problém</string>
     <string name="developer_matrix_chatroom">Matrix čet vývojárov</string>
-    <string name="donate_to_thumbkey">Podporiť Thumb-Key finančne</string>
-    <string name="join_c_thumbkey">Navštíviť c/thumbkey na Lemmy</string>
     <string name="follow_me_mastodon">Sleduj vývojára na Mastodone</string>
     <string name="source_code">Zdrojový kód</string>
-    <string name="source_code_subtitle">Thumb-Key je libre open-source softvér, licencovaný pod GNU Affero General Public License v3.0</string>
+    <string name="source_code_subtitle">Suave je libre open-source softvér, licencovaný pod GNU Affero General Public License v3.0</string>
     <string name="appearance">Vzhľad a dojem</string>
     <string name="layouts">Klávesové mapy</string>
     <string name="theme">Téma</string>
@@ -34,7 +31,6 @@
     <string name="play_sound_on_tap">Prehrať zvuk pri ťuknutí</string>
     <string name="auto_capitalize">Automatická kapitalizácia</string>
     <string name="key_size">Veľkosť klávesov: %1$s</string>
-    <string name="matrix">Matrix-AMOLED</string>
     <string name="srcery">Srcery</string>
     <string name="key_height">Výška klávesov: %1$s</string>
     <string name="key_width">Šírka klávesov: %1$s</string>
@@ -49,11 +45,11 @@
     <string name="reset_to_defaults">Obnoviť pôvodné nastavenia</string>
     <string name="reset_to_defaults_msg">Ste si istý, že chcete obnoviť pôvodné nastavenia?</string>
     <string name="cancel">Zrušiť</string>
-    <string name="test_out_thumbkey">Vyskúšať Thumb-Key</string>
+    <string name="test_out_suave">Vyskúšať Suave</string>
     <string name="setup">Nastavenie</string>
     <string name="user_guide">Používateľský sprievodca</string>
-    <string name="setup_thumbkey">Nastaviť Thumb-Key</string>
-    <string name="enable_thumbkey">Zapnúť Thumb-Key</string>
+    <string name="setup_suave">Nastaviť Suave</string>
+    <string name="enable_suave">Zapnúť Suave</string>
     <string name="finish_setup">Dokončiť nastavenie</string>
     <string name="copy">Vybraný text skopírovaný</string>
     <string name="hide_letters">Skryť písmená</string>

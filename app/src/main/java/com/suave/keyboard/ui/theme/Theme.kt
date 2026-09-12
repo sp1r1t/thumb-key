@@ -12,7 +12,7 @@ import com.suave.keyboard.utils.ThemeColor
 import com.suave.keyboard.utils.ThemeMode
 
 @Composable
-fun ThumbkeyTheme(
+fun SuaveTheme(
     settings: AppSettings?,
     content: @Composable () -> Unit,
 ) {
@@ -44,6 +44,7 @@ fun ThumbkeyTheme(
             ThemeColor.HighContrastColorful -> highContrastColorful()
             ThemeColor.Ancom -> ancom()
             ThemeColor.Neon -> neon()
+            ThemeColor.Suave -> suave()
         }
 
     val systemTheme =

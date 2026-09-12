@@ -687,3 +687,20 @@ val MIGRATION_47_48 =
             )
         }
     }
+
+// ColumnInfo defaultValue metadata changed (theme_color, clipboard history/cleanup).
+// No table rewrite needed; bump updates Room's identity hash.
+val MIGRATION_48_49 =
+    object : Migration(48, 49) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // no-op
+        }
+    }
+
+// ColumnInfo defaultValue metadata changed (key_padding / key_padding_vertical -> 0).
+val MIGRATION_49_50 =
+    object : Migration(49, 50) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // no-op
+        }
+    }

@@ -15,7 +15,7 @@ import com.suave.keyboard.db.isCredentialStorageUnlocked
 import com.suave.keyboard.layout.BuiltinLayouts
 import com.suave.keyboard.ui.engine.EngineKeyboardScreen
 import com.suave.keyboard.ui.engine.toggleHideLabels
-import com.suave.keyboard.ui.theme.ThumbkeyTheme
+import com.suave.keyboard.ui.theme.SuaveTheme
 import com.suave.keyboard.utils.KeyboardPosition
 import com.suave.keyboard.utils.toBool
 import kotlinx.coroutines.launch
@@ -32,12 +32,12 @@ class ComposeKeyboardView(
         val ctx = context as IMEService
         val clipboardRepository =
             if (isCredentialStorageUnlocked(ctx.applicationContext)) {
-                (ctx.applicationContext as ThumbkeyApplication).clipboardRepository
+                (ctx.applicationContext as SuaveApplication).clipboardRepository
             } else {
                 null
             }
 
-        ThumbkeyTheme(
+        SuaveTheme(
             settings = settings,
         ) {
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {

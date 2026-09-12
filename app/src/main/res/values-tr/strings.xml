@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="dynamic">Dinamik</string>
-    <string name="join_c_thumbkey">c/thumbkey\'e katılın</string>
     <string name="layouts">Klavye Düzenleri</string>
     <string name="system">Sistem</string>
     <string name="dracula">Drakula</string>
     <string name="blue">Mavi</string>
-    <string name="donate_to_thumbkey">Thumb-Key\'e bağış yapın</string>
     <string name="settings">Ayarlar</string>
     <string name="light">Aydınlık</string>
     <string name="green">Yeşil</string>
@@ -38,11 +35,11 @@
     <string name="reset_to_defaults">Varsayılana dön</string>
     <string name="reset_to_defaults_msg">Ayarları varsayılana döndürmek istediğine emin misin?</string>
     <string name="reset_to_defaults_confirm">Varsayılana döndür</string>
-    <string name="test_out_thumbkey">Değişiklikleri test et</string>
+    <string name="test_out_suave">Değişiklikleri test et</string>
     <string name="user_guide">Kullanım klavuzu</string>
-    <string name="setup_thumbkey">Thumb-Key\'i kur</string>
-    <string name="enable_thumbkey">Thumb-Key\'i etkinleştir</string>
-    <string name="select_thumbkey">Thumb-Key\'i seç</string>
+    <string name="setup_suave">Suave\'i kur</string>
+    <string name="enable_suave">Suave\'i etkinleştir</string>
+    <string name="select_suave">Suave\'i seç</string>
     <string name="finish_setup">Kurulumu tamamla</string>
     <string name="copy">Seçili metin kopyalandı</string>
     <string name="key_padding">Tuşlar arasındaki boşluk: %1$s</string>
@@ -61,7 +58,7 @@
     <string name="left">Sol</string>
     <string name="version">%1$s Sürümü</string>
     <string name="social">Sosyal medya</string>
-    <string name="source_code_subtitle">Thumb-Key GNU Affero Genel Lisansı v3.0 sürümünde lisanslı özgür ve açık kaynaklı bir yazılımdır</string>
+    <string name="source_code_subtitle">Suave GNU Affero Genel Lisansı v3.0 sürümünde lisanslı özgür ve açık kaynaklı bir yazılımdır</string>
     <string name="key_height">Tuş büyüklüğü/yüksekliği: %1$s</string>
     <string name="theme">Tema</string>
     <string name="position">Konum</string>
@@ -74,7 +71,6 @@
     <string name="hide_letters">Harfleri gizle</string>
     <string name="hide_symbols">Noktalama işaretlerini gizle</string>
     <string name="ghost_keys_enable">Görünmez tuşlar</string>
-    <string name="matrix">Matriks-AMOLED</string>
     <string name="ancom">Anarko-Komünist renkler</string>
     <string name="issue_tracker">Hata takibi</string>
     <string name="animation_helper_speed">Animasyon yardımcı hızı: %1$s</string>
