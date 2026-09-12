@@ -26,10 +26,10 @@
     <string name="prevent_cramped_dual_on">An - Doppelt wird übersprungen, wenn zwei Kopien die Tasten schmaler als %1$d dp machen würden</string>
     <string name="prevent_cramped_dual_off">Aus - Doppelt wird auch genutzt, wenn die Tasten gequetscht würden</string>
     <string name="prevent_cramped_dual_info">Auf einem Handy im Hochformat werden zwei volle Kopien eines 5-Spalten-Layouts zu schmal zum Tippen. Schalte das aus, wenn du Doppelt trotzdem auf einem schmalen Bildschirm willst.</string>
-    <string name="prevent_needless_split">Geteilt überspringen, wenn es nicht passt</string>
-    <string name="prevent_needless_split_on">An - Geteilt wird übersprungen, außer Doppelt wäre zu schmal und Geteilt-Tasten wären noch mindestens %1$d dp</string>
+    <string name="prevent_needless_split">Geteilt im Hochformat überspringen</string>
+    <string name="prevent_needless_split_on">An - Geteilt wird übersprungen, wenn der Bildschirm höher als breit ist</string>
     <string name="prevent_needless_split_off">Aus - Geteilt wird genutzt, sobald es aktiviert ist</string>
-    <string name="prevent_needless_split_info">Geteilt ist die schmale Alternative zu Doppelt: jede Hälfte hat weniger Spalten, die Tasten bleiben breiter. Wenn Doppelt schon Platz hat, oder selbst Geteilt zu schmal würde, überspringt Tastatur verschieben Geteilt. Schalte das aus, um Geteilt immer mitzunehmen, wenn es aktiviert ist.</string>
+    <string name="prevent_needless_split_info">Geteilt legt zwei Hälften links und rechts ab. Im Hochformat bleibt dazwischen kein Platz, deshalb überspringt Tastatur verschieben Geteilt. Querformat behält es. Doppelt hat eine eigene Platzmangel-Prüfung. Schalte das aus, um Geteilt auch im Hochformat mitzunehmen.</string>
     <string name="show_toast_on_switch">Hinweis beim Wechsel</string>
     <string name="show_toast_on_switch_on">An - ein Hinweis nennt Layout oder Position nach dem Wechsel</string>
     <string name="show_toast_on_switch_off">Aus - Layout- oder Positionswechsel bleiben still</string>

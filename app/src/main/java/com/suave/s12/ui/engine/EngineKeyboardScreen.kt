@@ -169,13 +169,16 @@ fun EngineKeyboardScreen(
 
     val canSwitchLayout = BuiltinLayouts.canSwitch(settings?.keyboardLayouts)
     val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
-    val screenWidthDp = LocalConfiguration.current.screenWidthDp
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp
+    val screenHeightDp = configuration.screenHeightDp
     val reachablePositions =
         reachableKeyboardPositions(
             enabled = parseKeyboardPositions(settings?.keyboardPositions ?: DEFAULT_KEYBOARD_POSITIONS),
             preventCrampedDual = (settings?.preventCrampedDual ?: DEFAULT_PREVENT_CRAMPED_DUAL).toBool(),
             preventNeedlessSplit = (settings?.preventNeedlessSplit ?: DEFAULT_PREVENT_NEEDLESS_SPLIT).toBool(),
             screenWidthDp = screenWidthDp,
+            screenHeightDp = screenHeightDp,
             columnCount = namedLayout.layout.columnCount(),
         )
     val canMoveKeyboard = canCycleKeyboardPosition(reachablePositions)

@@ -35,10 +35,10 @@
     <string name="prevent_cramped_dual_on">On - Dual is skipped when two copies would make keys narrower than %1$d dp</string>
     <string name="prevent_cramped_dual_off">Off - Dual is used even when keys would be squeezed</string>
     <string name="prevent_cramped_dual_info">On a phone in portrait, two full copies of a 5-column layout become too skinny to type on. Turn this off if you still want Dual on a narrow screen.</string>
-    <string name="prevent_needless_split">Skip Split when it does not make sense</string>
-    <string name="prevent_needless_split_on">On - Split is skipped unless Dual would be cramped and Split keys would still be at least %1$d dp</string>
+    <string name="prevent_needless_split">Skip Split in portrait</string>
+    <string name="prevent_needless_split_on">On - Split is skipped when the screen is taller than it is wide</string>
     <string name="prevent_needless_split_off">Off - Split is used whenever it is enabled</string>
-    <string name="prevent_needless_split_info">Split is the narrow-screen alternative to Dual: each half has fewer columns, so keys stay wider. If Dual already fits, or even Split\'s halves would be too skinny, Move keyboard skips Split. Turn this off to always cycle Split when it is enabled.</string>
+    <string name="prevent_needless_split_info">Split parks two halves on the left and right. In portrait there is no room between them, so Move keyboard skips Split. Landscape keeps it. Dual has its own cramped check. Turn this off to cycle Split in portrait too.</string>
     <string name="show_toast_on_switch">Toast on switch</string>
     <string name="show_toast_on_switch_on">On - a toast names the layout or position after you switch</string>
     <string name="show_toast_on_switch_off">Off - switching layout or position stays silent</string>

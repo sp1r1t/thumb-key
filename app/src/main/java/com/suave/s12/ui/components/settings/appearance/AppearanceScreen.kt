@@ -1259,7 +1259,6 @@ private fun EnabledKeyboardPositionsPreference(
                                 } else {
                                     R.string.prevent_needless_split_off
                                 },
-                                MIN_DUAL_CELL_WIDTH_DP,
                             ),
                         )
                     },

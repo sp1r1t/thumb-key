@@ -83,15 +83,16 @@ fun isSplitCramped(
 ): Boolean = screenWidthDp / (2f * splitHalfColumnCount(columnCount)) < minCellWidthDp
 
 /**
- * Split is the narrow-screen alternative to Dual: Dual would be cramped, but Split keys still
- * meet the minimum cell width.
+ * Split parks two halves on the left and right. That only pays off when the screen is
+ * wider than it is tall. Dual cramped-or-not is a separate question.
  */
 fun splitMakesSense(
     screenWidthDp: Int,
+    screenHeightDp: Int,
     columnCount: Int,
     minCellWidthDp: Int = MIN_DUAL_CELL_WIDTH_DP,
 ): Boolean =
-    isDualCramped(screenWidthDp, columnCount, minCellWidthDp) &&
+    screenWidthDp > screenHeightDp &&
         !isSplitCramped(screenWidthDp, columnCount, minCellWidthDp)
 
 fun reachableKeyboardPositions(
@@ -99,10 +100,12 @@ fun reachableKeyboardPositions(
     preventCrampedDual: Boolean,
     preventNeedlessSplit: Boolean,
     screenWidthDp: Int,
+    screenHeightDp: Int,
     columnCount: Int,
 ): List<KeyboardPosition> {
     val skipDual = preventCrampedDual && isDualCramped(screenWidthDp, columnCount)
-    val skipSplit = preventNeedlessSplit && !splitMakesSense(screenWidthDp, columnCount)
+    val skipSplit =
+        preventNeedlessSplit && !splitMakesSense(screenWidthDp, screenHeightDp, columnCount)
     val reachable =
         TOGGLEABLE_KEYBOARD_POSITIONS.filter { it in enabled }.filter { position ->
             when (position) {

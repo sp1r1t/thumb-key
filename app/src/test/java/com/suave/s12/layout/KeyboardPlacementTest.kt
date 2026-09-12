@@ -17,8 +17,29 @@ import org.junit.Test
 
 class KeyboardPlacementTest {
     private val all = TOGGLEABLE_KEYBOARD_POSITIONS
-    private val widePhone = 360
-    private val tablet = 960
+    private val phonePortraitW = 360
+    private val phonePortraitH = 800
+    private val phoneLandscapeW = 800
+    private val phoneLandscapeH = 360
+    private val tabletLandscapeW = 960
+    private val tabletLandscapeH = 600
+
+    private fun reachable(
+        width: Int,
+        height: Int,
+        preventCrampedDual: Boolean = true,
+        preventNeedlessSplit: Boolean = true,
+        enabled: Collection<KeyboardPosition> = all,
+        columnCount: Int = 5,
+    ): List<KeyboardPosition> =
+        reachableKeyboardPositions(
+            enabled = enabled,
+            preventCrampedDual = preventCrampedDual,
+            preventNeedlessSplit = preventNeedlessSplit,
+            screenWidthDp = width,
+            screenHeightDp = height,
+            columnCount = columnCount,
+        )
 
     @Test
     fun `split ranges duplicate the middle column only when the count is odd`() {
@@ -93,88 +114,77 @@ class KeyboardPlacementTest {
 
     @Test
     fun `dual is cramped on a phone-width 5 column board and not on a tablet`() {
-        assertTrue(isDualCramped(widePhone, columnCount = 5))
-        assertFalse(isDualCramped(tablet, columnCount = 5))
-        assertFalse(isDualCramped(widePhone, columnCount = 2))
+        assertTrue(isDualCramped(phonePortraitW, columnCount = 5))
+        assertFalse(isDualCramped(tabletLandscapeW, columnCount = 5))
+        assertFalse(isDualCramped(phonePortraitW, columnCount = 2))
     }
 
     @Test
     fun `reachable drops Dual when prevent-cramped is on and the board is tight`() {
         val reachable =
-            reachableKeyboardPositions(
-                enabled = all,
-                preventCrampedDual = true,
-                preventNeedlessSplit = true,
-                screenWidthDp = widePhone,
-                columnCount = 5,
+            reachable(
+                width = phonePortraitW,
+                height = phonePortraitH,
             )
-        assertEquals(listOf(KeyboardPosition.Center, KeyboardPosition.Split), reachable)
-        assertFalse(canCycleKeyboardPosition(listOf(KeyboardPosition.Center)))
-        assertTrue(canCycleKeyboardPosition(reachable))
+        assertEquals(listOf(KeyboardPosition.Center), reachable)
+        assertFalse(canCycleKeyboardPosition(reachable))
     }
 
     @Test
     fun `reachable keeps Dual when prevent-cramped is off or there is room`() {
         assertEquals(
             all,
-            reachableKeyboardPositions(
-                all,
+            reachable(
+                width = phonePortraitW,
+                height = phonePortraitH,
                 preventCrampedDual = false,
                 preventNeedlessSplit = false,
-                screenWidthDp = widePhone,
-                columnCount = 5,
             ),
         )
         assertEquals(
             all,
-            reachableKeyboardPositions(
-                all,
-                preventCrampedDual = true,
+            reachable(
+                width = tabletLandscapeW,
+                height = tabletLandscapeH,
                 preventNeedlessSplit = false,
-                screenWidthDp = tablet,
-                columnCount = 5,
             ),
         )
     }
 
     @Test
-    fun `split makes sense only when Dual is cramped and Split keys still fit`() {
-        assertTrue(splitMakesSense(widePhone, columnCount = 5))
-        assertFalse(splitMakesSense(tablet, columnCount = 5))
+    fun `split makes sense in landscape not in portrait`() {
+        assertFalse(splitMakesSense(phonePortraitW, phonePortraitH, columnCount = 5))
+        assertTrue(splitMakesSense(phoneLandscapeW, phoneLandscapeH, columnCount = 5))
+        assertTrue(splitMakesSense(tabletLandscapeW, tabletLandscapeH, columnCount = 5))
         assertTrue(isSplitCramped(200, columnCount = 5))
-        assertFalse(splitMakesSense(200, columnCount = 5))
+        assertFalse(splitMakesSense(200, 120, columnCount = 5))
     }
 
     @Test
-    fun `reachable drops Split when Dual already fits or Split itself is cramped`() {
-        assertEquals(
-            listOf(KeyboardPosition.Center, KeyboardPosition.Dual),
-            reachableKeyboardPositions(
-                enabled = all,
-                preventCrampedDual = true,
-                preventNeedlessSplit = true,
-                screenWidthDp = tablet,
-                columnCount = 5,
-            ),
-        )
+    fun `reachable drops Split in portrait even when Dual is cramped`() {
         assertEquals(
             listOf(KeyboardPosition.Center),
-            reachableKeyboardPositions(
-                enabled = all,
-                preventCrampedDual = true,
-                preventNeedlessSplit = true,
-                screenWidthDp = 200,
-                columnCount = 5,
-            ),
+            reachable(width = phonePortraitW, height = phonePortraitH),
         )
         assertEquals(
             all,
-            reachableKeyboardPositions(
-                enabled = all,
-                preventCrampedDual = true,
+            reachable(width = phoneLandscapeW, height = phoneLandscapeH),
+        )
+        assertEquals(
+            all,
+            reachable(width = tabletLandscapeW, height = tabletLandscapeH),
+        )
+        assertEquals(
+            listOf(KeyboardPosition.Center, KeyboardPosition.Dual),
+            reachable(width = 600, height = 960),
+        )
+        assertEquals(
+            all,
+            reachable(
+                width = phonePortraitW,
+                height = phonePortraitH,
                 preventNeedlessSplit = false,
-                screenWidthDp = tablet,
-                columnCount = 5,
+                preventCrampedDual = false,
             ),
         )
     }
