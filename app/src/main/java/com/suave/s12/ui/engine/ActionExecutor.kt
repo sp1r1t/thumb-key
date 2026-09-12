@@ -19,7 +19,6 @@ import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.output.OutputExecutor
 import com.suave.s12.layout.LayoutLayer
 import com.suave.s12.utils.KeyboardPosition
-import com.suave.s12.utils.nextVisible
 
 /**
  * Host callbacks for commands that are not editor I/O: settings, layout switch, IME picker,
@@ -217,6 +216,6 @@ object ActionExecutor {
     }
 
     private fun cycleKeyboardRight(host: AppCommandHost) {
-        host.onChangePosition { it.nextVisible() }
+        host.onChangePosition { it }
     }
 }

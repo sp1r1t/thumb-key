@@ -262,7 +262,7 @@ val Float.pxToSp
 fun keyboardPositionToAlignment(position: KeyboardPosition): Alignment =
     when (position) {
         KeyboardPosition.Right -> Alignment.BottomEnd
-        KeyboardPosition.Center -> Alignment.BottomCenter
+        KeyboardPosition.Center, KeyboardPosition.Split -> Alignment.BottomCenter
         KeyboardPosition.Left -> Alignment.BottomStart
         KeyboardPosition.Dual -> Alignment.BottomStart
     }
@@ -1441,7 +1441,7 @@ fun performKeyAction(
             onChangePosition {
                 when (it) {
                     KeyboardPosition.Right -> KeyboardPosition.Dual
-                    KeyboardPosition.Center -> KeyboardPosition.Left
+                    KeyboardPosition.Center, KeyboardPosition.Split -> KeyboardPosition.Left
                     KeyboardPosition.Left -> KeyboardPosition.Right
                     KeyboardPosition.Dual -> KeyboardPosition.Center
                 }
@@ -1452,7 +1452,7 @@ fun performKeyAction(
             onChangePosition {
                 when (it) {
                     KeyboardPosition.Left -> KeyboardPosition.Dual
-                    KeyboardPosition.Center -> KeyboardPosition.Right
+                    KeyboardPosition.Center, KeyboardPosition.Split -> KeyboardPosition.Right
                     KeyboardPosition.Right -> KeyboardPosition.Left
                     KeyboardPosition.Dual -> KeyboardPosition.Center
                 }

@@ -36,6 +36,8 @@ const val DEFAULT_ANIMATION_SPEED = 250
 const val DEFAULT_ANIMATION_HELPER_SPEED = 250
 const val DEFAULT_POSITION = 0
 const val DEFAULT_POSITION_PADDING = 0
+const val DEFAULT_KEYBOARD_POSITIONS = "Center,Dual,Split"
+const val DEFAULT_PREVENT_CRAMPED_DUAL = 1
 const val DEFAULT_AUTO_CAPITALIZE = 1
 const val DEFAULT_KEYBOARD_LAYOUT = 0
 const val DEFAULT_THEME = 0
@@ -248,6 +250,16 @@ data class AppSettings(
         defaultValue = DEFAULT_POSITION.toString(),
     )
     val position: Int,
+    @ColumnInfo(
+        name = "keyboard_positions",
+        defaultValue = DEFAULT_KEYBOARD_POSITIONS,
+    )
+    val keyboardPositions: String = DEFAULT_KEYBOARD_POSITIONS,
+    @ColumnInfo(
+        name = "prevent_cramped_dual",
+        defaultValue = DEFAULT_PREVENT_CRAMPED_DUAL.toString(),
+    )
+    val preventCrampedDual: Int = DEFAULT_PREVENT_CRAMPED_DUAL,
     @ColumnInfo(
         name = "last_version_code_viewed",
         defaultValue = "0",
@@ -469,6 +481,10 @@ data class AppearanceUpdate(
     val vibrateHoldRepeatType: Int,
     @ColumnInfo(name = "vibrate_modifier_type")
     val vibrateModifierType: Int,
+    @ColumnInfo(name = "keyboard_positions")
+    val keyboardPositions: String,
+    @ColumnInfo(name = "prevent_cramped_dual")
+    val preventCrampedDual: Int,
 )
 
 data class BehaviorUpdate(
@@ -608,7 +624,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 42,
+    version = 43,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -695,6 +711,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_39_40,
                             MIGRATION_40_41,
                             MIGRATION_41_42,
+                            MIGRATION_42_43,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

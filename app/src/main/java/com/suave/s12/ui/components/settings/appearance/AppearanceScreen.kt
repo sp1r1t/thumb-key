@@ -40,6 +40,7 @@ import androidx.compose.material.icons.outlined.Swipe
 import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material.icons.outlined.VerticalAlignTop
 import androidx.compose.material.icons.outlined.Vibration
+import androidx.compose.material.icons.outlined.ViewColumn
 import androidx.compose.material.icons.outlined.ViewDay
 import androidx.compose.material.icons.outlined.WebAssetOff
 import androidx.compose.material3.AlertDialog
@@ -90,6 +91,8 @@ import com.suave.s12.db.DEFAULT_KEY_HEIGHT
 import com.suave.s12.db.DEFAULT_KEY_PADDING
 import com.suave.s12.db.DEFAULT_KEY_PADDING_VERTICAL
 import com.suave.s12.db.DEFAULT_KEY_RADIUS
+import com.suave.s12.db.DEFAULT_KEYBOARD_POSITIONS
+import com.suave.s12.db.DEFAULT_PREVENT_CRAMPED_DUAL
 import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_THEME
 import com.suave.s12.db.DEFAULT_THEME_COLOR
@@ -110,9 +113,14 @@ import com.suave.s12.layout.BuiltinLayouts
 import com.suave.s12.layout.DEFAULT_LAYER_HEIGHTS
 import com.suave.s12.layout.LayoutLayer
 import com.suave.s12.layout.MAX_LAYER_HEIGHT_ROWS
+import com.suave.s12.layout.MIN_DUAL_CELL_WIDTH_DP
 import com.suave.s12.layout.NamedLayout
+import com.suave.s12.layout.TOGGLEABLE_KEYBOARD_POSITIONS
+import com.suave.s12.layout.formatKeyboardPositions
 import com.suave.s12.layout.formatLayerHeightOverrides
+import com.suave.s12.layout.parseKeyboardPositions
 import com.suave.s12.layout.parseLayerHeightOverrides
+import com.suave.s12.layout.toggleKeyboardPositionSelection
 import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.SettingTitle
@@ -123,6 +131,7 @@ import com.suave.s12.ui.engine.LegendCategory
 import com.suave.s12.ui.engine.formatHideKeyCategories
 import com.suave.s12.ui.engine.parseHideKeyCategories
 import com.suave.s12.ui.engine.toggleHideKeyGroupSelection
+import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.ThemeColor
@@ -188,6 +197,9 @@ fun AppearanceScreen(
     var keyRadiusState = settings?.keyRadius ?: DEFAULT_KEY_RADIUS
     var pushupSizeState = settings?.pushupSize ?: DEFAULT_PUSHUP_SIZE
     var layerHeightsState = settings?.layerHeights ?: DEFAULT_LAYER_HEIGHTS
+    var keyboardPositionsState = settings?.keyboardPositions ?: DEFAULT_KEYBOARD_POSITIONS
+    var preventCrampedDualState =
+        (settings?.preventCrampedDual ?: DEFAULT_PREVENT_CRAMPED_DUAL).toBool()
     val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
     val layerHeightOverrides = parseLayerHeightOverrides(layerHeightsState)
 
@@ -230,6 +242,8 @@ fun AppearanceScreen(
                 animationReleaseFlash = animationReleaseFlashState.toInt(),
                 animationLetterDrop = animationLetterDropState.toInt(),
                 distinctLetterControlColors = distinctLetterControlColorsState.toInt(),
+                keyboardPositions = keyboardPositionsState,
+                preventCrampedDual = preventCrampedDualState.toInt(),
             ),
         )
     }
@@ -538,6 +552,49 @@ fun AppearanceScreen(
                             )
                         },
                     )
+                    }
+
+                    SettingsSection(title = stringResource(R.string.position)) {
+                    EnabledKeyboardPositionsPreference(
+                        value = keyboardPositionsState,
+                        onValueChange = {
+                            keyboardPositionsState = it
+                            updateAppearance()
+                        },
+                    )
+                    SettingRow {
+                        SwitchPreference(
+                            value = preventCrampedDualState,
+                            onValueChange = {
+                                preventCrampedDualState = it
+                                updateAppearance()
+                            },
+                            title = {
+                                SettingTitle(
+                                    text = stringResource(R.string.prevent_cramped_dual),
+                                    infoText = stringResource(R.string.prevent_cramped_dual_info),
+                                )
+                            },
+                            summary = {
+                                Text(
+                                    stringResource(
+                                        if (preventCrampedDualState) {
+                                            R.string.prevent_cramped_dual_on
+                                        } else {
+                                            R.string.prevent_cramped_dual_off
+                                        },
+                                        MIN_DUAL_CELL_WIDTH_DP,
+                                    ),
+                                )
+                            },
+                            icon = {
+                                Icon(
+                                    imageVector = Icons.Outlined.Crop75,
+                                    contentDescription = null,
+                                )
+                            },
+                        )
+                    }
                     }
 
                     SettingsSection(title = stringResource(R.string.settings_section_keys)) {
@@ -1134,6 +1191,109 @@ private fun LegendCategory.hideGroupNameRes(): Int =
         LegendCategory.NAVIGATION -> R.string.hide_group_navigation
         LegendCategory.EDITING -> R.string.hide_group_editing
     }
+
+@Composable
+private fun EnabledKeyboardPositionsPreference(
+    value: String,
+    onValueChange: (String) -> Unit,
+) {
+    val selected = parseKeyboardPositions(value)
+    var showDialog by remember { mutableStateOf(false) }
+    var draft by remember { mutableStateOf(selected) }
+
+    SettingRow(
+        onReset = { onValueChange(DEFAULT_KEYBOARD_POSITIONS) },
+    ) {
+        Preference(
+            title = {
+                SettingTitle(
+                    text = stringResource(R.string.enabled_keyboard_positions),
+                    infoText = stringResource(R.string.enabled_keyboard_positions_info),
+                )
+            },
+            summary = {
+                Text(enabledKeyboardPositionsSummary(selected))
+            },
+            icon = {
+                Icon(
+                    imageVector = Icons.Outlined.ViewColumn,
+                    contentDescription = null,
+                )
+            },
+            onClick = {
+                draft = selected
+                showDialog = true
+            },
+        )
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text(stringResource(R.string.enabled_keyboard_positions)) },
+            text = {
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                    TOGGLEABLE_KEYBOARD_POSITIONS.forEach { position ->
+                        Row(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        draft = toggleKeyboardPositionSelection(draft, position)
+                                    }.padding(vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = position in draft,
+                                onCheckedChange = null,
+                            )
+                            Text(
+                                text = stringResource(position.resId),
+                                modifier = Modifier.padding(start = 8.dp),
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onValueChange(formatKeyboardPositions(draft))
+                        showDialog = false
+                    },
+                ) {
+                    Text(stringResource(R.string.done))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun enabledKeyboardPositionsSummary(selected: List<KeyboardPosition>): String {
+    val ordered = TOGGLEABLE_KEYBOARD_POSITIONS.filter { it in selected }
+    val names = ordered.map { stringResource(it.resId) }
+    val positionsText =
+        when {
+            ordered.size == TOGGLEABLE_KEYBOARD_POSITIONS.size ->
+                stringResource(R.string.enabled_keyboard_positions_all)
+            names.size <= 1 -> names.firstOrNull().orEmpty()
+            names.size == 2 ->
+                stringResource(R.string.enabled_keyboard_positions_two, names[0], names[1])
+            else ->
+                stringResource(
+                    R.string.enabled_keyboard_positions_many,
+                    names.dropLast(1).joinToString(", "),
+                    names.last(),
+                )
+        }
+    return stringResource(R.string.enabled_keyboard_positions_summary, positionsText)
+}
 
 @Composable
 private fun LayerHeightRow(

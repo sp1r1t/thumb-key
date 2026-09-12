@@ -69,6 +69,7 @@ class ComposeKeyboardView(
                                 val current =
                                     KeyboardPosition.entries.getOrElse(s.position) { KeyboardPosition.Center }
                                 val next = f(current)
+                                if (next == current) return@let
                                 settingsRepo.update(s.copy(position = next.ordinal))
                                 Toast.makeText(context, context.getString(next.resId), Toast.LENGTH_SHORT).show()
                             }

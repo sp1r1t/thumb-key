@@ -52,6 +52,19 @@ class LayoutRowsTest {
     }
 
     @Test
+    fun `columnCount counts span past the last origin column`() {
+        val layout: Layout =
+            mapOf(
+                KeyPosition(0, 0) to key("a"),
+                KeyPosition(0, 3) to
+                    KeyMapping(config, mapOf(Zone.Center to KeyIntent.Text("enter")), columnSpan = 2),
+            )
+        assertEquals(5, layout.columnCount())
+        assertEquals(setOf(KeyPosition(0, 0)), layout.filterColumns(0..2).keys)
+        assertEquals(setOf(KeyPosition(0, 3)), layout.filterColumns(2 until 5).keys)
+    }
+
+    @Test
     fun `bottomRow of an empty layout is empty`() {
         val empty: Layout = emptyMap()
         assertEquals(emptyMap<KeyPosition, KeyMapping>(), empty.bottomRow())

@@ -621,3 +621,15 @@ val MIGRATION_41_42 =
             db.execSQL("UPDATE AppSettings SET vibrate_on_modifier = vibrate_on_tap")
         }
     }
+
+val MIGRATION_42_43 =
+    object : Migration(42, 43) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN keyboard_positions TEXT NOT NULL DEFAULT '$DEFAULT_KEYBOARD_POSITIONS'",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN prevent_cramped_dual INTEGER NOT NULL DEFAULT $DEFAULT_PREVENT_CRAMPED_DUAL",
+            )
+        }
+    }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
@@ -62,8 +64,10 @@ import com.suave.s12.db.DEFAULT_KEY_HEIGHT
 import com.suave.s12.db.DEFAULT_KEY_PADDING
 import com.suave.s12.db.DEFAULT_KEY_PADDING_VERTICAL
 import com.suave.s12.db.DEFAULT_KEY_RADIUS
+import com.suave.s12.db.DEFAULT_KEYBOARD_POSITIONS
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_POSITION
+import com.suave.s12.db.DEFAULT_PREVENT_CRAMPED_DUAL
 import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
@@ -87,8 +91,10 @@ import com.suave.s12.engine.feedback.FeedbackSettings
 import com.suave.s12.engine.feedback.HapticChannel
 import com.suave.s12.engine.feedback.HapticType
 import com.suave.s12.engine.feedback.hapticTypeFromDb
+import com.suave.s12.engine.intent.KeyPosition
 import com.suave.s12.engine.intent.Layout
 import com.suave.s12.engine.intent.ModifierId
+import com.suave.s12.engine.intent.columnCount
 import com.suave.s12.engine.intent.layoutRows
 import com.suave.s12.engine.modifier.ModifierBehavior
 import com.suave.s12.engine.modifier.ModifierState
@@ -100,10 +106,16 @@ import com.suave.s12.layout.LayerContent
 import com.suave.s12.layout.LayerSession
 import com.suave.s12.layout.LayoutLayer
 import com.suave.s12.layout.NamedLayout
+import com.suave.s12.layout.canCycleKeyboardPosition
+import com.suave.s12.layout.coerceDisplayedPosition
 import com.suave.s12.layout.enterOverlay
 import com.suave.s12.layout.leaveOverlay
+import com.suave.s12.layout.nextKeyboardPosition
+import com.suave.s12.layout.parseKeyboardPositions
 import com.suave.s12.layout.parseLayerHeightOverrides
+import com.suave.s12.layout.reachableKeyboardPositions
 import com.suave.s12.layout.selectBaseLayer
+import com.suave.s12.layout.splitColumnRanges
 import com.suave.s12.layout.toggleClipboard
 import com.suave.s12.layout.toggleEmoji
 import com.suave.s12.ui.components.keyboard.ClipboardHistoryScreen
@@ -123,9 +135,10 @@ import java.util.Locale
  *
  * The grid is derived from the layout data ([layoutRows]), not a hardcoded 4x5. Suave is one
  * [BuiltinLayouts] entry; switching [AppSettings.keyboardLayout] selects another.
- * [AppSettings.position] Dual draws two copies that share modifier and layer state; Left, Right,
- * and Center are all full width until the layout has a real (narrower) key width to park.
- * Key width comes from [com.suave.s12.engine.intent.KeyMapping.columnSpan].
+ * [AppSettings.position] Dual draws two full copies that share modifier and layer state. Split
+ * keeps one content slot and cuts the key grid in half, duplicating the middle column when the
+ * count is odd. Left, Right, and Center are all full width until the layout has a real (narrower)
+ * key width to park. Key width comes from [com.suave.s12.engine.intent.KeyMapping.columnSpan].
  */
 @Composable
 fun EngineKeyboardScreen(
@@ -148,6 +161,16 @@ fun EngineKeyboardScreen(
         (clipboardRepository?.allClipboardItems ?: emptyClipboardItems).observeAsState(emptyList())
 
     val canSwitchLayout = BuiltinLayouts.canSwitch(settings?.keyboardLayouts)
+    val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp
+    val reachablePositions =
+        reachableKeyboardPositions(
+            enabled = parseKeyboardPositions(settings?.keyboardPositions ?: DEFAULT_KEYBOARD_POSITIONS),
+            preventCrampedDual = (settings?.preventCrampedDual ?: DEFAULT_PREVENT_CRAMPED_DUAL).toBool(),
+            screenWidthDp = screenWidthDp,
+            columnCount = namedLayout.layout.columnCount(),
+        )
+    val canMoveKeyboard = canCycleKeyboardPosition(reachablePositions)
     val feedbackSettings =
         remember(
             settings?.vibrateOnTap,
@@ -203,6 +226,7 @@ fun EngineKeyboardScreen(
             hideNavigation = (settings?.hideNavigation ?: DEFAULT_HIDE_NAVIGATION).toBool(),
             hideEditing = (settings?.hideEditing ?: DEFAULT_HIDE_EDITING).toBool(),
             canSwitchLayout = canSwitchLayout,
+            canMoveKeyboard = canMoveKeyboard,
         )
     val minSwipeDistancePx = (settings?.minSwipeLength ?: DEFAULT_MIN_SWIPE_LENGTH).toFloat()
     val ignoreBottomPadding = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
@@ -213,9 +237,11 @@ fun EngineKeyboardScreen(
     val keyBorderWidthDp = (settings?.keyBorderWidth ?: DEFAULT_KEY_BORDER_WIDTH) / 10f
     val keyRadiusPercent = settings?.keyRadius ?: DEFAULT_KEY_RADIUS
     val pushupSize = (settings?.pushupSize ?: DEFAULT_PUSHUP_SIZE).dp
-    val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
     val keyboardPosition =
-        KeyboardPosition.entries.getOrElse(settings?.position ?: DEFAULT_POSITION) { KeyboardPosition.Center }
+        coerceDisplayedPosition(
+            KeyboardPosition.entries.getOrElse(settings?.position ?: DEFAULT_POSITION) { KeyboardPosition.Center },
+            reachablePositions,
+        )
     val behaviors =
         remember(
             settings?.ctrlAsModifier,
@@ -295,6 +321,8 @@ fun EngineKeyboardScreen(
     val onToggleHideLettersState = rememberUpdatedState(onToggleHideLetters)
     val onSwitchLanguageState = rememberUpdatedState(onSwitchLanguage)
     val canSwitchLayoutState = rememberUpdatedState(canSwitchLayout)
+    val canMoveKeyboardState = rememberUpdatedState(canMoveKeyboard)
+    val reachablePositionsState = rememberUpdatedState(reachablePositions)
     val onChangePositionState = rememberUpdatedState(onChangePosition)
     val namedLayoutState = rememberUpdatedState(namedLayout)
     val appHost =
@@ -307,7 +335,13 @@ fun EngineKeyboardScreen(
                         onSwitchLanguageState.value()
                     }
                 },
-                onChangePosition = { f -> onChangePositionState.value(f) },
+                onChangePosition = { _ ->
+                    if (canMoveKeyboardState.value) {
+                        onChangePositionState.value { stored ->
+                            nextKeyboardPosition(stored, reachablePositionsState.value)
+                        }
+                    }
+                },
                 onSelectLayer = { requested ->
                     val current = namedLayoutState.value
                     val session = layerSessionState.value
@@ -394,7 +428,7 @@ fun EngineKeyboardScreen(
                 color = MaterialTheme.colorScheme.onError,
             )
         }
-        val renderPanel: @Composable (Modifier) -> Unit = { panelModifier ->
+        val renderPanel: @Composable (Modifier, Boolean) -> Unit = { panelModifier, splitHalves ->
             EngineKeyboardPanel(
                 modifier = panelModifier,
                 namedLayout = namedLayout,
@@ -419,6 +453,7 @@ fun EngineKeyboardScreen(
                 animations = animations,
                 isPasswordField = passwordField,
                 distinctLetterControlColors = distinctLetterControlColors,
+                splitHalves = splitHalves,
             )
         }
         Box(
@@ -451,13 +486,15 @@ fun EngineKeyboardScreen(
                         .padding(bottom = pushupSize)
                         .then(if (backdropEnabled) Modifier.padding(top = 6.dp) else Modifier),
             ) {
-                if (keyboardPosition == KeyboardPosition.Dual) {
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        renderPanel(Modifier.weight(1f))
-                        renderPanel(Modifier.weight(1f))
+                when (keyboardPosition) {
+                    KeyboardPosition.Dual -> {
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            renderPanel(Modifier.weight(1f), false)
+                            renderPanel(Modifier.weight(1f), false)
+                        }
                     }
-                } else {
-                    renderPanel(Modifier.fillMaxWidth())
+                    KeyboardPosition.Split -> renderPanel(Modifier.fillMaxWidth(), true)
+                    else -> renderPanel(Modifier.fillMaxWidth(), false)
                 }
             }
         }
@@ -501,6 +538,7 @@ private fun EngineKeyboardPanel(
     animations: KeyAnimationSettings,
     isPasswordField: Boolean,
     distinctLetterControlColors: Boolean,
+    splitHalves: Boolean,
 ) {
     val grid = namedLayout.gridFor(layer)
     val overrideRows = layerHeightOverrides[layer] ?: 0
@@ -537,6 +575,7 @@ private fun EngineKeyboardPanel(
             animations = animations,
             isPasswordField = isPasswordField,
             distinctLetterControlColors = distinctLetterControlColors,
+            splitHalves = splitHalves,
         )
     }
 }
@@ -629,25 +668,54 @@ private fun LayoutGrid(
     animations: KeyAnimationSettings,
     isPasswordField: Boolean,
     distinctLetterControlColors: Boolean,
+    splitHalves: Boolean,
 ) {
     val rows = remember(layout) { layoutRows(layout) }
+    val splitRanges =
+        remember(layout, splitHalves) {
+            if (splitHalves) splitColumnRanges(layout.columnCount()) else null
+        }
     val shiftActive = modifierState.value.isActive(ModifierId.SHIFT)
     for (row in rows) {
         Row(modifier = Modifier.fillMaxWidth().height(keyHeight)) {
-            for (position in row) {
-                val mapping = layout[position] ?: continue
-                key(position) {
-                    EngineKeyboardKey(
-                        mapping = mapping,
+            val ranges = splitRanges
+            if (ranges == null) {
+                LayoutRowKeys(
+                    positions = row,
+                    layout = layout,
+                    namedLayout = namedLayout,
+                    keyHeight = keyHeight,
+                    modifierState = modifierState,
+                    shiftActive = shiftActive,
+                    onExecute = onExecute,
+                    onFeedback = onFeedback,
+                    minSwipeDistancePx = minSwipeDistancePx,
+                    legendVisibility = legendVisibility,
+                    modifierBehaviors = modifierBehaviors,
+                    keyPadding = keyPadding,
+                    keyPaddingVertical = keyPaddingVertical,
+                    keyBorderWidthDp = keyBorderWidthDp,
+                    keyCornerRadius = keyCornerRadius,
+                    animations = animations,
+                    isPasswordField = isPasswordField,
+                    distinctLetterControlColors = distinctLetterControlColors,
+                    keyPrefix = "",
+                )
+            } else {
+                val (leftCols, rightCols) = ranges
+                Row(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    LayoutRowKeys(
+                        positions = row.filter { it.col in leftCols },
+                        layout = layout,
+                        namedLayout = namedLayout,
+                        keyHeight = keyHeight,
                         modifierState = modifierState,
                         shiftActive = shiftActive,
                         onExecute = onExecute,
                         onFeedback = onFeedback,
-                        shiftMappings = namedLayout.shiftMappings,
                         minSwipeDistancePx = minSwipeDistancePx,
                         legendVisibility = legendVisibility,
                         modifierBehaviors = modifierBehaviors,
-                        keyHeight = keyHeight,
                         keyPadding = keyPadding,
                         keyPaddingVertical = keyPaddingVertical,
                         keyBorderWidthDp = keyBorderWidthDp,
@@ -655,10 +723,82 @@ private fun LayoutGrid(
                         animations = animations,
                         isPasswordField = isPasswordField,
                         distinctLetterControlColors = distinctLetterControlColors,
-                        modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
+                        keyPrefix = "L",
+                    )
+                }
+                Row(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    LayoutRowKeys(
+                        positions = row.filter { it.col in rightCols },
+                        layout = layout,
+                        namedLayout = namedLayout,
+                        keyHeight = keyHeight,
+                        modifierState = modifierState,
+                        shiftActive = shiftActive,
+                        onExecute = onExecute,
+                        onFeedback = onFeedback,
+                        minSwipeDistancePx = minSwipeDistancePx,
+                        legendVisibility = legendVisibility,
+                        modifierBehaviors = modifierBehaviors,
+                        keyPadding = keyPadding,
+                        keyPaddingVertical = keyPaddingVertical,
+                        keyBorderWidthDp = keyBorderWidthDp,
+                        keyCornerRadius = keyCornerRadius,
+                        animations = animations,
+                        isPasswordField = isPasswordField,
+                        distinctLetterControlColors = distinctLetterControlColors,
+                        keyPrefix = "R",
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun RowScope.LayoutRowKeys(
+    positions: List<KeyPosition>,
+    layout: Layout,
+    namedLayout: NamedLayout,
+    keyHeight: Dp,
+    modifierState: MutableState<ModifierState>,
+    shiftActive: Boolean,
+    onExecute: (SemanticAction) -> Unit,
+    onFeedback: (FeedbackEvent) -> Unit,
+    minSwipeDistancePx: Float,
+    legendVisibility: LegendVisibility,
+    modifierBehaviors: Map<ModifierId, ModifierBehavior>,
+    keyPadding: Int,
+    keyPaddingVertical: Int,
+    keyBorderWidthDp: Float,
+    keyCornerRadius: Dp,
+    animations: KeyAnimationSettings,
+    isPasswordField: Boolean,
+    distinctLetterControlColors: Boolean,
+    keyPrefix: String,
+) {
+    for (position in positions) {
+        val mapping = layout[position] ?: continue
+        key(keyPrefix, position) {
+            EngineKeyboardKey(
+                mapping = mapping,
+                modifierState = modifierState,
+                shiftActive = shiftActive,
+                onExecute = onExecute,
+                onFeedback = onFeedback,
+                shiftMappings = namedLayout.shiftMappings,
+                minSwipeDistancePx = minSwipeDistancePx,
+                legendVisibility = legendVisibility,
+                modifierBehaviors = modifierBehaviors,
+                keyHeight = keyHeight,
+                keyPadding = keyPadding,
+                keyPaddingVertical = keyPaddingVertical,
+                keyBorderWidthDp = keyBorderWidthDp,
+                keyCornerRadius = keyCornerRadius,
+                animations = animations,
+                isPasswordField = isPasswordField,
+                distinctLetterControlColors = distinctLetterControlColors,
+                modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
+            )
         }
     }
 }

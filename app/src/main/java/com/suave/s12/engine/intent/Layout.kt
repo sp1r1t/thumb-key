@@ -56,6 +56,13 @@ fun layoutRows(layout: Layout): List<List<KeyPosition>> =
         .toSortedMap()
         .map { (_, positions) -> positions.sortedBy { it.col } }
 
+/** How many grid columns [this] occupies, counting [KeyMapping.columnSpan]. Empty is 1. */
+fun Layout.columnCount(): Int =
+    maxOfOrNull { (pos, mapping) -> pos.col + mapping.columnSpan } ?: 1
+
+/** Keys whose origin column sits in [columns]. Span is ignored: Enter at col 3 stays with 3. */
+fun Layout.filterColumns(columns: IntRange): Layout = filterKeys { it.col in columns }
+
 /** The last row of [layout], remapped to row 0 so it can sit under a layer's content slot. */
 fun Layout.bottomRow(): Layout {
     val lastRow = layoutRows(this).lastOrNull() ?: return emptyMap()

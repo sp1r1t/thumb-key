@@ -5,10 +5,11 @@ import org.junit.Test
 
 class KeyboardPositionTest {
     @Test
-    fun `nextVisible toggles Center and Dual and skips the invisible Left Right stops`() {
-        assertEquals(KeyboardPosition.Dual, KeyboardPosition.Center.nextVisible())
-        assertEquals(KeyboardPosition.Center, KeyboardPosition.Dual.nextVisible())
-        assertEquals(KeyboardPosition.Dual, KeyboardPosition.Left.nextVisible())
-        assertEquals(KeyboardPosition.Dual, KeyboardPosition.Right.nextVisible())
+    fun `Split is appended so existing ordinals stay stable`() {
+        assertEquals(0, KeyboardPosition.Center.ordinal)
+        assertEquals(1, KeyboardPosition.Right.ordinal)
+        assertEquals(2, KeyboardPosition.Left.ordinal)
+        assertEquals(3, KeyboardPosition.Dual.ordinal)
+        assertEquals(4, KeyboardPosition.Split.ordinal)
     }
 }

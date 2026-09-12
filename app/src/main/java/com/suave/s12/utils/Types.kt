@@ -379,14 +379,8 @@ enum class KeyboardPosition(
     Right(R.string.right),
     Left(R.string.left),
     Dual(R.string.dual),
+    Split(R.string.split),
 }
-
-/**
- * Left and Right still render as full-width (same as Center), so cycling through them looks
- * like a no-op. Dual is the only other visible arrangement: two copies of the keyboard.
- */
-fun KeyboardPosition.nextVisible(): KeyboardPosition =
-    if (this == KeyboardPosition.Dual) KeyboardPosition.Center else KeyboardPosition.Dual
 
 enum class SwipeNWay {
     EIGHT_WAY,

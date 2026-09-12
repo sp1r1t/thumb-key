@@ -173,6 +173,20 @@ class KeyLegendTest {
     }
 
     @Test
+    fun `move keyboard legend is hidden when fewer than two positions are reachable`() {
+        val noMove = LegendVisibility(canMoveKeyboard = false)
+        assertNull(legend(KeyIntent.Command(CommandId.MOVE_KEYBOARD), noMove))
+        assertEquals(
+            KeyLegend.Icon(Icons.Outlined.SwapHoriz),
+            legend(KeyIntent.Command(CommandId.SWITCH_LANGUAGE), noMove),
+        )
+        assertEquals(
+            KeyLegend.Icon(Icons.Outlined.ViewColumn),
+            legend(KeyIntent.Command(CommandId.MOVE_KEYBOARD), shown),
+        )
+    }
+
+    @Test
     fun `center legends use Thumb-Key primary large, swipes use secondary small`() {
         assertEquals(ColorVariant.PRIMARY, legendColorVariant(isCenter = true))
         assertEquals(ColorVariant.SECONDARY, legendColorVariant(isCenter = false))
