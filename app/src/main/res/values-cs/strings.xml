@@ -26,7 +26,7 @@
     <string name="follow_me_mastodon">Sledujte mě na Mastodonu</string>
     <string name="source_code">Zdrojový kód</string>
     <string name="source_code_subtitle">Thumb-Key je svobodný open-source software, licencovaný pod GNU Affero General Public License v3.0</string>
-    <string name="look_and_feel">Vzhled a odezva</string>
+    <string name="appearance">Vzhled a odezva</string>
     <string name="behavior">Chování</string>
     <string name="layouts">Rozložení</string>
 </resources>

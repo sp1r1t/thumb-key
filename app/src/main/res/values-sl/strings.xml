@@ -33,7 +33,7 @@
     <string name="open_source">Odprta koda</string>
     <string name="source_code">Izvorna koda</string>
     <string name="source_code_subtitle">Thumb-Key je prosto (libre) odprtokodno programje z licenco GNU Affero General Public License v3.0</string>
-    <string name="look_and_feel">Izgled</string>
+    <string name="appearance">Izgled</string>
     <string name="behavior">Obnašanje</string>
     <string name="layouts">Razporeditve</string>
     <string name="theme">Barvni način</string>

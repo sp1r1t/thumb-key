@@ -348,7 +348,7 @@ data class LayoutsUpdate(
     val keyboardLayouts: String,
 )
 
-data class LookAndFeelUpdate(
+data class AppearanceUpdate(
     val id: Int,
     @ColumnInfo(name = "theme")
     val theme: Int,
@@ -463,7 +463,7 @@ interface AppSettingsDao {
     fun updateLayouts(layouts: LayoutsUpdate)
 
     @Update(entity = AppSettings::class)
-    fun updateLookAndFeel(lookAndFeel: LookAndFeelUpdate)
+    fun updateAppearance(appearance: AppearanceUpdate)
 
     @Update(entity = AppSettings::class)
     fun updateBehavior(behavior: BehaviorUpdate)
@@ -501,8 +501,8 @@ class AppSettingsRepository(
     }
 
     @WorkerThread
-    fun updateLookAndFeel(lookAndFeel: LookAndFeelUpdate) {
-        appSettingsDao.updateLookAndFeel(lookAndFeel)
+    fun updateAppearance(appearance: AppearanceUpdate) {
+        appSettingsDao.updateAppearance(appearance)
     }
 
     @WorkerThread
@@ -670,9 +670,9 @@ class AppSettingsViewModel(
             repository.updateLayouts(layouts)
         }
 
-    fun updateLookAndFeel(lookAndFeel: LookAndFeelUpdate) =
+    fun updateAppearance(appearance: AppearanceUpdate) =
         viewModelScope.launch {
-            repository.updateLookAndFeel(lookAndFeel)
+            repository.updateAppearance(appearance)
         }
 
     fun updateBehavior(behavior: BehaviorUpdate) =

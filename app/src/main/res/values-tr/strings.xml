@@ -22,7 +22,7 @@
     <string name="follow_me_mastodon">Beni Mastodon\'dan takip edin</string>
     <string name="open_source">Açık kaynak</string>
     <string name="source_code">Kaynak kodu</string>
-    <string name="look_and_feel">Görünüm</string>
+    <string name="appearance">Görünüm</string>
     <string name="theme_color">Tema Rengi</string>
     <string name="vibrate_on_tap">Titret</string>
     <string name="play_sound_on_tap">Ses çal</string>

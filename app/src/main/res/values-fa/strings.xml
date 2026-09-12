@@ -28,7 +28,7 @@
     <string name="open_source">متن باز</string>
     <string name="source_code">سورس کد</string>
     <string name="source_code_subtitle">Thumb-Key یک نرم افزار آزاد متن باز، تحت مجوز GNU Affero General Public License v3.0 است</string>
-    <string name="look_and_feel">ظاهر</string>
+    <string name="appearance">ظاهر</string>
     <string name="behavior">رفتار</string>
     <string name="layouts">لایه ها</string>
     <string name="theme">تم</string>

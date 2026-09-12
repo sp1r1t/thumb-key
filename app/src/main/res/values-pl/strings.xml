@@ -28,7 +28,7 @@
     <string name="follow_me_mastodon">Obserwuj mnie na Mastodonie</string>
     <string name="source_code">Kod źródłowy</string>
     <string name="source_code_subtitle">Thumb-Key to wolne otwarto źródłowe oprogramowanie, które używa licencji GNU Affero General Public License v3.0</string>
-    <string name="look_and_feel">Wygląd</string>
+    <string name="appearance">Wygląd</string>
     <string name="behavior">Zachowanie</string>
     <string name="layouts">Układy</string>
     <string name="theme">Motyw</string>

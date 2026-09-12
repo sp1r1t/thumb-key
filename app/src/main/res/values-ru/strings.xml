@@ -32,7 +32,7 @@
     <string name="open_source">Открытый исходный код</string>
     <string name="source_code">Исходный код</string>
     <string name="source_code_subtitle">Thumb-Key — свободное программное обеспечение с открытым исходным кодом, лицензированное по GNU Affero General Public License v3.0</string>
-    <string name="look_and_feel">Внешний вид</string>
+    <string name="appearance">Внешний вид</string>
     <string name="behavior">Поведение</string>
     <string name="layouts">Раскладки</string>
     <string name="theme">Тема</string>

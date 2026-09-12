@@ -66,7 +66,7 @@
     <string name="database_restored">データベースが復元されました。</string>
     <string name="follow_me_mastodon">Mastodonでフォローする</string>
     <string name="open_source">オープンソース</string>
-    <string name="look_and_feel">外観と操作感</string>
+    <string name="appearance">外観と操作感</string>
     <string name="behavior">動作</string>
     <string name="layouts">レイアウト</string>
     <string name="source_code_subtitle">Thumb-KeyはGNU Affero General Public License v3.0の下でライセンスされた自由でオープンソースのソフトウェアです</string>

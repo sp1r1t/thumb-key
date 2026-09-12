@@ -84,14 +84,14 @@ fun SettingsScreen(
                     }
 
                     Preference(
-                        title = { Text(stringResource(R.string.look_and_feel)) },
+                        title = { Text(stringResource(R.string.appearance)) },
                         icon = {
                             Icon(
                                 imageVector = Icons.Outlined.Palette,
                                 contentDescription = null,
                             )
                         },
-                        onClick = { navController.navigate("lookAndFeel") },
+                        onClick = { navController.navigate("appearance") },
                     )
                     Preference(
                         title = { Text(stringResource(R.string.behavior)) },

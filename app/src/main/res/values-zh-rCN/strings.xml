@@ -32,7 +32,7 @@
     <string name="open_source">开源</string>
     <string name="source_code">源码</string>
     <string name="source_code_subtitle">Thumb-Key是一个自由开源软件, 使用GNU Affero General Public License v3.0协议传播</string>
-    <string name="look_and_feel">外观和体验</string>
+    <string name="appearance">外观和体验</string>
     <string name="behavior">行为</string>
     <string name="layouts">布局</string>
     <string name="theme">主题</string>

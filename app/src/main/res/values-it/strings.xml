@@ -32,7 +32,7 @@
     <string name="open_source">Open-source</string>
     <string name="source_code">Codice sorgente</string>
     <string name="source_code_subtitle">Thumb-Key è un software libero e open source, sotto licenza GNU Affero General Public License v3.0</string>
-    <string name="look_and_feel">Aspetto</string>
+    <string name="appearance">Aspetto</string>
     <string name="behavior">Comportamento</string>
     <string name="layouts">Schemi tastiera</string>
     <string name="theme">Tema</string>

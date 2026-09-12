@@ -1,4 +1,4 @@
-package com.suave.s12.ui.components.settings.lookandfeel
+package com.suave.s12.ui.components.settings.appearance
 
 import android.util.Log
 import androidx.compose.foundation.background
@@ -92,7 +92,7 @@ import com.suave.s12.db.DEFAULT_THEME_COLOR
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_SLIDE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_TAP
-import com.suave.s12.db.LookAndFeelUpdate
+import com.suave.s12.db.AppearanceUpdate
 import com.suave.s12.layout.BuiltinLayouts
 import com.suave.s12.layout.DEFAULT_LAYER_HEIGHTS
 import com.suave.s12.layout.LayoutLayer
@@ -124,11 +124,11 @@ import me.zhanghai.compose.preference.SwitchPreference
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LookAndFeelScreen(
+fun AppearanceScreen(
     navController: NavController,
     appSettingsViewModel: AppSettingsViewModel,
 ) {
-    Log.d(TAG, "Got to lookAndFeel activity")
+    Log.d(TAG, "Got to appearance activity")
 
     val resources = LocalResources.current
     val settings by appSettingsViewModel.appSettings.observeAsState()
@@ -167,9 +167,9 @@ fun LookAndFeelScreen(
     val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
     val layerHeightOverrides = parseLayerHeightOverrides(layerHeightsState)
 
-    fun updateLookAndFeel() {
-        appSettingsViewModel.updateLookAndFeel(
-            LookAndFeelUpdate(
+    fun updateAppearance() {
+        appSettingsViewModel.updateAppearance(
+            AppearanceUpdate(
                 id = 1,
                 vibrateOnTap = vibrateOnTapState.toInt(),
                 vibrateOnSlide = vibrateOnSlideState.toInt(),
@@ -209,7 +209,7 @@ fun LookAndFeelScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            SimpleTopAppBar(text = stringResource(R.string.look_and_feel), navController = navController)
+            SimpleTopAppBar(text = stringResource(R.string.appearance), navController = navController)
         },
         content = { padding ->
             Column(
@@ -224,14 +224,14 @@ fun LookAndFeelScreen(
                     SettingsSection(title = stringResource(R.string.theme)) {
                     SettingRow(onReset = {
                         themeState = ThemeMode.entries[DEFAULT_THEME]
-                        updateLookAndFeel()
+                        updateAppearance()
                     }) {
                         ListPreference(
                             type = ListPreferenceType.DROPDOWN_MENU,
                             value = themeState,
                             onValueChange = {
                                 themeState = it
-                                updateLookAndFeel()
+                                updateAppearance()
                             },
                             values = ThemeMode.entries,
                             valueToText = {
@@ -254,14 +254,14 @@ fun LookAndFeelScreen(
 
                     SettingRow(onReset = {
                         themeColorState = ThemeColor.entries[DEFAULT_THEME_COLOR]
-                        updateLookAndFeel()
+                        updateAppearance()
                     }) {
                         ListPreference(
                             type = ListPreferenceType.DROPDOWN_MENU,
                             value = themeColorState,
                             onValueChange = {
                                 themeColorState = it
-                                updateLookAndFeel()
+                                updateAppearance()
                             },
                             values = ThemeColor.entries,
                             valueToText = {
@@ -289,7 +289,7 @@ fun LookAndFeelScreen(
                         value = hideLettersState,
                         onValueChange = {
                             hideLettersState = it
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                         title = R.string.hide_letters,
                         onSummary = R.string.hide_letters_on,
@@ -301,7 +301,7 @@ fun LookAndFeelScreen(
                         value = hideSymbolsState,
                         onValueChange = {
                             hideSymbolsState = it
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                         title = R.string.hide_symbols,
                         onSummary = R.string.hide_symbols_on,
@@ -312,7 +312,7 @@ fun LookAndFeelScreen(
                         value = hideNumbersState,
                         onValueChange = {
                             hideNumbersState = it
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                         title = R.string.hide_numbers,
                         onSummary = R.string.hide_numbers_on,
@@ -323,7 +323,7 @@ fun LookAndFeelScreen(
                         value = hideModifiersState,
                         onValueChange = {
                             hideModifiersState = it
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                         title = R.string.hide_modifiers,
                         onSummary = R.string.hide_modifiers_on,
@@ -334,7 +334,7 @@ fun LookAndFeelScreen(
                         value = hideLayerSwitchesState,
                         onValueChange = {
                             hideLayerSwitchesState = it
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                         title = R.string.hide_layer_switches,
                         onSummary = R.string.hide_layer_switches_on,
@@ -345,7 +345,7 @@ fun LookAndFeelScreen(
                         value = hideSpecialsState,
                         onValueChange = {
                             hideSpecialsState = it
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                         title = R.string.hide_specials,
                         onSummary = R.string.hide_specials_on,
@@ -356,7 +356,7 @@ fun LookAndFeelScreen(
                         value = hideNavigationState,
                         onValueChange = {
                             hideNavigationState = it
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                         title = R.string.hide_navigation,
                         onSummary = R.string.hide_navigation_on,
@@ -367,7 +367,7 @@ fun LookAndFeelScreen(
                         value = hideEditingState,
                         onValueChange = {
                             hideEditingState = it
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                         title = R.string.hide_editing,
                         onSummary = R.string.hide_editing_on,
@@ -378,7 +378,7 @@ fun LookAndFeelScreen(
                         value = hideKeyCategoriesState,
                         onValueChange = {
                             hideKeyCategoriesState = it
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                     )
                     }
@@ -390,7 +390,7 @@ fun LookAndFeelScreen(
                             value = backdropEnabledState,
                             onValueChange = {
                                 backdropEnabledState = it
-                                updateLookAndFeel()
+                                updateAppearance()
                             },
                             title = {
                                 Text(stringResource(R.string.backdrop))
@@ -412,7 +412,7 @@ fun LookAndFeelScreen(
                             value = ignoreBottomPaddingState,
                             onValueChange = {
                                 ignoreBottomPaddingState = it
-                                updateLookAndFeel()
+                                updateAppearance()
                             },
                             title = {
                                 Text(stringResource(R.string.ignore_bottom_padding))
@@ -440,14 +440,14 @@ fun LookAndFeelScreen(
                     SettingRow(
                         onReset = {
                             pushupSizeState = DEFAULT_PUSHUP_SIZE
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                     ) {
                         IntStepperPreference(
                             value = pushupSizeState,
                             onValueChange = {
                                 pushupSizeState = it
-                                updateLookAndFeel()
+                                updateAppearance()
                             },
                             valueRange = 0..250,
                             vibrateOnRepeat = vibrateOnHoldRepeatState,
@@ -479,7 +479,7 @@ fun LookAndFeelScreen(
                         value = disableFullscreenEditorState,
                         onValueChange = {
                             disableFullscreenEditorState = it
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                         title = {
                             SettingTitle(
@@ -511,14 +511,14 @@ fun LookAndFeelScreen(
                     SettingRow(
                         onReset = {
                             keyHeightState = DEFAULT_KEY_HEIGHT
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                     ) {
                         IntStepperPreference(
                             value = keyHeightState,
                             onValueChange = {
                                 keyHeightState = it
-                                updateLookAndFeel()
+                                updateAppearance()
                             },
                             valueRange = 10..200,
                             vibrateOnRepeat = vibrateOnHoldRepeatState,
@@ -540,14 +540,14 @@ fun LookAndFeelScreen(
                     SettingRow(
                         onReset = {
                             keyPaddingState = DEFAULT_KEY_PADDING
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                     ) {
                         IntStepperPreference(
                             value = keyPaddingState,
                             onValueChange = {
                                 keyPaddingState = it
-                                updateLookAndFeel()
+                                updateAppearance()
                             },
                             valueRange = 0..10,
                             vibrateOnRepeat = vibrateOnHoldRepeatState,
@@ -581,14 +581,14 @@ fun LookAndFeelScreen(
                     SettingRow(
                         onReset = {
                             keyPaddingVerticalState = DEFAULT_KEY_PADDING_VERTICAL
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                     ) {
                         IntStepperPreference(
                             value = keyPaddingVerticalState,
                             onValueChange = {
                                 keyPaddingVerticalState = it
-                                updateLookAndFeel()
+                                updateAppearance()
                             },
                             valueRange = 0..10,
                             vibrateOnRepeat = vibrateOnHoldRepeatState,
@@ -622,14 +622,14 @@ fun LookAndFeelScreen(
                     SettingRow(
                         onReset = {
                             keyBorderWidthState = DEFAULT_KEY_BORDER_WIDTH
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                     ) {
                         IntStepperPreference(
                             value = keyBorderWidthState,
                             onValueChange = {
                                 keyBorderWidthState = it
-                                updateLookAndFeel()
+                                updateAppearance()
                             },
                             valueRange = 0..50,
                             vibrateOnRepeat = vibrateOnHoldRepeatState,
@@ -663,14 +663,14 @@ fun LookAndFeelScreen(
                     SettingRow(
                         onReset = {
                             keyRadiusState = DEFAULT_KEY_RADIUS
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                     ) {
                         IntStepperPreference(
                             value = keyRadiusState,
                             onValueChange = {
                                 keyRadiusState = it
-                                updateLookAndFeel()
+                                updateAppearance()
                             },
                             valueRange = 0..100,
                             vibrateOnRepeat = vibrateOnHoldRepeatState,
@@ -708,7 +708,7 @@ fun LookAndFeelScreen(
                                     vibrateOnRepeat = vibrateOnHoldRepeatState,
                                     onOverridesChange = { next ->
                                         layerHeightsState = formatLayerHeightOverrides(next)
-                                        updateLookAndFeel()
+                                        updateAppearance()
                                     },
                                 )
                             }
@@ -721,7 +721,7 @@ fun LookAndFeelScreen(
                         value = vibrateOnTapState,
                         onValueChange = {
                             vibrateOnTapState = it
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                         title = {
                             SettingTitle(
@@ -743,7 +743,7 @@ fun LookAndFeelScreen(
                         value = vibrateOnSlideState,
                         onValueChange = {
                             vibrateOnSlideState = it
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                         title = {
                             SettingTitle(
@@ -769,7 +769,7 @@ fun LookAndFeelScreen(
                         value = vibrateOnHoldRepeatState,
                         onValueChange = {
                             vibrateOnHoldRepeatState = it
-                            updateLookAndFeel()
+                            updateAppearance()
                         },
                         title = {
                             SettingTitle(
@@ -803,7 +803,7 @@ fun LookAndFeelScreen(
                             value = animationPressHighlightState,
                             onValueChange = {
                                 animationPressHighlightState = it
-                                updateLookAndFeel()
+                                updateAppearance()
                             },
                             title = {
                                 SettingTitle(
@@ -833,7 +833,7 @@ fun LookAndFeelScreen(
                             value = animationReleaseFlashState,
                             onValueChange = {
                                 animationReleaseFlashState = it
-                                updateLookAndFeel()
+                                updateAppearance()
                             },
                             title = {
                                 SettingTitle(
@@ -863,7 +863,7 @@ fun LookAndFeelScreen(
                             value = animationLetterDropState,
                             onValueChange = {
                                 animationLetterDropState = it
-                                updateLookAndFeel()
+                                updateAppearance()
                             },
                             title = {
                                 SettingTitle(

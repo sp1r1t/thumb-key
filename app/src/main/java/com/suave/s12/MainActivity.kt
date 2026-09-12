@@ -29,7 +29,7 @@ import com.suave.s12.ui.components.settings.about.AboutScreen
 import com.suave.s12.ui.components.settings.backupandrestore.BackupAndRestoreScreen
 import com.suave.s12.ui.components.settings.behavior.BehaviorScreen
 import com.suave.s12.ui.components.settings.clipboard.ClipboardSettingsScreen
-import com.suave.s12.ui.components.settings.lookandfeel.LookAndFeelScreen
+import com.suave.s12.ui.components.settings.appearance.AppearanceScreen
 import com.suave.s12.ui.components.settings.other.OtherSettingsScreen
 import com.suave.s12.ui.components.setup.SetupScreen
 import com.suave.s12.ui.theme.ThumbkeyTheme
@@ -145,8 +145,8 @@ class MainActivity : AppCompatActivity() {
                             thumbkeySelected = thumbkeySelected,
                         )
                     }
-                    composable(route = "lookAndFeel") {
-                        LookAndFeelScreen(
+                    composable(route = "appearance") {
+                        AppearanceScreen(
                             navController = navController,
                             appSettingsViewModel = appSettingsViewModel,
                         )
