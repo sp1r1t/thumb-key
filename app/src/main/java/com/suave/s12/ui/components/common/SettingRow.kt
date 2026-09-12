@@ -2,10 +2,13 @@ package com.suave.s12.ui.components.common
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.RestartAlt
@@ -27,10 +30,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.suave.s12.R
+import dev.jeziellago.compose.markdowntext.MarkdownText
 
 /**
  * Title slot for a preference row. Optional [infoText] places a compact "i" next to the title
  * (not a trailing row control) and opens a bottom sheet with the longer rationale.
+ * [infoText] may use Markdown (headings, lists, emphasis).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +66,19 @@ fun SettingTitle(
             sheetState = rememberModalBottomSheetState(),
             onDismissRequest = { showInfo = false },
         ) {
-            Text(infoText, modifier = Modifier.padding(16.dp))
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(bottom = 24.dp),
+            ) {
+                MarkdownText(
+                    markdown = infoText,
+                    linkColor = MaterialTheme.colorScheme.primary,
+                )
+            }
         }
     }
 }

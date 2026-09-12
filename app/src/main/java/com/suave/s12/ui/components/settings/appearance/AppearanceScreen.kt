@@ -9,7 +9,6 @@ import androidx.compose.material.icons.outlined.BorderBottom
 import androidx.compose.material.icons.outlined.BorderOuter
 import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.ContentCopy
-import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.material.icons.outlined.Crop75
 import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.FormatColorFill
@@ -23,7 +22,6 @@ import androidx.compose.material.icons.outlined.KeyboardCapslock
 import androidx.compose.material.icons.outlined.KeyboardControlKey
 import androidx.compose.material.icons.outlined.Layers
 import androidx.compose.material.icons.outlined.LinearScale
-import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.Padding
 import androidx.compose.material.icons.outlined.Palette
@@ -74,8 +72,6 @@ import com.suave.s12.db.DEFAULT_HIDE_NUMBERS
 import com.suave.s12.db.DEFAULT_HIDE_SPECIALS
 import com.suave.s12.db.DEFAULT_HIDE_SYMBOLS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
-import com.suave.s12.db.DEFAULT_INLINE_SUGGESTIONS
-import com.suave.s12.db.DEFAULT_INLINE_SUGGESTION_HEIGHT
 import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
 import com.suave.s12.db.DEFAULT_KEY_PADDING
@@ -84,11 +80,6 @@ import com.suave.s12.db.DEFAULT_KEY_RADIUS
 import com.suave.s12.db.DEFAULT_KEYBOARD_POSITIONS
 import com.suave.s12.db.DEFAULT_PREVENT_CRAMPED_DUAL
 import com.suave.s12.db.DEFAULT_PREVENT_NEEDLESS_SPLIT
-import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_COPY
-import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_CUT
-import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH
-import com.suave.s12.db.MAX_INLINE_SUGGESTION_HEIGHT
-import com.suave.s12.db.MIN_INLINE_SUGGESTION_HEIGHT
 import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_THEME
 import com.suave.s12.db.DEFAULT_THEME_COLOR
@@ -198,16 +189,6 @@ fun AppearanceScreen(
         (settings?.preventCrampedDual ?: DEFAULT_PREVENT_CRAMPED_DUAL).toBool()
     var preventNeedlessSplitState =
         (settings?.preventNeedlessSplit ?: DEFAULT_PREVENT_NEEDLESS_SPLIT).toBool()
-    var showToastOnSwitchState =
-        (settings?.showToastOnLayoutSwitch ?: DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH).toBool()
-    var showToastOnCopyState =
-        (settings?.showToastOnCopy ?: DEFAULT_SHOW_TOAST_ON_COPY).toBool()
-    var showToastOnCutState =
-        (settings?.showToastOnCut ?: DEFAULT_SHOW_TOAST_ON_CUT).toBool()
-    var inlineSuggestionsState =
-        (settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()
-    var inlineSuggestionHeightState =
-        settings?.inlineSuggestionHeight ?: DEFAULT_INLINE_SUGGESTION_HEIGHT
     val namedLayout = BuiltinLayouts.byIndex(settings?.keyboardLayout ?: 0)
     val layerHeightOverrides = parseLayerHeightOverrides(layerHeightsState)
 
@@ -253,11 +234,6 @@ fun AppearanceScreen(
                 keyboardPositions = keyboardPositionsState,
                 preventCrampedDual = preventCrampedDualState.toInt(),
                 preventNeedlessSplit = preventNeedlessSplitState.toInt(),
-                showToastOnLayoutSwitch = showToastOnSwitchState.toInt(),
-                showToastOnCopy = showToastOnCopyState.toInt(),
-                showToastOnCut = showToastOnCutState.toInt(),
-                inlineSuggestions = inlineSuggestionsState.toInt(),
-                inlineSuggestionHeight = inlineSuggestionHeightState,
             ),
         )
     }
@@ -577,172 +553,6 @@ fun AppearanceScreen(
                             updateAppearance()
                         },
                     )
-                    }
-
-                    SettingsSection(title = stringResource(R.string.settings_section_notices)) {
-                        SwitchPreference(
-                            value = showToastOnSwitchState,
-                            onValueChange = {
-                                showToastOnSwitchState = it
-                                updateAppearance()
-                            },
-                            title = {
-                                SettingTitle(
-                                    text = stringResource(R.string.show_toast_on_switch),
-                                    infoText = stringResource(R.string.show_toast_on_switch_info),
-                                )
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        if (showToastOnSwitchState) {
-                                            R.string.show_toast_on_switch_on
-                                        } else {
-                                            R.string.show_toast_on_switch_off
-                                        },
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Notifications,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                        SwitchPreference(
-                            value = showToastOnCopyState,
-                            onValueChange = {
-                                showToastOnCopyState = it
-                                updateAppearance()
-                            },
-                            title = {
-                                SettingTitle(
-                                    text = stringResource(R.string.show_toast_on_copy),
-                                    infoText = stringResource(R.string.show_toast_on_copy_info),
-                                )
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        if (showToastOnCopyState) {
-                                            R.string.show_toast_on_copy_on
-                                        } else {
-                                            R.string.show_toast_on_copy_off
-                                        },
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.ContentCopy,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                        SwitchPreference(
-                            value = showToastOnCutState,
-                            onValueChange = {
-                                showToastOnCutState = it
-                                updateAppearance()
-                            },
-                            title = {
-                                SettingTitle(
-                                    text = stringResource(R.string.show_toast_on_cut),
-                                    infoText = stringResource(R.string.show_toast_on_cut_info),
-                                )
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        if (showToastOnCutState) {
-                                            R.string.show_toast_on_cut_on
-                                        } else {
-                                            R.string.show_toast_on_cut_off
-                                        },
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.ContentCut,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
-
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-                    SettingsSection(title = stringResource(R.string.settings_section_suggestions)) {
-                    SettingRow {
-                        SwitchPreference(
-                            value = inlineSuggestionsState,
-                            onValueChange = {
-                                inlineSuggestionsState = it
-                                updateAppearance()
-                            },
-                            title = {
-                                SettingTitle(
-                                    text = stringResource(R.string.inline_suggestions),
-                                    infoText = stringResource(R.string.inline_suggestions_info),
-                                )
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        if (inlineSuggestionsState) {
-                                            R.string.inline_suggestions_on
-                                        } else {
-                                            R.string.inline_suggestions_off
-                                        },
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.AutoAwesome,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
-                    if (inlineSuggestionsState) {
-                    SettingRow(
-                        onReset = {
-                            inlineSuggestionHeightState = DEFAULT_INLINE_SUGGESTION_HEIGHT
-                            updateAppearance()
-                        },
-                    ) {
-                        IntStepperPreference(
-                            value = inlineSuggestionHeightState,
-                            onValueChange = {
-                                inlineSuggestionHeightState = it
-                                updateAppearance()
-                            },
-                            valueRange = MIN_INLINE_SUGGESTION_HEIGHT..MAX_INLINE_SUGGESTION_HEIGHT,
-                            vibrateOnRepeat = vibrateOnHoldRepeatState,
-                            repeatHapticType = vibrateHoldRepeatTypeState,
-                            title = {
-                                SettingTitle(text = stringResource(R.string.inline_suggestion_height))
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        R.string.inline_suggestion_height_summary,
-                                        inlineSuggestionHeightState,
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Height,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
-                    }
-                    }
                     }
 
                     SettingsSection(title = stringResource(R.string.settings_section_keys)) {

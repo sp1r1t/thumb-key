@@ -33,16 +33,18 @@
     <string name="show_toast_on_switch">Layoutwechsel</string>
     <string name="show_toast_on_switch_on">An - ein Hinweis nennt Layout oder Position nach dem Wechsel</string>
     <string name="show_toast_on_switch_off">Aus - Layout- oder Positionswechsel bleiben still</string>
-    <string name="show_toast_on_switch_info">Der Hinweis liegt über den Tasten und ändert die Tastaturhöhe nicht. Er nennt das Layout nach Sprache wechseln, oder die Position nach Tastatur verschieben.</string>
+    <string name="show_toast_on_switch_info">Ein kurzer Hinweis auf der Tastatur nennt das Layout nach Sprache wechseln, oder die Position nach Tastatur verschieben.</string>
     <string name="settings_section_notices">Hinweise</string>
     <string name="show_toast_on_copy">Kopieren</string>
     <string name="show_toast_on_copy_on">An - ein Hinweis bestätigt nach erfolgreichem Kopieren</string>
     <string name="show_toast_on_copy_off">Aus - Kopieren bleibt still</string>
-    <string name="show_toast_on_copy_info">Der Hinweis liegt über den Tasten und ändert die Tastaturhöhe nicht. Er erscheint nur, wenn Kopieren gelingt. Editoren, die Kopieren selbst erledigen, etwa manche Terminals, zeigen ihn nicht.</string>
+    <string name="show_toast_on_copy_info">Ein kurzer Hinweis auf der Tastatur erscheint nur, wenn Kopieren gelingt. Mit privater Zwischenablage steht ein gedämpftes \"private\" neben Kopieren. Editoren, die Kopieren selbst erledigen, etwa manche Terminals, zeigen ihn nicht.</string>
     <string name="show_toast_on_cut">Ausschneiden</string>
     <string name="show_toast_on_cut_on">An - ein Hinweis bestätigt nach erfolgreichem Ausschneiden</string>
     <string name="show_toast_on_cut_off">Aus - Ausschneiden bleibt still</string>
-    <string name="show_toast_on_cut_info">Der Hinweis liegt über den Tasten und ändert die Tastaturhöhe nicht. Er erscheint nur, wenn Ausschneiden gelingt. Editoren, die Ausschneiden selbst erledigen, etwa manche Terminals, zeigen ihn nicht.</string>
+    <string name="show_toast_on_cut_info">Ein kurzer Hinweis auf der Tastatur erscheint nur, wenn Ausschneiden gelingt. Mit privater Zwischenablage steht ein gedämpftes \"private\" neben Ausschneiden. Editoren, die Ausschneiden selbst erledigen, etwa manche Terminals, zeigen ihn nicht.</string>
+    <string name="notice_sample">Beispiel</string>
+    <string name="notice_sample_need_keyboard">Kein Auftritt ohne Bühne - wähle Suave als Tastatur und versuch es nochmal</string>
     <string name="about">Über</string>
     <string name="whats_new">Neuigkeiten</string>
     <string name="version">Version %1$s</string>
@@ -64,7 +66,8 @@
     <string name="inline_suggestions">Autofill-Vorschläge</string>
     <string name="inline_suggestions_on">An - Bitwarden und andere Autofill-Dienste können Chips über der Tastatur zeigen</string>
     <string name="inline_suggestions_off">Aus - Autofill bleibt im System-Dropdown statt auf dieser Tastatur</string>
-    <string name="inline_suggestions_info">Das nutzt Android-Autofill. Setze Bitwarden in den Systemeinstellungen als Autofill-Dienst, und in Bitwarden Autofill-Vorschläge auf Inline (nicht Popup). Popup und Tastatur-Chips schließen sich dort aus. Chrome braucht außerdem Autofill using another service. Tippe einen Chip zum Ausfüllen. Wisch nach rechts auf der Leertaste füllt den obersten (nicht-Logo-) Chip. Die Tastatur sieht das Passwort nie. Debug af=y [6] heißt: dieses Feld hat Autofill und 6 Chips liegen auf der Tastatur. Klammern sind wait / 0 / N / fail / - (Android hat gefragt / keine Chips / Chip-Anzahl / Anzeige fehlgeschlagen / leer). af=n heißt keine Autofill-Id. af=off / af=na ist Inline aus / unter Android 11.</string>
+    <string name="inline_suggestions_requires_android_11">Benötigt Android 11 oder neuer</string>
+    <string name="inline_suggestions_info">Das nutzt Android-Autofill. Jeder Autofill-Dienst, den du in den Systemeinstellungen wählst, kann Chips über der Tastatur zeigen, wenn er Inline-Vorschläge unterstützt - zum Beispiel Bitwarden, Google Passwortmanager oder 1Password. Die App, in die du tippst, muss Autofill an ihren Login-Feldern freigeben, sonst erscheinen keine Chips. Chrome braucht außerdem Autofill using another service.\n\nTippe einen Chip zum Ausfüllen. Wisch nach rechts auf der Leertaste füllt den obersten (nicht-Logo-) Chip. Die Tastatur sieht das Passwort nie.\n\n## Bitwarden\n\nSetze Bitwarden in den Systemeinstellungen als Autofill-Dienst. In Bitwarden stelle Autofill-Vorschläge auf Inline (nicht Popup). Popup und Tastatur-Chips schließen sich dort aus.\n\n## Debug\n\naf=y [6] heißt: dieses Feld hat Autofill und 6 Chips liegen auf der Tastatur. Klammern sind wait / 0 / N / fail / - (Android hat gefragt / keine Chips / Chip-Anzahl / Anzeige fehlgeschlagen / leer). af=n heißt keine Autofill-Id. af=off / af=na ist Inline aus / unter Android 11.</string>
     <string name="inline_suggestion_height">Vorschlagshöhe</string>
     <string name="inline_suggestion_height_summary">Aktuell %1$d dp - Höhe der Leiste über den Tasten</string>
     <string name="settings_section_keys">Tasten</string>
@@ -73,7 +76,7 @@
     <string name="letter_and_control_colors_off">Aus - jede Taste nutzt dieselbe Hintergrundfarbe</string>
     <string name="letter_and_control_colors_info">Buchstaben, Zahlen und Symbole nutzen die Theme-Fläche. Leertaste, Modifikatoren, 123, Enter und ähnliche Steuertasten nutzen die Variantenfüllung.</string>
     <string name="settings_section_layers">Ebenen</string>
-    <string name="settings_section_feedback">Feedback</string>
+    <string name="settings_section_feedback">Haptik</string>
     <string name="settings_section_animations">Animationen</string>
     <string name="settings_section_gestures">Gesten</string>
     <string name="settings_section_modifiers">Modifikatoren</string>

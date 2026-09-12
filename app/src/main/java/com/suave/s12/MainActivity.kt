@@ -31,6 +31,7 @@ import com.suave.s12.ui.components.settings.behavior.BehaviorScreen
 import com.suave.s12.ui.components.settings.clipboard.ClipboardSettingsScreen
 import com.suave.s12.ui.components.settings.appearance.AppearanceScreen
 import com.suave.s12.ui.components.settings.other.OtherSettingsScreen
+import com.suave.s12.ui.components.settings.suggestions.SuggestionsSettingsScreen
 import com.suave.s12.ui.components.setup.SetupScreen
 import com.suave.s12.ui.theme.ThumbkeyTheme
 import com.suave.s12.utils.ANIMATION_SPEED
@@ -154,6 +155,12 @@ class MainActivity : AppCompatActivity() {
                     }
                     composable(route = "behavior") {
                         BehaviorScreen(
+                            navController = navController,
+                            appSettingsViewModel = appSettingsViewModel,
+                        )
+                    }
+                    composable(route = "suggestionsSettings") {
+                        SuggestionsSettingsScreen(
                             navController = navController,
                             appSettingsViewModel = appSettingsViewModel,
                         )

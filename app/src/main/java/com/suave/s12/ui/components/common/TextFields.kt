@@ -44,7 +44,19 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.suave.s12.R
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.first
+
+/** Asks the pinned Test out field on settings screens to open and focus the keyboard. */
+object TestOutKeyboardRequests {
+    private val _requests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val requests = _requests.asSharedFlow()
+
+    fun open() {
+        _requests.tryEmit(Unit)
+    }
+}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -64,12 +76,23 @@ fun TestOutTextField() {
     val imeVisible = WindowInsets.isImeVisible
     val hideButton = showField && fieldFocused && imeVisible
 
+    fun openField() {
+        showField = true
+        focusNonce += 1
+    }
+
     fun collapse() {
         keyboardController?.hide()
         focusManager.clearFocus()
         showField = false
         fieldFocused = false
         imeHadShown = false
+    }
+
+    LaunchedEffect(Unit) {
+        TestOutKeyboardRequests.requests.collect {
+            openField()
+        }
     }
 
     LaunchedEffect(showField, imeVisible) {
@@ -93,10 +116,7 @@ fun TestOutTextField() {
     ) {
         if (!hideButton) {
             Button(
-                onClick = {
-                    showField = true
-                    focusNonce += 1
-                },
+                onClick = { openField() },
                 modifier =
                     Modifier
                         .fillMaxWidth()

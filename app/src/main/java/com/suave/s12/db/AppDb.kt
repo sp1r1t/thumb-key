@@ -525,16 +525,6 @@ data class AppearanceUpdate(
     val preventCrampedDual: Int,
     @ColumnInfo(name = "prevent_needless_split")
     val preventNeedlessSplit: Int,
-    @ColumnInfo(name = "show_toast_on_layout_switch")
-    val showToastOnLayoutSwitch: Int,
-    @ColumnInfo(name = "show_toast_on_copy")
-    val showToastOnCopy: Int,
-    @ColumnInfo(name = "show_toast_on_cut")
-    val showToastOnCut: Int,
-    @ColumnInfo(name = "inline_suggestions")
-    val inlineSuggestions: Int,
-    @ColumnInfo(name = "inline_suggestion_height")
-    val inlineSuggestionHeight: Int,
 )
 
 data class BehaviorUpdate(
@@ -549,6 +539,20 @@ data class BehaviorUpdate(
     val altAsModifier: Int,
     @ColumnInfo(name = "shift_as_modifier")
     val shiftAsModifier: Int,
+    @ColumnInfo(name = "show_toast_on_layout_switch")
+    val showToastOnLayoutSwitch: Int,
+    @ColumnInfo(name = "show_toast_on_copy")
+    val showToastOnCopy: Int,
+    @ColumnInfo(name = "show_toast_on_cut")
+    val showToastOnCut: Int,
+)
+
+data class SuggestionsUpdate(
+    val id: Int,
+    @ColumnInfo(name = "inline_suggestions")
+    val inlineSuggestions: Int,
+    @ColumnInfo(name = "inline_suggestion_height")
+    val inlineSuggestionHeight: Int,
 )
 
 data class ClipboardSettingsUpdate(
@@ -602,6 +606,9 @@ interface AppSettingsDao {
     fun updateBehavior(behavior: BehaviorUpdate)
 
     @Update(entity = AppSettings::class)
+    fun updateSuggestions(suggestions: SuggestionsUpdate)
+
+    @Update(entity = AppSettings::class)
     fun updateClipboardSettings(clipboardSettings: ClipboardSettingsUpdate)
 
     @Update(entity = AppSettings::class)
@@ -643,6 +650,11 @@ class AppSettingsRepository(
     @WorkerThread
     fun updateBehavior(behavior: BehaviorUpdate) {
         appSettingsDao.updateBehavior(behavior)
+    }
+
+    @WorkerThread
+    fun updateSuggestions(suggestions: SuggestionsUpdate) {
+        appSettingsDao.updateSuggestions(suggestions)
     }
 
     @WorkerThread
@@ -820,6 +832,11 @@ class AppSettingsViewModel(
     fun updateBehavior(behavior: BehaviorUpdate) =
         viewModelScope.launch {
             repository.updateBehavior(behavior)
+        }
+
+    fun updateSuggestions(suggestions: SuggestionsUpdate) =
+        viewModelScope.launch {
+            repository.updateSuggestions(suggestions)
         }
 
     fun updateClipboardSettings(clipboardSettings: ClipboardSettingsUpdate) =

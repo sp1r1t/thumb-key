@@ -42,16 +42,18 @@
     <string name="show_toast_on_switch">Layout switch</string>
     <string name="show_toast_on_switch_on">On - a notice names the layout or position after you switch</string>
     <string name="show_toast_on_switch_off">Off - switching layout or position stays silent</string>
-    <string name="show_toast_on_switch_info">The notice overlays the keys and does not change keyboard height. It names the layout after Switch language, or the position after Move keyboard.</string>
+    <string name="show_toast_on_switch_info">A brief notice on the keyboard names the layout after Switch language, or the position after Move keyboard.</string>
     <string name="settings_section_notices">Notices</string>
     <string name="show_toast_on_copy">Copy</string>
     <string name="show_toast_on_copy_on">On - a notice confirms after a successful copy</string>
     <string name="show_toast_on_copy_off">Off - copy stays silent</string>
-    <string name="show_toast_on_copy_info">The notice overlays the keys and does not change keyboard height. It appears only after copy succeeds. Editors that handle copy themselves, such as some terminals, do not show it.</string>
+    <string name="show_toast_on_copy_info">A brief notice on the keyboard appears only after copy succeeds. With Use private clipboard on, a muted \"private\" label sits beside Copy. Editors that handle copy themselves, such as some terminals, do not show it.</string>
     <string name="show_toast_on_cut">Cut</string>
     <string name="show_toast_on_cut_on">On - a notice confirms after a successful cut</string>
     <string name="show_toast_on_cut_off">Off - cut stays silent</string>
-    <string name="show_toast_on_cut_info">The notice overlays the keys and does not change keyboard height. It appears only after cut succeeds. Editors that handle cut themselves, such as some terminals, do not show it.</string>
+    <string name="show_toast_on_cut_info">A brief notice on the keyboard appears only after cut succeeds. With Use private clipboard on, a muted \"private\" label sits beside Cut. Editors that handle cut themselves, such as some terminals, do not show it.</string>
+    <string name="notice_sample">Sample</string>
+    <string name="notice_sample_need_keyboard">No stage, no show - open Suave as the keyboard and try again</string>
     <string name="about">About</string>
     <string name="version">Version %1$s</string>
     <string name="open_source">Open source</string>
@@ -64,7 +66,8 @@
     <string name="inline_suggestions">Autofill suggestions</string>
     <string name="inline_suggestions_on">On - Bitwarden and other Autofill services can show chips above the keyboard</string>
     <string name="inline_suggestions_off">Off - Autofill stays in the system dropdown instead of this keyboard</string>
-    <string name="inline_suggestions_info">This uses Android Autofill. Set Bitwarden as the Autofill service in system settings, and in Bitwarden set Display autofill suggestions to Inline (not Popup). Popup and keyboard chips are mutually exclusive there. Chrome also needs Autofill using another service. Tap a chip to fill. Swipe right on space fills the top (non-logo) chip. The keyboard never sees the password. Debug af=y [6] means this field has Autofill and 6 chips are on the keyboard. Brackets are wait / 0 / N / fail / - (Android asked / no chips / chip count / inflate failed / idle). af=n means no Autofill id. af=off / af=na is Inline off / below Android 11.</string>
+    <string name="inline_suggestions_requires_android_11">Requires Android 11 or newer</string>
+    <string name="inline_suggestions_info">This uses Android Autofill. Any Autofill service you pick in system settings can show chips above the keyboard if it supports inline suggestions - for example Bitwarden, Google Password Manager, or 1Password. The app you are typing into must expose Autofill on its login fields; otherwise no chips appear. Chrome also needs Autofill using another service.\n\nTap a chip to fill. Swipe right on space fills the top (non-logo) chip. The keyboard never sees the password.\n\n## Bitwarden\n\nSet Bitwarden as the Autofill service in system settings. In Bitwarden, set Display autofill suggestions to Inline (not Popup). Popup and keyboard chips are mutually exclusive there.\n\n## Debug\n\naf=y [6] means this field has Autofill and 6 chips are on the keyboard. Brackets are wait / 0 / N / fail / - (Android asked / no chips / chip count / inflate failed / idle). af=n means no Autofill id. af=off / af=na is Inline off / below Android 11.</string>
     <string name="inline_suggestion_height">Suggestion height</string>
     <string name="inline_suggestion_height_summary">Currently %1$d dp - height of the strip above the keys</string>
     <string name="settings_section_keys">Keys</string>
@@ -73,7 +76,7 @@
     <string name="letter_and_control_colors_off">Off - every key uses the same background color</string>
     <string name="letter_and_control_colors_info">Letters, numbers, and symbols use the theme surface. Space, modifiers, 123, Enter, and similar controls use the variant fill.</string>
     <string name="settings_section_layers">Layers</string>
-    <string name="settings_section_feedback">Feedback</string>
+    <string name="settings_section_feedback">Haptics</string>
     <string name="settings_section_animations">Animations</string>
     <string name="settings_section_gestures">Gestures</string>
     <string name="settings_section_modifiers">Modifiers</string>
@@ -188,7 +191,7 @@
     <string name="hide_editing_on">On - keys show no editing labels</string>
     <string name="hide_editing_off">Off - keys show their editing labels</string>
     <string name="hide_labels_info">Hiding a category removes its labels and icons from the keys. The keys themselves still work.</string>
-    <string name="hide_key_groups">Hide key groups</string>
+    <string name="hide_key_groups">Hide-button groups</string>
     <string name="hide_key_groups_summary">Currently the hide key toggles %1$s</string>
     <string name="hide_key_groups_all">all label groups</string>
     <string name="hide_key_groups_two">%1$s and %2$s</string>

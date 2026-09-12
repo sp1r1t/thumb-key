@@ -46,6 +46,7 @@ import com.suave.s12.legacy.KeyboardLayout
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.ThumbKeyClipboardManager
 import com.suave.s12.utils.toBool
+import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -141,6 +142,7 @@ class IMEService :
 
     override fun onCreate() {
         super.onCreate()
+        activeInstance = WeakReference(this)
         savedStateRegistryController.performRestore(null)
         handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
 
@@ -167,6 +169,9 @@ class IMEService :
     }
 
     override fun onDestroy() {
+        if (activeInstance?.get() === this) {
+            activeInstance = null
+        }
         unregisterUnlockReceiver()
         clipboardManager?.stopListening()
         clipboardManager = null
@@ -363,6 +368,24 @@ class IMEService :
             view.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             view.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO
+        }
+    }
+
+    companion object {
+        @Volatile
+        private var activeInstance: WeakReference<IMEService>? = null
+
+        /**
+         * Shows a notice on the live keyboard, if Suave's IME is currently running.
+         * @return true if a notice was shown
+         */
+        fun showNoticeOnActiveIme(
+            text: String,
+            detail: String? = null,
+        ): Boolean {
+            val ime = activeInstance?.get() ?: return false
+            ime.showNotice(text, detail)
+            return true
         }
     }
 }
