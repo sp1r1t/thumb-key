@@ -30,6 +30,7 @@ import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
 import com.suave.s12.db.DEFAULT_SHOW_ON_SCREEN_KEYBOARD
 import com.suave.s12.db.OtherSettingsUpdate
 import com.suave.s12.ui.components.common.SettingTitle
+import com.suave.s12.ui.components.common.TestOutTextField
 import com.suave.s12.utils.SimpleTopAppBar
 import com.suave.s12.utils.TAG
 import com.suave.s12.utils.toBool
@@ -140,6 +141,7 @@ fun OtherSettingsScreen(
                             )
                         },
                     )
+                    TestOutTextField()
                 }
             }
         },
