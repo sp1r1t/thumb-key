@@ -7,9 +7,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -26,10 +29,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.suave.s12.R
 
@@ -82,6 +89,10 @@ fun SettingsSection(
 /**
  * Settings options scroll in the remaining space. The test-out button stays pinned to
  * the bottom; the text field only takes height while you are actually typing.
+ *
+ * Scaffold padding already includes the navigation bar (and on some Material3 versions
+ * the IME). Adding imePadding() on top of that stacked both insets, leaving a hole
+ * between the test field and the keyboard. Take the larger of the two instead.
  */
 @Composable
 fun SettingsScreenBody(
@@ -89,12 +100,20 @@ fun SettingsScreenBody(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val layoutDirection = LocalLayoutDirection.current
+    val density = LocalDensity.current
+    val imeBottom = with(density) { WindowInsets.ime.getBottom(density).toDp() }
     Column(
         modifier =
             modifier
                 .fillMaxSize()
-                .padding(padding)
-                .imePadding()
+                .padding(
+                    settingsScreenBodyPadding(
+                        padding = padding,
+                        layoutDirection = layoutDirection,
+                        imeBottom = imeBottom,
+                    ),
+                )
                 .background(MaterialTheme.colorScheme.surface),
     ) {
         Column(
@@ -108,3 +127,21 @@ fun SettingsScreenBody(
         TestOutTextField()
     }
 }
+
+internal fun settingsScreenBodyPadding(
+    padding: PaddingValues,
+    layoutDirection: LayoutDirection,
+    imeBottom: Dp,
+): PaddingValues =
+    PaddingValues(
+        start = padding.calculateStartPadding(layoutDirection),
+        top = padding.calculateTopPadding(),
+        end = padding.calculateEndPadding(layoutDirection),
+        bottom = settingsBodyBottomPadding(padding.calculateBottomPadding(), imeBottom),
+    )
+
+/** Nav-bar (or IME) from the Scaffold, unioned with the live IME inset - never both stacked. */
+internal fun settingsBodyBottomPadding(
+    scaffoldBottom: Dp,
+    imeBottom: Dp,
+): Dp = maxOf(scaffoldBottom, imeBottom)
