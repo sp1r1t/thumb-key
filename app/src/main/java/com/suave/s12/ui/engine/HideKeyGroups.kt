@@ -5,7 +5,7 @@ import com.suave.s12.utils.toBool
 import com.suave.s12.utils.toInt
 
 /**
- * Checkbox order in Appearance, matching the hide-letter / hide-symbol / ... rows so the
+ * Chip order in Appearance, matching the hide-letter / hide-symbol / ... rows so the
  * hide-key picker and those switches stay visually aligned.
  */
 val HIDE_KEY_GROUP_ORDER: List<LegendCategory> =

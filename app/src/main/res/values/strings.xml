@@ -178,7 +178,7 @@
     <string name="hide_key_groups_all">all label groups</string>
     <string name="hide_key_groups_two">%1$s and %2$s</string>
     <string name="hide_key_groups_many">%1$s, and %2$s</string>
-    <string name="hide_key_groups_info">The hide key on the keyboard writes the same Appearance switches as the rows above. It only changes the groups you select here. Groups you leave unchecked stay as they are. If any selected group is visible, the key hides all of them. If they are all already hidden, the key shows them again.</string>
+    <string name="hide_key_groups_info">The hide key on the keyboard writes the same Appearance switches as the hide-letter rows. It only changes the groups you select here. Groups you leave unselected stay as they are. If any selected group is visible, the key hides all of them. If they are all already hidden, the key shows them again.</string>
     <string name="hide_group_letters">letters</string>
     <string name="hide_group_symbols">symbols</string>
     <string name="hide_group_numbers">numbers</string>
@@ -187,6 +187,14 @@
     <string name="hide_group_specials">specials</string>
     <string name="hide_group_navigation">navigation</string>
     <string name="hide_group_editing">editing</string>
+    <string name="hide_group_chip_letters">Letters</string>
+    <string name="hide_group_chip_symbols">Symbols</string>
+    <string name="hide_group_chip_numbers">Numbers</string>
+    <string name="hide_group_chip_modifiers">Modifiers</string>
+    <string name="hide_group_chip_layer_switches">Layers</string>
+    <string name="hide_group_chip_specials">Specials</string>
+    <string name="hide_group_chip_navigation">Navigation</string>
+    <string name="hide_group_chip_editing">Editing</string>
     <string name="animation_press_highlight">Press highlight</string>
     <string name="animation_press_highlight_on">On - the keycap fill flashes while your finger is down</string>
     <string name="animation_press_highlight_off">Off - the keycap keeps its normal fill while pressed</string>

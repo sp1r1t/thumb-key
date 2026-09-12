@@ -1,13 +1,7 @@
 package com.suave.s12.ui.components.settings.appearance
 
 import android.util.Log
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardBackspace
 import androidx.compose.material.icons.outlined.AutoAwesome
@@ -43,30 +37,23 @@ import androidx.compose.material.icons.outlined.VerticalSplit
 import androidx.compose.material.icons.outlined.ViewColumn
 import androidx.compose.material.icons.outlined.ViewDay
 import androidx.compose.material.icons.outlined.WebAssetOff
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.suave.s12.R
 import com.suave.s12.db.AppSettingsViewModel
@@ -127,6 +114,7 @@ import com.suave.s12.layout.formatLayerHeightOverrides
 import com.suave.s12.layout.parseKeyboardPositions
 import com.suave.s12.layout.parseLayerHeightOverrides
 import com.suave.s12.layout.toggleKeyboardPositionSelection
+import com.suave.s12.ui.components.common.ChipSelectCard
 import com.suave.s12.ui.components.common.IntStepperPreference
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.SettingTitle
@@ -146,7 +134,6 @@ import com.suave.s12.utils.toBool
 import com.suave.s12.utils.toInt
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ListPreferenceType
-import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
 import me.zhanghai.compose.preference.SwitchPreference
 
@@ -340,6 +327,13 @@ fun AppearanceScreen(
 
                     SettingsSection(
                         title = stringResource(R.string.settings_section_labels)                    ) {
+                    HideKeyGroupsPreference(
+                        value = hideKeyCategoriesState,
+                        onValueChange = {
+                            hideKeyCategoriesState = it
+                            updateAppearance()
+                        },
+                    )
                     HideLabelSwitch(
                         value = hideLettersState,
                         onValueChange = {
@@ -428,13 +422,6 @@ fun AppearanceScreen(
                         onSummary = R.string.hide_editing_on,
                         offSummary = R.string.hide_editing_off,
                         icon = Icons.AutoMirrored.Outlined.KeyboardBackspace,
-                    )
-                    HideKeyGroupsPreference(
-                        value = hideKeyCategoriesState,
-                        onValueChange = {
-                            hideKeyCategoriesState = it
-                            updateAppearance()
-                        },
                     )
                     }
 
@@ -570,102 +557,22 @@ fun AppearanceScreen(
                             keyboardPositionsState = it
                             updateAppearance()
                         },
+                        preventCrampedDual = preventCrampedDualState,
+                        onPreventCrampedDualChange = {
+                            preventCrampedDualState = it
+                            updateAppearance()
+                        },
+                        preventNeedlessSplit = preventNeedlessSplitState,
+                        onPreventNeedlessSplitChange = {
+                            preventNeedlessSplitState = it
+                            updateAppearance()
+                        },
+                        showToastOnSwitch = showToastOnSwitchState,
+                        onShowToastOnSwitchChange = {
+                            showToastOnSwitchState = it
+                            updateAppearance()
+                        },
                     )
-                    SettingRow {
-                        SwitchPreference(
-                            value = preventCrampedDualState,
-                            onValueChange = {
-                                preventCrampedDualState = it
-                                updateAppearance()
-                            },
-                            title = {
-                                SettingTitle(
-                                    text = stringResource(R.string.prevent_cramped_dual),
-                                    infoText = stringResource(R.string.prevent_cramped_dual_info),
-                                )
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        if (preventCrampedDualState) {
-                                            R.string.prevent_cramped_dual_on
-                                        } else {
-                                            R.string.prevent_cramped_dual_off
-                                        },
-                                        MIN_DUAL_CELL_WIDTH_DP,
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Crop75,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
-                    SettingRow {
-                        SwitchPreference(
-                            value = preventNeedlessSplitState,
-                            onValueChange = {
-                                preventNeedlessSplitState = it
-                                updateAppearance()
-                            },
-                            title = {
-                                SettingTitle(
-                                    text = stringResource(R.string.prevent_needless_split),
-                                    infoText = stringResource(R.string.prevent_needless_split_info),
-                                )
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        if (preventNeedlessSplitState) {
-                                            R.string.prevent_needless_split_on
-                                        } else {
-                                            R.string.prevent_needless_split_off
-                                        },
-                                        MIN_DUAL_CELL_WIDTH_DP,
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.VerticalSplit,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
-                    SettingRow {
-                        SwitchPreference(
-                            value = showToastOnSwitchState,
-                            onValueChange = {
-                                showToastOnSwitchState = it
-                                updateAppearance()
-                            },
-                            title = {
-                                Text(stringResource(R.string.show_toast_on_switch))
-                            },
-                            summary = {
-                                Text(
-                                    stringResource(
-                                        if (showToastOnSwitchState) {
-                                            R.string.show_toast_on_switch_on
-                                        } else {
-                                            R.string.show_toast_on_switch_off
-                                        },
-                                    ),
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    imageVector = Icons.Outlined.Notifications,
-                                    contentDescription = null,
-                                )
-                            },
-                        )
-                    }
                     }
 
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
@@ -1215,79 +1122,25 @@ private fun HideKeyGroupsPreference(
     onValueChange: (String) -> Unit,
 ) {
     val selected = parseHideKeyCategories(value)
-    var showDialog by remember { mutableStateOf(false) }
-    var draft by remember { mutableStateOf(selected) }
 
-    SettingRow(
+    ChipSelectCard(
+        title = stringResource(R.string.hide_key_groups),
+        infoText = stringResource(R.string.hide_key_groups_info),
+        summary = hideKeyGroupsSummary(selected),
+        icon = Icons.Outlined.HideImage,
         onReset = { onValueChange(DEFAULT_HIDE_KEY_CATEGORIES) },
     ) {
-        Preference(
-            title = {
-                SettingTitle(
-                    text = stringResource(R.string.hide_key_groups),
-                    infoText = stringResource(R.string.hide_key_groups_info),
-                )
-            },
-            summary = {
-                Text(hideKeyGroupsSummary(selected))
-            },
-            icon = {
-                Icon(
-                    imageVector = Icons.Outlined.HideImage,
-                    contentDescription = null,
-                )
-            },
-            onClick = {
-                draft = selected
-                showDialog = true
-            },
-        )
-    }
-
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text(stringResource(R.string.hide_key_groups)) },
-            text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    HIDE_KEY_GROUP_ORDER.forEach { category ->
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        draft = toggleHideKeyGroupSelection(draft, category)
-                                    }.padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(
-                                checked = category in draft,
-                                onCheckedChange = null,
-                            )
-                            Text(
-                                text = stringResource(category.hideGroupNameRes()),
-                                modifier = Modifier.padding(start = 8.dp),
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onValueChange(formatHideKeyCategories(draft))
-                        showDialog = false
-                    },
-                ) {
-                    Text(stringResource(R.string.done))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            },
-        )
+        HIDE_KEY_GROUP_ORDER.forEach { category ->
+            FilterChip(
+                selected = category in selected,
+                onClick = {
+                    onValueChange(
+                        formatHideKeyCategories(toggleHideKeyGroupSelection(selected, category)),
+                    )
+                },
+                label = { Text(stringResource(category.hideGroupChipRes())) },
+            )
+        }
     }
 }
 
@@ -1312,6 +1165,18 @@ private fun hideKeyGroupsSummary(selected: Set<LegendCategory>): String {
     return stringResource(R.string.hide_key_groups_summary, groupsText)
 }
 
+private fun LegendCategory.hideGroupChipRes(): Int =
+    when (this) {
+        LegendCategory.LETTER -> R.string.hide_group_chip_letters
+        LegendCategory.SYMBOL -> R.string.hide_group_chip_symbols
+        LegendCategory.NUMBER -> R.string.hide_group_chip_numbers
+        LegendCategory.MODIFIER -> R.string.hide_group_chip_modifiers
+        LegendCategory.LAYER_SWITCH -> R.string.hide_group_chip_layer_switches
+        LegendCategory.SPECIAL -> R.string.hide_group_chip_specials
+        LegendCategory.NAVIGATION -> R.string.hide_group_chip_navigation
+        LegendCategory.EDITING -> R.string.hide_group_chip_editing
+    }
+
 private fun LegendCategory.hideGroupNameRes(): Int =
     when (this) {
         LegendCategory.LETTER -> R.string.hide_group_letters
@@ -1328,81 +1193,119 @@ private fun LegendCategory.hideGroupNameRes(): Int =
 private fun EnabledKeyboardPositionsPreference(
     value: String,
     onValueChange: (String) -> Unit,
+    preventCrampedDual: Boolean,
+    onPreventCrampedDualChange: (Boolean) -> Unit,
+    preventNeedlessSplit: Boolean,
+    onPreventNeedlessSplitChange: (Boolean) -> Unit,
+    showToastOnSwitch: Boolean,
+    onShowToastOnSwitchChange: (Boolean) -> Unit,
 ) {
     val selected = parseKeyboardPositions(value)
-    var showDialog by remember { mutableStateOf(false) }
-    var draft by remember { mutableStateOf(selected) }
+    val dualEnabled = KeyboardPosition.Dual in selected
+    val splitEnabled = KeyboardPosition.Split in selected
 
-    SettingRow(
+    ChipSelectCard(
+        title = stringResource(R.string.enabled_keyboard_positions),
+        infoText = stringResource(R.string.enabled_keyboard_positions_info),
+        summary = enabledKeyboardPositionsSummary(selected),
+        icon = Icons.Outlined.ViewColumn,
         onReset = { onValueChange(DEFAULT_KEYBOARD_POSITIONS) },
-    ) {
-        Preference(
-            title = {
-                SettingTitle(
-                    text = stringResource(R.string.enabled_keyboard_positions),
-                    infoText = stringResource(R.string.enabled_keyboard_positions_info),
-                )
-            },
-            summary = {
-                Text(enabledKeyboardPositionsSummary(selected))
-            },
-            icon = {
-                Icon(
-                    imageVector = Icons.Outlined.ViewColumn,
-                    contentDescription = null,
-                )
-            },
-            onClick = {
-                draft = selected
-                showDialog = true
-            },
-        )
-    }
-
-    if (showDialog) {
-        AlertDialog(
-            onDismissRequest = { showDialog = false },
-            title = { Text(stringResource(R.string.enabled_keyboard_positions)) },
-            text = {
-                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                    TOGGLEABLE_KEYBOARD_POSITIONS.forEach { position ->
-                        Row(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        draft = toggleKeyboardPositionSelection(draft, position)
-                                    }.padding(vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Checkbox(
-                                checked = position in draft,
-                                onCheckedChange = null,
-                            )
-                            Text(
-                                text = stringResource(position.resId),
-                                modifier = Modifier.padding(start = 8.dp),
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        onValueChange(formatKeyboardPositions(draft))
-                        showDialog = false
+        extra = {
+            AnimatedVisibility(visible = dualEnabled) {
+                SwitchPreference(
+                    value = preventCrampedDual,
+                    onValueChange = onPreventCrampedDualChange,
+                    title = {
+                        SettingTitle(
+                            text = stringResource(R.string.prevent_cramped_dual),
+                            infoText = stringResource(R.string.prevent_cramped_dual_info),
+                        )
                     },
-                ) {
-                    Text(stringResource(R.string.done))
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDialog = false }) {
-                    Text(stringResource(R.string.cancel))
-                }
-            },
-        )
+                    summary = {
+                        Text(
+                            stringResource(
+                                if (preventCrampedDual) {
+                                    R.string.prevent_cramped_dual_on
+                                } else {
+                                    R.string.prevent_cramped_dual_off
+                                },
+                                MIN_DUAL_CELL_WIDTH_DP,
+                            ),
+                        )
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Crop75,
+                            contentDescription = null,
+                        )
+                    },
+                )
+            }
+            AnimatedVisibility(visible = splitEnabled) {
+                SwitchPreference(
+                    value = preventNeedlessSplit,
+                    onValueChange = onPreventNeedlessSplitChange,
+                    title = {
+                        SettingTitle(
+                            text = stringResource(R.string.prevent_needless_split),
+                            infoText = stringResource(R.string.prevent_needless_split_info),
+                        )
+                    },
+                    summary = {
+                        Text(
+                            stringResource(
+                                if (preventNeedlessSplit) {
+                                    R.string.prevent_needless_split_on
+                                } else {
+                                    R.string.prevent_needless_split_off
+                                },
+                                MIN_DUAL_CELL_WIDTH_DP,
+                            ),
+                        )
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Outlined.VerticalSplit,
+                            contentDescription = null,
+                        )
+                    },
+                )
+            }
+            SwitchPreference(
+                value = showToastOnSwitch,
+                onValueChange = onShowToastOnSwitchChange,
+                title = {
+                    Text(stringResource(R.string.show_toast_on_switch))
+                },
+                summary = {
+                    Text(
+                        stringResource(
+                            if (showToastOnSwitch) {
+                                R.string.show_toast_on_switch_on
+                            } else {
+                                R.string.show_toast_on_switch_off
+                            },
+                        ),
+                    )
+                },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Notifications,
+                        contentDescription = null,
+                    )
+                },
+            )
+        },
+    ) {
+        TOGGLEABLE_KEYBOARD_POSITIONS.forEach { position ->
+            FilterChip(
+                selected = position in selected,
+                onClick = {
+                    onValueChange(formatKeyboardPositions(toggleKeyboardPositionSelection(selected, position)))
+                },
+                label = { Text(stringResource(position.resId)) },
+            )
+        }
     }
 }
 

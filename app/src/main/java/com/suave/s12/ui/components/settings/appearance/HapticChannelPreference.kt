@@ -6,13 +6,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -25,6 +22,7 @@ import com.suave.s12.engine.feedback.HAPTIC_TYPE_BY_FEEL
 import com.suave.s12.engine.feedback.HapticType
 import com.suave.s12.ui.components.common.SettingRow
 import com.suave.s12.ui.components.common.SettingTitle
+import com.suave.s12.ui.components.common.SettingsCard
 import com.suave.s12.ui.engine.playHaptic
 import me.zhanghai.compose.preference.SwitchPreference
 
@@ -45,14 +43,7 @@ fun HapticChannelPreference(
     val view = LocalView.current
     val typeName = stringResource(type.resId)
 
-    Surface(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 5.dp),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-    ) {
+    SettingsCard {
         Column {
             SwitchPreference(
                 value = enabled,

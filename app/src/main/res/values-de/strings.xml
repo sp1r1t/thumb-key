@@ -150,7 +150,7 @@
     <string name="hide_key_groups_all">alle Beschriftungsgruppen</string>
     <string name="hide_key_groups_two">%1$s und %2$s</string>
     <string name="hide_key_groups_many">%1$s und %2$s</string>
-    <string name="hide_key_groups_info">Die Verstecken-Taste auf der Tastatur schreibt dieselben Erscheinungsbild-Schalter wie die Zeilen oben. Sie ändert nur die Gruppen, die du hier auswählst. Nicht ausgewählte Gruppen bleiben unverändert. Ist irgendeine ausgewählte Gruppe sichtbar, versteckt die Taste alle ausgewählten. Sind sie alle bereits versteckt, zeigt die Taste sie wieder an.</string>
+    <string name="hide_key_groups_info">Die Verstecken-Taste auf der Tastatur schreibt dieselben Erscheinungsbild-Schalter wie die Verstecken-Zeilen. Sie ändert nur die Gruppen, die du hier auswählst. Nicht ausgewählte Gruppen bleiben unverändert. Ist irgendeine ausgewählte Gruppe sichtbar, versteckt die Taste alle ausgewählten. Sind sie alle bereits versteckt, zeigt die Taste sie wieder an.</string>
     <string name="hide_group_letters">Buchstaben</string>
     <string name="hide_group_symbols">Symbole</string>
     <string name="hide_group_numbers">Zahlen</string>
@@ -159,6 +159,14 @@
     <string name="hide_group_specials">Spezialtasten</string>
     <string name="hide_group_navigation">Navigation</string>
     <string name="hide_group_editing">Bearbeitung</string>
+    <string name="hide_group_chip_letters">Buchstaben</string>
+    <string name="hide_group_chip_symbols">Symbole</string>
+    <string name="hide_group_chip_numbers">Zahlen</string>
+    <string name="hide_group_chip_modifiers">Modifikatoren</string>
+    <string name="hide_group_chip_layer_switches">Ebenen</string>
+    <string name="hide_group_chip_specials">Spezial</string>
+    <string name="hide_group_chip_navigation">Navigation</string>
+    <string name="hide_group_chip_editing">Bearbeitung</string>
     <string name="animation_press_highlight">Tastendruck-Hervorhebung</string>
     <string name="animation_press_highlight_on">An - die Tastenfläche leuchtet, solange der Finger darauf ist</string>
     <string name="animation_press_highlight_off">Aus - die Taste behält beim Drücken ihre normale Farbe</string>
