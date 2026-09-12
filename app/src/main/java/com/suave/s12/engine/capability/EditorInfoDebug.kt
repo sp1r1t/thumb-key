@@ -5,37 +5,69 @@ import android.text.InputType
 import android.view.inputmethod.EditorInfo
 
 /**
- * Compact orthogonal dump of [EditorInfo] for the IME debug bar. Does not invent a richer
- * capability level: Firefox web fields, Termux, and password boxes all stay whatever
- * [EditorCapabilityResolver] already classified them as. This just lists independent facts
- * (class, variation, flags, content mime types) so they can be read at a glance.
+ * Orthogonal [EditorInfo] dump for the IME debug bar. Does not invent a richer capability
+ * level: Firefox web fields, Termux, and password boxes all stay whatever
+ * [EditorCapabilityResolver] already classified them as.
+ *
+ * [describe] is the short chip (class, variation, real multiline, content mime). [verbose]
+ * adds default-y IME flags and hex values so they can be copied without covering the board.
  */
 object EditorInfoDebug {
     private const val SEP = " . "
 
-    fun describe(editorInfo: EditorInfo?): String {
-        if (editorInfo == null) return "NO_EDITOR"
+    fun describe(editorInfo: EditorInfo?): String = label(editorInfo).compact
+
+    fun verbose(editorInfo: EditorInfo?): String = label(editorInfo).verbose
+
+    fun label(editorInfo: EditorInfo?): EditorInfoDebugLabel {
+        if (editorInfo == null) return EditorInfoDebugLabel("NO_EDITOR", "NO_EDITOR")
         val mime =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
                 editorInfo.contentMimeTypes
             } else {
                 null
             }
-        return describe(editorInfo.inputType, editorInfo.imeOptions, mime)
+        return label(editorInfo.inputType, editorInfo.imeOptions, mime)
     }
 
     fun describe(
         inputType: Int,
         imeOptions: Int = 0,
         contentMimeTypes: Array<out String>? = null,
-    ): String {
+    ): String = label(inputType, imeOptions, contentMimeTypes).compact
+
+    fun verbose(
+        inputType: Int,
+        imeOptions: Int = 0,
+        contentMimeTypes: Array<out String>? = null,
+    ): String = label(inputType, imeOptions, contentMimeTypes).verbose
+
+    fun label(
+        inputType: Int,
+        imeOptions: Int = 0,
+        contentMimeTypes: Array<out String>? = null,
+    ): EditorInfoDebugLabel {
+        val compact = tokens(inputType, imeOptions, contentMimeTypes, verbose = false).joinToString(SEP)
+        val verboseTokens = tokens(inputType, imeOptions, contentMimeTypes, verbose = true)
+        val verbose =
+            verboseTokens.joinToString(SEP) +
+                " | inputType=0x${inputType.toString(16)} imeOptions=0x${imeOptions.toString(16)}"
+        return EditorInfoDebugLabel(compact = compact, verbose = verbose)
+    }
+
+    private fun tokens(
+        inputType: Int,
+        imeOptions: Int,
+        contentMimeTypes: Array<out String>?,
+        verbose: Boolean,
+    ): List<String> {
         val tokens = mutableListOf<String>()
         val klass = inputType and InputType.TYPE_MASK_CLASS
         if (klass == InputType.TYPE_NULL) {
             tokens += "RAW"
             tokens += "TYPE_NULL"
             appendContent(tokens, contentMimeTypes)
-            return tokens.joinToString(SEP)
+            return tokens
         }
 
         tokens += "EDITABLE"
@@ -43,23 +75,31 @@ object EditorInfoDebug {
             InputType.TYPE_CLASS_TEXT -> {
                 tokens += "TEXT"
                 appendTextVariation(tokens, inputType)
-                appendTextFlags(tokens, inputType)
+                appendTextFlags(tokens, inputType, verbose)
             }
+
             InputType.TYPE_CLASS_NUMBER -> {
                 tokens += "NUMBER"
                 appendNumberVariation(tokens, inputType)
                 appendNumberFlags(tokens, inputType)
             }
-            InputType.TYPE_CLASS_PHONE -> tokens += "PHONE"
+
+            InputType.TYPE_CLASS_PHONE -> {
+                tokens += "PHONE"
+            }
+
             InputType.TYPE_CLASS_DATETIME -> {
                 tokens += "DATETIME"
                 appendDatetimeVariation(tokens, inputType)
             }
-            else -> tokens += "CLASS:0x${klass.toString(16)}"
+
+            else -> {
+                tokens += "CLASS:0x${klass.toString(16)}"
+            }
         }
-        appendImeOptions(tokens, imeOptions)
+        if (verbose) appendImeOptions(tokens, imeOptions)
         appendContent(tokens, contentMimeTypes)
-        return tokens.joinToString(SEP)
+        return tokens
     }
 
     private fun appendTextVariation(
@@ -87,18 +127,20 @@ object EditorInfoDebug {
     private fun appendTextFlags(
         tokens: MutableList<String>,
         inputType: Int,
+        verbose: Boolean,
     ) {
-        if (inputType has InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS) tokens += "CAP_CHARS"
-        if (inputType has InputType.TYPE_TEXT_FLAG_CAP_WORDS) tokens += "CAP_WORDS"
-        if (inputType has InputType.TYPE_TEXT_FLAG_CAP_SENTENCES) tokens += "CAP_SENTENCES"
-        if (inputType has InputType.TYPE_TEXT_FLAG_AUTO_CORRECT) tokens += "AUTO_CORRECT"
-        if (inputType has InputType.TYPE_TEXT_FLAG_AUTO_COMPLETE) tokens += "AUTO_COMPLETE"
-        if (inputType has InputType.TYPE_TEXT_FLAG_MULTI_LINE ||
-            inputType has InputType.TYPE_TEXT_FLAG_IME_MULTI_LINE
-        ) {
-            tokens += "MULTILINE"
+        if (verbose) {
+            if (inputType has InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS) tokens += "CAP_CHARS"
+            if (inputType has InputType.TYPE_TEXT_FLAG_CAP_WORDS) tokens += "CAP_WORDS"
+            if (inputType has InputType.TYPE_TEXT_FLAG_CAP_SENTENCES) tokens += "CAP_SENTENCES"
+            if (inputType has InputType.TYPE_TEXT_FLAG_AUTO_CORRECT) tokens += "AUTO_CORRECT"
+            if (inputType has InputType.TYPE_TEXT_FLAG_AUTO_COMPLETE) tokens += "AUTO_COMPLETE"
         }
-        if (inputType has InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS) tokens += "NO_SUGGESTIONS"
+        // IME_MULTI_LINE only means the IME may use a multiline editor. Firefox sets it on
+        // single-line web inputs, so the chip only shows MULTILINE for the real text flag.
+        if (inputType has InputType.TYPE_TEXT_FLAG_MULTI_LINE) tokens += "MULTILINE"
+        if (verbose && inputType has InputType.TYPE_TEXT_FLAG_IME_MULTI_LINE) tokens += "IME_MULTILINE"
+        if (verbose && inputType has InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS) tokens += "NO_SUGGESTIONS"
     }
 
     private fun appendNumberVariation(
@@ -154,3 +196,8 @@ object EditorInfoDebug {
 
     private infix fun Int.has(flag: Int): Boolean = this and flag == flag
 }
+
+data class EditorInfoDebugLabel(
+    val compact: String,
+    val verbose: String,
+)

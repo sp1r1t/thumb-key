@@ -3,12 +3,16 @@ package com.suave.s12.engine.capability
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class EditorInfoDebugTest {
     @Test
     fun `null editor is NO_EDITOR`() {
-        assertEquals("NO_EDITOR", EditorInfoDebug.describe(editorInfo = null))
+        val label = EditorInfoDebug.label(editorInfo = null)
+        assertEquals("NO_EDITOR", label.compact)
+        assertEquals("NO_EDITOR", label.verbose)
     }
 
     @Test
@@ -25,6 +29,14 @@ class EditorInfoDebugTest {
     fun `multiline text lists MULTILINE`() {
         val inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_MULTI_LINE
         assertEquals("EDITABLE . TEXT . MULTILINE", EditorInfoDebug.describe(inputType))
+    }
+
+    @Test
+    fun `IME multiline alone does not count as MULTILINE on the chip`() {
+        val inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_IME_MULTI_LINE
+        assertEquals("EDITABLE . TEXT", EditorInfoDebug.describe(inputType))
+        assertTrue(EditorInfoDebug.verbose(inputType).contains("IME_MULTILINE"))
+        assertFalse(EditorInfoDebug.verbose(inputType).contains(" . MULTILINE ."))
     }
 
     @Test
@@ -50,6 +62,27 @@ class EditorInfoDebugTest {
     }
 
     @Test
+    fun `Firefox web login chip drops default IME noise`() {
+        val inputType =
+            InputType.TYPE_CLASS_TEXT or
+                InputType.TYPE_TEXT_VARIATION_WEB_EDIT_TEXT or
+                InputType.TYPE_TEXT_FLAG_AUTO_CORRECT or
+                InputType.TYPE_TEXT_FLAG_IME_MULTI_LINE
+        val imeOptions =
+            EditorInfo.IME_ACTION_NEXT or
+                EditorInfo.IME_FLAG_NO_EXTRACT_UI or
+                EditorInfo.IME_FLAG_NO_FULLSCREEN
+        val label = EditorInfoDebug.label(inputType, imeOptions)
+        assertEquals("EDITABLE . TEXT . WEB_EDIT", label.compact)
+        assertTrue(label.verbose.contains("AUTO_CORRECT"))
+        assertTrue(label.verbose.contains("IME_MULTILINE"))
+        assertTrue(label.verbose.contains("NO_EXTRACT"))
+        assertTrue(label.verbose.contains("NO_FULLSCREEN"))
+        assertTrue(label.verbose.contains("ACTION:NEXT"))
+        assertTrue(label.verbose.contains("inputType=0x"))
+    }
+
+    @Test
     fun `number password and decimal flags stack`() {
         val inputType =
             InputType.TYPE_CLASS_NUMBER or
@@ -59,12 +92,14 @@ class EditorInfoDebugTest {
     }
 
     @Test
-    fun `ime action and extract flags are listed`() {
+    fun `ime action and extract flags stay on the verbose dump`() {
         val label =
-            EditorInfoDebug.describe(
+            EditorInfoDebug.label(
                 inputType = InputType.TYPE_CLASS_TEXT,
                 imeOptions = EditorInfo.IME_ACTION_DONE or EditorInfo.IME_FLAG_NO_EXTRACT_UI,
             )
-        assertEquals("EDITABLE . TEXT . NO_EXTRACT . ACTION:DONE", label)
+        assertEquals("EDITABLE . TEXT", label.compact)
+        assertTrue(label.verbose.contains("NO_EXTRACT"))
+        assertTrue(label.verbose.contains("ACTION:DONE"))
     }
 }

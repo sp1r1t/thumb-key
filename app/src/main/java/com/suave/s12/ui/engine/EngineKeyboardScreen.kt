@@ -1,9 +1,14 @@
 package com.suave.s12.ui.engine
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,9 +19,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -35,6 +47,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,6 +65,7 @@ import com.suave.s12.db.DEFAULT_ANIMATION_RELEASE_FLASH
 import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_CLIPBOARD_HISTORY_ENABLED
 import com.suave.s12.db.DEFAULT_CTRL_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_DISTINCT_LETTER_CONTROL_COLORS
 import com.suave.s12.db.DEFAULT_ESC_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_HIDE_EDITING
 import com.suave.s12.db.DEFAULT_HIDE_LAYER_SWITCHES
@@ -64,12 +78,12 @@ import com.suave.s12.db.DEFAULT_HIDE_SYMBOLS
 import com.suave.s12.db.DEFAULT_IGNORE_BOTTOM_PADDING
 import com.suave.s12.db.DEFAULT_INLINE_SUGGESTIONS
 import com.suave.s12.db.DEFAULT_INLINE_SUGGESTION_HEIGHT
+import com.suave.s12.db.DEFAULT_KEYBOARD_POSITIONS
 import com.suave.s12.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.s12.db.DEFAULT_KEY_HEIGHT
 import com.suave.s12.db.DEFAULT_KEY_PADDING
 import com.suave.s12.db.DEFAULT_KEY_PADDING_VERTICAL
 import com.suave.s12.db.DEFAULT_KEY_RADIUS
-import com.suave.s12.db.DEFAULT_KEYBOARD_POSITIONS
 import com.suave.s12.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.s12.db.DEFAULT_POSITION
 import com.suave.s12.db.DEFAULT_PREVENT_CRAMPED_DUAL
@@ -77,7 +91,6 @@ import com.suave.s12.db.DEFAULT_PREVENT_NEEDLESS_SPLIT
 import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
-import com.suave.s12.db.DEFAULT_DISTINCT_LETTER_CONTROL_COLORS
 import com.suave.s12.db.DEFAULT_VIBRATE_HOLD_REPEAT_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_MODIFIER_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
@@ -89,7 +102,6 @@ import com.suave.s12.db.DEFAULT_VIBRATE_SLIDE_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_SWIPE_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_TAP_TYPE
 import com.suave.s12.engine.action.SemanticAction
-import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.capability.EditorCapabilities
 import com.suave.s12.engine.capability.EditorCapabilityResolver
 import com.suave.s12.engine.capability.EditorInfoDebug
@@ -99,6 +111,7 @@ import com.suave.s12.engine.feedback.FeedbackSettings
 import com.suave.s12.engine.feedback.HapticChannel
 import com.suave.s12.engine.feedback.HapticType
 import com.suave.s12.engine.feedback.hapticTypeFromDb
+import com.suave.s12.engine.intent.CommandId
 import com.suave.s12.engine.intent.KeyPosition
 import com.suave.s12.engine.intent.Layout
 import com.suave.s12.engine.intent.ModifierId
@@ -131,11 +144,11 @@ import com.suave.s12.ui.components.keyboard.ClipboardHistoryScreen
 import com.suave.s12.utils.KeyboardPosition
 import com.suave.s12.utils.isPasswordField
 import com.suave.s12.utils.toBool
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 /**
  * Renders the selected [NamedLayout] on the new engine end to end. Owns the two pieces of
@@ -290,9 +303,10 @@ fun EngineKeyboardScreen(
     val inputEpoch by ime.inputEpoch.collectAsState()
     val autofillStatus by ime.inlineAutofill.status.collectAsState()
     val capabilities = remember(inputEpoch) { EditorCapabilityResolver.resolve(ime.currentInputEditorInfo) }
-    val passwordField = remember(inputEpoch) {
-        ime.currentInputEditorInfo?.let { isPasswordField(ime) } ?: false
-    }
+    val passwordField =
+        remember(inputEpoch) {
+            ime.currentInputEditorInfo?.let { isPasswordField(ime) } ?: false
+        }
 
     LaunchedEffect(namedLayout.id) {
         layerSessionState.value = LayerSession()
@@ -363,20 +377,27 @@ fun EngineKeyboardScreen(
                     val session = layerSessionState.value
                     layerSessionState.value =
                         when (requested) {
-                            LayoutLayer.NUMERIC ->
+                            LayoutLayer.NUMERIC -> {
                                 if (current.numericLayout != null) {
                                     session.selectBaseLayer(LayoutLayer.NUMERIC)
                                 } else {
                                     session
                                 }
-                            LayoutLayer.MAIN -> session.selectBaseLayer(LayoutLayer.MAIN)
-                            LayoutLayer.EMOJI ->
+                            }
+
+                            LayoutLayer.MAIN -> {
+                                session.selectBaseLayer(LayoutLayer.MAIN)
+                            }
+
+                            LayoutLayer.EMOJI -> {
                                 if (current.emojiBottomRow != null) {
                                     session.enterOverlay(LayoutLayer.EMOJI)
                                 } else {
                                     session
                                 }
-                            LayoutLayer.CLIPBOARD ->
+                            }
+
+                            LayoutLayer.CLIPBOARD -> {
                                 if (current.clipboardBottomRow != null ||
                                     current.layerContent[LayoutLayer.CLIPBOARD] != null
                                 ) {
@@ -384,6 +405,7 @@ fun EngineKeyboardScreen(
                                 } else {
                                     session
                                 }
+                            }
                         }
                 },
                 onToggleEmojiLayer = {
@@ -401,45 +423,41 @@ fun EngineKeyboardScreen(
                 },
             )
         }
-        val onExecute =
-            remember(capabilities, ime, appHost) {
-                { action: SemanticAction ->
-                    val filledTop =
-                        action is SemanticAction.TypeCommand &&
-                            action.id == CommandId.ARROW_RIGHT &&
-                            action.modifiers.isEmpty() &&
-                            ime.acceptTopInlineSuggestion()
-                    if (!filledTop) {
-                        ActionExecutor.execute(
-                            action = action,
-                            capabilities = capabilities,
-                            ime = ime,
-                            host = appHost,
-                        )
-                    }
+    val onExecute =
+        remember(capabilities, ime, appHost) {
+            { action: SemanticAction ->
+                val filledTop =
+                    action is SemanticAction.TypeCommand &&
+                        action.id == CommandId.ARROW_RIGHT &&
+                        action.modifiers.isEmpty() &&
+                        ime.acceptTopInlineSuggestion()
+                if (!filledTop) {
+                    ActionExecutor.execute(
+                        action = action,
+                        capabilities = capabilities,
+                        ime = ime,
+                        host = appHost,
+                    )
                 }
             }
-        val onFeedback =
-            remember(feedbackSettings, hapticPlayer) {
-                { event: FeedbackEvent -> FeedbackDispatcher.dispatch(event, feedbackSettings, hapticPlayer) }
-            }
+        }
+    val onFeedback =
+        remember(feedbackSettings, hapticPlayer) {
+            { event: FeedbackEvent -> FeedbackDispatcher.dispatch(event, feedbackSettings, hapticPlayer) }
+        }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         if (showDebugBar) {
-            // Shows the APK's actual install timestamp (read from PackageManager at runtime,
-            // not baked in at Gradle configuration time - this project's Gradle configuration
-            // cache gets reused whenever only source files change, which skips re-running the
-            // build script and any Date() call in it, so a config-time timestamp went stale
-            // exactly when it mattered most: confirming a fresh `adb install` actually took
-            // effect), which app the IME is connected to, and orthogonal EditorInfo facts
-            // (class / variation / flags / content mime) rather than a single fake field type.
+            // Install timestamp comes from PackageManager at runtime (Gradle config-time
+            // Date() went stale whenever the configuration cache reused a previous run).
+            // The editor chip lists orthogonal EditorInfo facts, not a fake field class.
             val installTime =
                 remember {
                     val info = ime.packageManager.getPackageInfo(ime.packageName, 0)
                     SimpleDateFormat("MM-dd HH:mm:ss", Locale.getDefault()).format(Date(info.lastUpdateTime))
                 }
             val targetApp = remember(inputEpoch) { ime.currentInputEditorInfo?.packageName ?: "?" }
-            val editorDebug = remember(inputEpoch) { EditorInfoDebug.describe(ime.currentInputEditorInfo) }
+            val editorDebug = remember(inputEpoch) { EditorInfoDebug.label(ime.currentInputEditorInfo) }
             val inlineEnabled = (settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()
             val af =
                 when {
@@ -447,16 +465,15 @@ fun EngineKeyboardScreen(
                     !inlineEnabled -> "off"
                     else -> autofillStatus.ifEmpty { INLINE_STATUS_IDLE }
                 }
-            Text(
-                text = "$installTime | $targetApp | $editorDebug | af=$af",
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.error)
-                        .padding(horizontal = 4.dp, vertical = 2.dp),
-                textAlign = TextAlign.Center,
-                fontSize = 10.sp,
-                color = MaterialTheme.colorScheme.onError,
+            EditorDebugBar(
+                meta = "$installTime | $targetApp | af=$af",
+                compact = editorDebug.compact,
+                verbose = editorDebug.verbose,
+                onCopy = { text ->
+                    val clipboard = ime.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                    clipboard.setPrimaryClip(ClipData.newPlainText("editor", text))
+                    ime.showNotice("Copied")
+                },
             )
         }
         ImeNoticeBanner(ime = ime)
@@ -531,8 +548,14 @@ fun EngineKeyboardScreen(
                             renderPanel(Modifier.weight(1f), false)
                         }
                     }
-                    KeyboardPosition.Split -> renderPanel(Modifier.fillMaxWidth(), true)
-                    else -> renderPanel(Modifier.fillMaxWidth(), false)
+
+                    KeyboardPosition.Split -> {
+                        renderPanel(Modifier.fillMaxWidth(), true)
+                    }
+
+                    else -> {
+                        renderPanel(Modifier.fillMaxWidth(), false)
+                    }
                 }
             }
         }
@@ -633,7 +656,10 @@ private fun LayerContentSlot(
 ) {
     val view = LocalView.current
     when (content) {
-        LayerContent.None -> Spacer(modifier = Modifier.fillMaxWidth().height(height))
+        LayerContent.None -> {
+            Spacer(modifier = Modifier.fillMaxWidth().height(height))
+        }
+
         LayerContent.EmojiPicker -> {
             val colorScheme = MaterialTheme.colorScheme
             val pickerText = colorScheme.onSurface.toArgb()
@@ -666,6 +692,7 @@ private fun LayerContentSlot(
                 )
             }
         }
+
         LayerContent.ClipboardHistory -> {
             ClipboardHistoryScreen(
                 clipboardItems = clipboardSession.items,
@@ -837,6 +864,61 @@ private fun RowScope.LayoutRowKeys(
                 distinctLetterControlColors = distinctLetterControlColors,
                 modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
             )
+        }
+    }
+}
+
+@Composable
+private fun EditorDebugBar(
+    meta: String,
+    compact: String,
+    verbose: String,
+    onCopy: (String) -> Unit,
+) {
+    val onError = MaterialTheme.colorScheme.onError
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.error)
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            text = meta,
+            color = onError,
+            fontSize = 9.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
+        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+            Row(
+                modifier =
+                    Modifier
+                        .background(
+                            color = onError.copy(alpha = 0.16f),
+                            shape = RoundedCornerShape(50),
+                        ).clickable { onCopy(verbose) }
+                        .padding(start = 12.dp, top = 3.dp, end = 8.dp, bottom = 3.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(
+                    text = compact,
+                    color = onError,
+                    fontSize = 10.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Icon(
+                    imageVector = Icons.Outlined.ContentCopy,
+                    contentDescription = "Copy editor info",
+                    tint = onError,
+                    modifier = Modifier.size(12.dp),
+                )
+            }
         }
     }
 }
