@@ -108,6 +108,27 @@ fun isUriOrEmailOrPasswordField(ime: IMEService): Boolean {
         ime.currentInputEditorInfo.inputType == EditorInfo.TYPE_NULL
 }
 
+fun autoCapitalizeCheck(ime: IMEService): Boolean {
+    val ic = ime.currentInputConnection ?: return false
+    val editorInfo = ime.currentInputEditorInfo ?: return false
+    return ic.getCursorCapsMode(editorInfo.inputType) > 0
+}
+
+/**
+ * True when [text] ends a sentence the way AOSP caps-mode does (. ? ! then optional closers,
+ * then whitespace). Used after we already know what we committed - avoids getTextBeforeCursor
+ * probes that burn multitap's cursor-move ignore slot.
+ */
+fun textEndsSentenceForCaps(text: String): Boolean =
+    SENTENCE_END_COMMITTED.containsMatchIn(text)
+
+private val SENTENCE_END_COMMITTED = Regex("""[.!?]["'\u201D\u2019)\]]*\s+$""")
+
+fun editorWantsSentenceCaps(ime: IMEService): Boolean {
+    val editorInfo = ime.currentInputEditorInfo ?: return false
+    return (editorInfo.inputType and InputType.TYPE_TEXT_FLAG_CAP_SENTENCES) != 0
+}
+
 fun isPasswordField(ime: IMEService): Boolean {
     val inputType = ime.currentInputEditorInfo.inputType and (InputType.TYPE_MASK_VARIATION)
     return listOf(

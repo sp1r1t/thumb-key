@@ -675,3 +675,15 @@ val MIGRATION_46_47 =
             )
         }
     }
+
+val MIGRATION_47_48 =
+    object : Migration(47, 48) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN auto_capitalize INTEGER NOT NULL DEFAULT $DEFAULT_AUTO_CAPITALIZE",
+            )
+            db.execSQL(
+                "ALTER TABLE AppSettings ADD COLUMN spacebar_multitaps INTEGER NOT NULL DEFAULT $DEFAULT_SPACEBAR_MULTITAPS",
+            )
+        }
+    }

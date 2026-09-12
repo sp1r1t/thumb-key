@@ -34,6 +34,15 @@ sealed class SemanticAction {
         val modifiers: Set<ModifierId> = emptySet(),
     ) : SemanticAction()
 
+    /**
+     * Delete [trimCount] characters before the cursor, then commit [text]. Used by spacebar
+     * multi-taps to replace the previous ending (stock ThumbKey ReplaceLastText).
+     */
+    data class ReplaceLastText(
+        val text: String,
+        val trimCount: Int = 2,
+    ) : SemanticAction()
+
     data class MoveCursor(
         val direction: CursorDirection,
         val resetAnchor: Boolean = false,

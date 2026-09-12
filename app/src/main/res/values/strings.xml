@@ -44,6 +44,7 @@
     <string name="show_toast_on_switch_off">Off - switching layout or position stays silent</string>
     <string name="show_toast_on_switch_info">A brief notice on the keyboard names the layout after Switch language, or the position after Move keyboard.</string>
     <string name="settings_section_notices">Notices</string>
+    <string name="settings_section_typing">Typing</string>
     <string name="show_toast_on_copy">Copy</string>
     <string name="show_toast_on_copy_on">On - a notice confirms after a successful copy</string>
     <string name="show_toast_on_copy_off">Off - copy stays silent</string>
@@ -121,6 +122,9 @@
     <string name="haptic_type_reject">Sharp</string>
     <string name="play_sound_on_tap">Play sound on tap</string>
     <string name="auto_capitalize">Auto-capitalize</string>
+    <string name="auto_capitalize_on">On - Shift engages for the next letter when the field wants a capital</string>
+    <string name="auto_capitalize_off">Off - Shift stays off unless you tap it</string>
+    <string name="auto_capitalize_info">Uses the editor\'s caps mode after you type or after spacebar punctuation. Skipped in URI, email, and password fields. Does not override caps lock or a held Shift.</string>
     <string name="auto_size_keys">Maximize to fit screen width</string>
     <string name="key_size">Key size: %1$s</string>
     <string name="key_non_square">Use non-square keys</string>
@@ -226,6 +230,9 @@
     <string name="animation_letter_drop_off">Off - no extra letter appears on the key after typing</string>
     <string name="animation_letter_drop_info">After a character is typed, a copy of that character slides down the keycap and fades. Only typed text, not commands. Password fields never show it.</string>
     <string name="spacebar_multitaps">Spacebar multi-taps</string>
+    <string name="spacebar_multitaps_on">On - repeated space taps cycle space, comma, period, question, exclamation, colon, semicolon</string>
+    <string name="spacebar_multitaps_off">Off - each space tap only inserts a space</string>
+    <string name="spacebar_multitaps_info">Within one second, and only if the cursor has not moved, each further tap replaces the previous ending (space -> \", \" -> \". \" -> \"? \" -> \"! \" -> \": \" -> \"; \", then wraps). Sliding on space does not advance the cycle. Holding space to repeat only inserts spaces.</string>
     <string name="done">Done</string>
     <string name="backdrop">Keyboard background</string>
     <string name="backdrop_on">On - fills the area behind the keys with the theme background color</string>

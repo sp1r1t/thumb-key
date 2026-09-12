@@ -35,6 +35,7 @@
     <string name="show_toast_on_switch_off">Aus - Layout- oder Positionswechsel bleiben still</string>
     <string name="show_toast_on_switch_info">Ein kurzer Hinweis auf der Tastatur nennt das Layout nach Sprache wechseln, oder die Position nach Tastatur verschieben.</string>
     <string name="settings_section_notices">Hinweise</string>
+    <string name="settings_section_typing">Tippen</string>
     <string name="show_toast_on_copy">Kopieren</string>
     <string name="show_toast_on_copy_on">An - ein Hinweis bestätigt nach erfolgreichem Kopieren</string>
     <string name="show_toast_on_copy_off">Aus - Kopieren bleibt still</string>
@@ -119,6 +120,9 @@
     <string name="haptic_type_reject">Scharf</string>
     <string name="play_sound_on_tap">akustisches Feedback</string>
     <string name="auto_capitalize">Auto-Großschreibung</string>
+    <string name="auto_capitalize_on">An - Shift wird für den nächsten Buchstaben aktiv, wenn das Feld eine Großschreibung will</string>
+    <string name="auto_capitalize_off">Aus - Shift bleibt aus, bis du ihn tippst</string>
+    <string name="auto_capitalize_info">Nutzt den Caps-Modus des Editors nach dem Tippen oder nach Leertasten-Satzzeichen. In URI-, E-Mail- und Passwortfeldern aus. Überschreibt weder Feststelltaste noch gehaltenes Shift.</string>
     <string name="key_size">Tastengröße: %1$s</string>
     <string name="bottom_offset">Unterer Abstand: %1$s</string>
     <string name="min_swipe_length">Minimale Wischlänge: %1$s</string>
@@ -194,6 +198,9 @@
     <string name="animation_letter_drop_off">Aus - nach dem Tippen erscheint kein extra Zeichen auf der Taste</string>
     <string name="animation_letter_drop_info">Nach einem getippten Zeichen gleitet eine Kopie dieses Zeichens die Taste hinunter und verblasst. Nur getippter Text, keine Befehle. In Passwortfeldern erscheint es nie.</string>
     <string name="spacebar_multitaps">Leertaste Mehrfachtippen</string>
+    <string name="spacebar_multitaps_on">An - wiederholtes Tippen auf die Leertaste wechselt Leerzeichen, Komma, Punkt, Fragezeichen, Ausrufezeichen, Doppelpunkt, Semikolon</string>
+    <string name="spacebar_multitaps_off">Aus - jedes Tippen auf die Leertaste fügt nur ein Leerzeichen ein</string>
+    <string name="spacebar_multitaps_info">Innerhalb einer Sekunde und nur wenn der Cursor nicht bewegt wurde, ersetzt jedes weitere Tippen die vorherige Endung (Leerzeichen -> \", \" -> \". \" -> \"? \" -> \"! \" -> \": \" -> \"; \", dann von vorn). Gleiten auf der Leertaste zählt nicht. Gehaltenes Wiederholen fügt nur Leerzeichen ein.</string>
     <string name="twilight">Dämmerung</string>
     <string name="high_contrast_colorful">Kontrastreich bunt</string>
     <string name="high_contrast">Kontrastreich</string>

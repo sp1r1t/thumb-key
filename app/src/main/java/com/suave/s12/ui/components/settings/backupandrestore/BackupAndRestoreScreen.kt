@@ -36,6 +36,7 @@ import com.suave.s12.db.AppDB
 import com.suave.s12.db.AppSettings
 import com.suave.s12.db.AppSettingsViewModel
 import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
+import com.suave.s12.db.DEFAULT_AUTO_CAPITALIZE
 import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_CLIPBOARD_AUTO_CLEANUP_ENABLED
 import com.suave.s12.db.DEFAULT_CLIPBOARD_CLEANUP_AFTER_MINUTES
@@ -71,6 +72,7 @@ import com.suave.s12.db.DEFAULT_SHOW_ON_SCREEN_KEYBOARD
 import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_COPY
 import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_CUT
 import com.suave.s12.db.DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH
+import com.suave.s12.db.DEFAULT_SPACEBAR_MULTITAPS
 import com.suave.s12.db.DEFAULT_THEME
 import com.suave.s12.db.DEFAULT_THEME_COLOR
 import com.suave.s12.db.DEFAULT_CAPTURE_SYSTEM_CLIPBOARD
@@ -251,6 +253,8 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             ctrlAsModifier = DEFAULT_CTRL_AS_MODIFIER,
             altAsModifier = DEFAULT_ALT_AS_MODIFIER,
             shiftAsModifier = DEFAULT_SHIFT_AS_MODIFIER,
+            autoCapitalize = DEFAULT_AUTO_CAPITALIZE,
+            spacebarMultitaps = DEFAULT_SPACEBAR_MULTITAPS,
             keyboardLayout = DEFAULT_KEYBOARD_LAYOUT,
             keyboardLayouts = setOf(DEFAULT_KEYBOARD_LAYOUT).joinToString(),
             showToastOnLayoutSwitch = DEFAULT_SHOW_TOAST_ON_LAYOUT_SWITCH,

@@ -56,8 +56,25 @@ object ActionExecutor {
             executeSpecialCommand(action.id, capabilities, ime, host)
             return
         }
-        OutputExecutor.execute(action, capabilities, ime.currentInputConnection)
+        val ignoreCount = cursorMovesToIgnore(action)
+        if (ignoreCount > 0) {
+            ime.ignoreNextCursorMove(ignoreCount)
+        }
+        val ic = ime.currentInputConnection ?: return
+        OutputExecutor.execute(action, capabilities, ic)
     }
+
+    /**
+     * ReplaceLastText does delete + commit and often yields two cursor updates; ignoring only
+     * one lets the second look like a user move and resets space multitap.
+     */
+    private fun cursorMovesToIgnore(action: SemanticAction): Int =
+        when (action) {
+            is SemanticAction.ReplaceLastText -> 2
+            is SemanticAction.TypeText -> 1
+            is SemanticAction.TypeCommand -> if (action.id == CommandId.SPACE) 1 else 0
+            else -> 0
+        }
 
     private fun executeSpecialCommand(
         id: CommandId,

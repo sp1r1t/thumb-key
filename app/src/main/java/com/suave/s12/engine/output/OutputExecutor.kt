@@ -45,6 +45,10 @@ object OutputExecutor {
                 typeCommand(action, capabilities, inputConnection)
             }
 
+            is SemanticAction.ReplaceLastText -> {
+                replaceLastText(action, inputConnection)
+            }
+
             is SemanticAction.MoveCursor -> {
                 moveCursor(action.direction, action.resetAnchor, extend = false, capabilities, inputConnection)
             }
@@ -55,6 +59,14 @@ object OutputExecutor {
 
             SemanticAction.Noop -> {}
         }
+    }
+
+    private fun replaceLastText(
+        action: SemanticAction.ReplaceLastText,
+        ic: InputConnection,
+    ) {
+        ic.deleteSurroundingText(action.trimCount, 0)
+        ic.commitText(action.text, 1)
     }
 
     private fun typeText(

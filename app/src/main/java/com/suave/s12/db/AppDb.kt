@@ -239,6 +239,16 @@ data class AppSettings(
     )
     val shiftAsModifier: Int = DEFAULT_SHIFT_AS_MODIFIER,
     @ColumnInfo(
+        name = "auto_capitalize",
+        defaultValue = DEFAULT_AUTO_CAPITALIZE.toString(),
+    )
+    val autoCapitalize: Int = DEFAULT_AUTO_CAPITALIZE,
+    @ColumnInfo(
+        name = "spacebar_multitaps",
+        defaultValue = DEFAULT_SPACEBAR_MULTITAPS.toString(),
+    )
+    val spacebarMultitaps: Int = DEFAULT_SPACEBAR_MULTITAPS,
+    @ColumnInfo(
         name = "keyboard_layout",
         defaultValue = DEFAULT_KEYBOARD_LAYOUT.toString(),
     )
@@ -539,6 +549,10 @@ data class BehaviorUpdate(
     val altAsModifier: Int,
     @ColumnInfo(name = "shift_as_modifier")
     val shiftAsModifier: Int,
+    @ColumnInfo(name = "auto_capitalize")
+    val autoCapitalize: Int,
+    @ColumnInfo(name = "spacebar_multitaps")
+    val spacebarMultitaps: Int,
     @ColumnInfo(name = "show_toast_on_layout_switch")
     val showToastOnLayoutSwitch: Int,
     @ColumnInfo(name = "show_toast_on_copy")
@@ -690,7 +704,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 47,
+    version = 48,
     entities = [AppSettings::class],
     exportSchema = true,
 )
@@ -782,6 +796,7 @@ abstract class AppDB : RoomDatabase() {
                             MIGRATION_44_45,
                             MIGRATION_45_46,
                             MIGRATION_46_47,
+                            MIGRATION_47_48,
                         )
                         // Necessary because it can't insert data on creation
                         .addCallback(

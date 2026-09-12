@@ -55,6 +55,7 @@ import com.suave.s12.db.DEFAULT_ALT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_ANIMATION_LETTER_DROP
 import com.suave.s12.db.DEFAULT_ANIMATION_PRESS_HIGHLIGHT
 import com.suave.s12.db.DEFAULT_ANIMATION_RELEASE_FLASH
+import com.suave.s12.db.DEFAULT_AUTO_CAPITALIZE
 import com.suave.s12.db.DEFAULT_BACKDROP_ENABLED
 import com.suave.s12.db.DEFAULT_CLIPBOARD_HISTORY_ENABLED
 import com.suave.s12.db.DEFAULT_CLIPBOARD_IMAGES_ENABLED
@@ -85,6 +86,7 @@ import com.suave.s12.db.DEFAULT_PREVENT_NEEDLESS_SPLIT
 import com.suave.s12.db.DEFAULT_PUSHUP_SIZE
 import com.suave.s12.db.DEFAULT_SHIFT_AS_MODIFIER
 import com.suave.s12.db.DEFAULT_SHOW_DEBUG_BAR
+import com.suave.s12.db.DEFAULT_SPACEBAR_MULTITAPS
 import com.suave.s12.db.DEFAULT_VIBRATE_HOLD_REPEAT_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_MODIFIER_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_ON_HOLD_REPEAT
@@ -96,6 +98,7 @@ import com.suave.s12.db.DEFAULT_VIBRATE_SLIDE_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_SWIPE_TYPE
 import com.suave.s12.db.DEFAULT_VIBRATE_TAP_TYPE
 import com.suave.s12.engine.action.SemanticAction
+import com.suave.s12.engine.action.SpacebarMultitapTracker
 import com.suave.s12.engine.capability.EditorCapabilities
 import com.suave.s12.engine.capability.EditorCapabilityResolver
 import com.suave.s12.engine.capability.EditorInfoDebug
@@ -113,6 +116,8 @@ import com.suave.s12.engine.intent.columnCount
 import com.suave.s12.engine.intent.layoutRows
 import com.suave.s12.engine.modifier.ModifierBehavior
 import com.suave.s12.engine.modifier.ModifierState
+import com.suave.s12.engine.modifier.applyAutoCapitalize
+import com.suave.s12.engine.modifier.initialAutoCapitalizeState
 import com.suave.s12.engine.modifier.modifierBehaviors
 import com.suave.s12.engine.output.ClipboardPaste
 import com.suave.s12.engine.output.LiveClipboardImage
@@ -171,6 +176,7 @@ fun EngineKeyboardScreen(
     val view = LocalView.current
 
     val modifierState = remember { mutableStateOf(ModifierState()) }
+    val spacebarMultitap = remember { SpacebarMultitapTracker() }
     val layerSessionState = remember { mutableStateOf(LayerSession()) }
     val layer = layerSessionState.value.layer
     val clipboardScope = rememberCoroutineScope()
@@ -252,6 +258,9 @@ fun EngineKeyboardScreen(
             canMoveKeyboard = canMoveKeyboard,
         )
     val minSwipeDistancePx = (settings?.minSwipeLength ?: DEFAULT_MIN_SWIPE_LENGTH).toFloat()
+    val autoCapitalize = (settings?.autoCapitalize ?: DEFAULT_AUTO_CAPITALIZE).toBool()
+    val spacebarMultitapEnabled =
+        (settings?.spacebarMultitaps ?: DEFAULT_SPACEBAR_MULTITAPS).toBool()
     val ignoreBottomPadding = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
     val showDebugBar = (settings?.showDebugBar ?: DEFAULT_SHOW_DEBUG_BAR).toBool()
     val backdropEnabled = (settings?.backdropEnabled ?: DEFAULT_BACKDROP_ENABLED).toBool()
@@ -308,6 +317,10 @@ fun EngineKeyboardScreen(
 
     LaunchedEffect(namedLayout.id) {
         layerSessionState.value = LayerSession()
+    }
+    LaunchedEffect(inputEpoch, autoCapitalize) {
+        spacebarMultitap.reset()
+        modifierState.value = initialAutoCapitalizeState(ime, autoCapitalize)
     }
     LaunchedEffect(layer) {
         if (layer == LayoutLayer.CLIPBOARD) {
@@ -438,7 +451,7 @@ fun EngineKeyboardScreen(
             )
         }
     val onExecute =
-        remember(capabilities, ime, appHost) {
+        remember(capabilities, ime, appHost, autoCapitalize) {
             { action: SemanticAction ->
                 val filledTop =
                     action is SemanticAction.TypeCommand &&
@@ -452,6 +465,15 @@ fun EngineKeyboardScreen(
                         ime = ime,
                         host = appHost,
                     )
+                    if (shouldApplyAutoCapitalizeAfter(action)) {
+                        modifierState.value =
+                            applyAutoCapitalize(
+                                modifierState.value,
+                                ime,
+                                autoCapitalize,
+                                committed = action,
+                            )
+                    }
                 }
             }
         }
@@ -527,6 +549,8 @@ fun EngineKeyboardScreen(
                 animations = animations,
                 isPasswordField = passwordField,
                 distinctLetterControlColors = distinctLetterControlColors,
+                spacebarMultitap = spacebarMultitap,
+                spacebarMultitapEnabled = spacebarMultitapEnabled,
                 splitHalves = splitHalves,
             )
         }
@@ -622,6 +646,8 @@ private fun EngineKeyboardPanel(
     animations: KeyAnimationSettings,
     isPasswordField: Boolean,
     distinctLetterControlColors: Boolean,
+    spacebarMultitap: SpacebarMultitapTracker,
+    spacebarMultitapEnabled: Boolean,
     splitHalves: Boolean,
 ) {
     val grid = namedLayout.gridFor(layer)
@@ -659,6 +685,8 @@ private fun EngineKeyboardPanel(
             animations = animations,
             isPasswordField = isPasswordField,
             distinctLetterControlColors = distinctLetterControlColors,
+            spacebarMultitap = spacebarMultitap,
+            spacebarMultitapEnabled = spacebarMultitapEnabled,
             splitHalves = splitHalves,
         )
     }
@@ -760,6 +788,8 @@ private fun LayoutGrid(
     animations: KeyAnimationSettings,
     isPasswordField: Boolean,
     distinctLetterControlColors: Boolean,
+    spacebarMultitap: SpacebarMultitapTracker,
+    spacebarMultitapEnabled: Boolean,
     splitHalves: Boolean,
 ) {
     val rows = remember(layout) { layoutRows(layout) }
@@ -791,6 +821,8 @@ private fun LayoutGrid(
                     animations = animations,
                     isPasswordField = isPasswordField,
                     distinctLetterControlColors = distinctLetterControlColors,
+                    spacebarMultitap = spacebarMultitap,
+                    spacebarMultitapEnabled = spacebarMultitapEnabled,
                     keyPrefix = "",
                 )
             } else {
@@ -815,6 +847,8 @@ private fun LayoutGrid(
                         animations = animations,
                         isPasswordField = isPasswordField,
                         distinctLetterControlColors = distinctLetterControlColors,
+                        spacebarMultitap = spacebarMultitap,
+                        spacebarMultitapEnabled = spacebarMultitapEnabled,
                         keyPrefix = "L",
                     )
                 }
@@ -838,6 +872,8 @@ private fun LayoutGrid(
                         animations = animations,
                         isPasswordField = isPasswordField,
                         distinctLetterControlColors = distinctLetterControlColors,
+                        spacebarMultitap = spacebarMultitap,
+                        spacebarMultitapEnabled = spacebarMultitapEnabled,
                         keyPrefix = "R",
                     )
                 }
@@ -866,6 +902,8 @@ private fun RowScope.LayoutRowKeys(
     animations: KeyAnimationSettings,
     isPasswordField: Boolean,
     distinctLetterControlColors: Boolean,
+    spacebarMultitap: SpacebarMultitapTracker,
+    spacebarMultitapEnabled: Boolean,
     keyPrefix: String,
 ) {
     for (position in positions) {
@@ -890,11 +928,22 @@ private fun RowScope.LayoutRowKeys(
                 animations = animations,
                 isPasswordField = isPasswordField,
                 distinctLetterControlColors = distinctLetterControlColors,
+                spacebarMultitap = spacebarMultitap,
+                spacebarMultitapEnabled = spacebarMultitapEnabled,
                 modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
             )
         }
     }
 }
+
+private fun shouldApplyAutoCapitalizeAfter(action: SemanticAction): Boolean =
+    when (action) {
+        is SemanticAction.TypeText,
+        is SemanticAction.ReplaceLastText,
+        -> true
+        is SemanticAction.TypeCommand -> action.id == CommandId.SPACE
+        else -> false
+    }
 
 @Composable
 private fun EditorDebugBar(

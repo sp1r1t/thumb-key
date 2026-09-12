@@ -38,6 +38,8 @@ import androidx.compose.ui.unit.dp
 import com.suave.s12.db.DEFAULT_ANIMATION_HELPER_SPEED
 import com.suave.s12.db.DEFAULT_ANIMATION_SPEED
 import com.suave.s12.engine.action.SemanticAction
+import com.suave.s12.engine.action.SpacebarMultitapTracker
+import com.suave.s12.engine.action.isPlainSpaceTap
 import com.suave.s12.engine.dispatch.KeyDispatcher
 import com.suave.s12.engine.feedback.FeedbackEvent
 import com.suave.s12.engine.gesture.Direction
@@ -50,6 +52,7 @@ import com.suave.s12.engine.gesture.Zone
 import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.KeyMapping
 import com.suave.s12.engine.intent.ModifierId
+import com.suave.s12.engine.modifier.ActivationMode
 import com.suave.s12.engine.modifier.ModifierBehavior
 import com.suave.s12.engine.modifier.ModifierState
 import com.suave.s12.utils.ColorVariant
@@ -95,6 +98,8 @@ fun EngineKeyboardKey(
     animations: KeyAnimationSettings = KeyAnimationSettings(),
     isPasswordField: Boolean = false,
     distinctLetterControlColors: Boolean = true,
+    spacebarMultitap: SpacebarMultitapTracker? = null,
+    spacebarMultitapEnabled: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val dispatcher =
@@ -113,6 +118,8 @@ fun EngineKeyboardKey(
     val currentMapping by rememberUpdatedState(mapping)
     val currentAnimations by rememberUpdatedState(animations)
     val currentIsPasswordField by rememberUpdatedState(isPasswordField)
+    val currentSpacebarMultitap by rememberUpdatedState(spacebarMultitap)
+    val currentSpacebarMultitapEnabled by rememberUpdatedState(spacebarMultitapEnabled)
     // MutableState (not `by`) so press/release visuals are read only in draw / a child. Writing
     // them from the pointer loop used to recompose this key mid-gesture: the highlight swapped
     // Modifier.background, legends relaid out, and a slightly slow Shift+letter crossed the
@@ -211,24 +218,48 @@ fun EngineKeyboardKey(
                             }
                             val before = localState
                             var typed: String? = null
+                            var executed: SemanticAction? = null
                             val newState =
                                 currentDispatcher.handle(
                                     gesture,
                                     before,
                                     { action ->
+                                        val resolved =
+                                            resolveSpacebarMultitap(
+                                                gesture = gesture,
+                                                action = action,
+                                                tracker = currentSpacebarMultitap,
+                                                enabled = currentSpacebarMultitapEnabled,
+                                            )
+                                        executed = resolved
                                         if (currentAnimations.playsRelease &&
                                             !currentIsPasswordField &&
                                             (gesture is Gesture.Tap || gesture is Gesture.Hold)
                                         ) {
-                                            typedTextForReleaseAnimation(action)?.let { typed = it }
+                                            typedTextForReleaseAnimation(resolved)?.let { typed = it }
                                         }
-                                        currentOnExecute(action)
+                                        currentOnExecute(resolved)
                                     },
                                     currentOnFeedback,
                                 )
-                            localState = newState
-                            if (newState != before) {
-                                modifierState.value = newState
+                            // onExecute may set ONE_SHOT Shift for autocap, but handle's return
+                            // value still has consumeOneShots(before) - which clears a Shift that
+                            // was already on (e.g. multitap ". " then "? "). Prefer autocap's
+                            // ONE_SHOT decision; otherwise trust the dispatcher (including when
+                            // autocap clears ONE_SHOT after a comma).
+                            var next = newState
+                            when (modifierState.value.active[ModifierId.SHIFT]?.mode) {
+                                ActivationMode.ONE_SHOT ->
+                                    next = next.activate(ModifierId.SHIFT, ActivationMode.ONE_SHOT)
+                                null ->
+                                    if (next.active[ModifierId.SHIFT]?.mode == ActivationMode.ONE_SHOT) {
+                                        next = next.deactivate(ModifierId.SHIFT)
+                                    }
+                                else -> Unit
+                            }
+                            localState = next
+                            if (next != before || executed != null) {
+                                modifierState.value = next
                             }
                             if (gesture is Gesture.Released || gesture is Gesture.Cancelled) {
                                 isPressed.value = false
@@ -446,3 +477,37 @@ private val DIRECTIONAL_ALIGNMENTS =
         Direction.DOWN to Alignment.BottomCenter,
         Direction.DOWN_RIGHT to Alignment.BottomEnd,
     )
+
+/**
+ * Space multitaps only advance on a plain SPACE [Gesture.Tap]. Slides and hold-repeat reset the
+ * cycle so they keep inserting plain spaces / moving the cursor.
+ */
+private fun resolveSpacebarMultitap(
+    gesture: Gesture,
+    action: SemanticAction,
+    tracker: SpacebarMultitapTracker?,
+    enabled: Boolean,
+): SemanticAction {
+    if (tracker == null) return action
+    when (gesture) {
+        is Gesture.SlideStep -> {
+            tracker.reset()
+            return action
+        }
+        is Gesture.Tap -> {
+            if (action.isPlainSpaceTap()) {
+                return tracker.onSpaceTap(enabled)
+            }
+            tracker.noteOtherAction(action)
+            return action
+        }
+        else -> {
+            if (action.isPlainSpaceTap()) {
+                tracker.reset()
+            } else {
+                tracker.noteOtherAction(action)
+            }
+            return action
+        }
+    }
+}

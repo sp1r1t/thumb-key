@@ -200,8 +200,8 @@ class IMEService :
         super.onUpdateCursorAnchorInfo(cursorAnchorInfo)
 
         cursorMoved =
-            if (ignoreCursorMove) {
-                ignoreCursorMove = false
+            if (ignoreCursorMoveCount > 0) {
+                ignoreCursorMoveCount--
                 false
             } else {
                 Log.d(TAG, "cursor moved")
@@ -278,9 +278,12 @@ class IMEService :
 
     fun didCursorMove(): Boolean = cursorMoved
 
-    fun ignoreNextCursorMove() {
-        // This gets reset on the next call to `onUpdateCursorAnchorInfo`
-        ignoreCursorMove = true
+    /**
+     * Ignore the next [count] [onUpdateCursorAnchorInfo] reports so self-inflicted edits
+     * (commit, delete+commit for space multitap) do not look like the user moved the cursor.
+     */
+    fun ignoreNextCursorMove(count: Int = 1) {
+        ignoreCursorMoveCount += count.coerceAtLeast(1)
     }
 
     override fun onWindowHidden() {
@@ -288,7 +291,7 @@ class IMEService :
         super.onWindowHidden()
     }
 
-    private var ignoreCursorMove: Boolean = false
+    private var ignoreCursorMoveCount: Int = 0
     private var cursorMoved: Boolean = false
     private var selectionStart: Int = 0
     private var selectionEnd: Int = 0
