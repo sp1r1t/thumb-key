@@ -41,6 +41,7 @@ import com.suave.s12.db.isCredentialStorageUnlocked
 import com.suave.s12.engine.output.LiveClipboardImage
 import com.suave.s12.ime.InlineAutofillHost
 import com.suave.s12.ime.createInlineSuggestionsRequest
+import com.suave.s12.ime.inlineChipSlotHeightDp
 import com.suave.s12.utils.KeyboardDefinition
 import com.suave.s12.utils.KeyboardLayout
 import com.suave.s12.utils.TAG
@@ -235,12 +236,12 @@ class IMEService :
         if (!(settings?.inlineSuggestions ?: DEFAULT_INLINE_SUGGESTIONS).toBool()) {
             return null
         }
-        val heightDp = settings?.inlineSuggestionHeight ?: DEFAULT_INLINE_SUGGESTION_HEIGHT
+        val stripHeightDp = settings?.inlineSuggestionHeight ?: DEFAULT_INLINE_SUGGESTION_HEIGHT
         val heightPx =
             TypedValue
                 .applyDimension(
                     TypedValue.COMPLEX_UNIT_DIP,
-                    heightDp.toFloat(),
+                    inlineChipSlotHeightDp(stripHeightDp).toFloat(),
                     resources.displayMetrics,
                 ).toInt()
                 .coerceAtLeast(1)

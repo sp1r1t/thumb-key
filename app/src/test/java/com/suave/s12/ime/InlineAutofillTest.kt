@@ -87,6 +87,13 @@ class InlineAutofillTest {
     }
 
     @Test
+    fun `chip slot height matches strip padding`() {
+        assertEquals(28, inlineChipSlotHeightDp(36))
+        assertEquals(16, inlineChipSlotHeightDp(24))
+        assertEquals(1, inlineChipSlotHeightDp(0))
+    }
+
+    @Test
     fun `empty ping does not clear wait until a real fill is missing`() {
         val host = InlineAutofillHost()
         host.markWaiting(40)

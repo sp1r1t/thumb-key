@@ -31,7 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.ViewCompat
 import com.suave.s12.IMEService
+import com.suave.s12.ime.INLINE_STRIP_VERTICAL_PADDING_DP
 import com.suave.s12.ime.InflatedInlineSuggestion
+import com.suave.s12.ime.inlineChipSlotHeightDp
 import kotlin.math.roundToInt
 
 @Composable
@@ -52,6 +54,7 @@ private fun InlineSuggestionStripContent(
     heightDp: Int,
 ) {
     val scrollState = rememberScrollState()
+    val chipHeightDp = inlineChipSlotHeightDp(heightDp)
     Row(
         modifier =
             Modifier
@@ -59,7 +62,7 @@ private fun InlineSuggestionStripContent(
                 .height(heightDp.dp)
                 .background(MaterialTheme.colorScheme.surface)
                 .horizontalScroll(scrollState)
-                .padding(horizontal = 6.dp, vertical = 4.dp),
+                .padding(horizontal = 6.dp, vertical = INLINE_STRIP_VERTICAL_PADDING_DP.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -98,7 +101,7 @@ private fun InlineSuggestionStripContent(
                     },
                     modifier =
                         Modifier
-                            .height((heightDp - 8).coerceAtLeast(1).dp)
+                            .height(chipHeightDp.dp)
                             .onGloballyPositioned {
                                 val position = it.positionInParent()
                                 chipPos =

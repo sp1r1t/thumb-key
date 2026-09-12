@@ -150,10 +150,15 @@ fun createInlineSuggestionsRequest(
 }
 
 internal const val INLINE_SUGGESTION_MAX_COUNT = 6
+internal const val INLINE_STRIP_VERTICAL_PADDING_DP = 4
 internal const val INLINE_STATUS_IDLE = "-"
 internal const val INLINE_STATUS_WAIT = "wait"
 internal const val INLINE_STATUS_EMPTY = "0"
 internal const val INLINE_STATUS_FAIL = "fail"
+
+/** Chip slot inside the strip: request, inflate, and Compose height must all use this. */
+internal fun inlineChipSlotHeightDp(stripHeightDp: Int): Int =
+    (stripHeightDp - INLINE_STRIP_VERTICAL_PADDING_DP * 2).coerceAtLeast(1)
 
 internal fun inlineChipStatus(
     rawCount: Int,
