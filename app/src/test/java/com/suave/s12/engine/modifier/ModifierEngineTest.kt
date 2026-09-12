@@ -188,4 +188,16 @@ class ModifierEngineTest {
         assertTrue(state.isActive(ModifierId.ESC))
         assertEquals(ActivationMode.ONE_SHOT, state.active.getValue(ModifierId.ESC).mode)
     }
+
+    @Test
+    fun `letter-key legend state stays the same instance while Shift only changes mode`() {
+        val held = ModifierState().activate(ModifierId.SHIFT, ActivationMode.HELD)
+        val oneShot = ModifierState().activate(ModifierId.SHIFT, ActivationMode.ONE_SHOT)
+
+        assertTrue(held.forLetterLegends() === oneShot.forLetterLegends())
+        assertTrue(held.forLetterLegends() === ModifierState.SHIFT_ON_FOR_LEGENDS)
+        assertTrue(ModifierState().forLetterLegends() === ModifierState.NONE)
+        assertTrue(oneShot.forLetterLegends().isActive(ModifierId.SHIFT))
+        assertFalse(ModifierState().activate(ModifierId.CTRL, ActivationMode.HELD).forLetterLegends().isActive(ModifierId.CTRL))
+    }
 }

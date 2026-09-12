@@ -23,6 +23,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,6 +75,7 @@ import com.suave.s12.engine.capability.EditorCapabilityResolver
 import com.suave.s12.engine.feedback.FeedbackDispatcher
 import com.suave.s12.engine.feedback.FeedbackEvent
 import com.suave.s12.engine.feedback.FeedbackSettings
+import com.suave.s12.engine.intent.KeyIntent
 import com.suave.s12.engine.intent.Layout
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.intent.layoutRows
@@ -125,7 +127,11 @@ fun EngineKeyboardScreen(
     var showClipboardHistory by remember { mutableStateOf(false) }
     val clipboardScope = rememberCoroutineScope()
     val clipboardItems =
-        clipboardRepository?.allClipboardItems?.observeAsState(emptyList())?.value.orEmpty()
+        if (showClipboardHistory) {
+            clipboardRepository?.allClipboardItems?.observeAsState(emptyList())?.value.orEmpty()
+        } else {
+            emptyList()
+        }
 
     val vibrateOnTap = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
     val vibrateOnSlide = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
@@ -208,35 +214,62 @@ fun EngineKeyboardScreen(
     val clipboardHistoryEnabled =
         (settings?.clipboardHistoryEnabled ?: DEFAULT_CLIPBOARD_HISTORY_ENABLED).toBool()
 
+    val onToggleHideLettersState = rememberUpdatedState(onToggleHideLetters)
+    val onSwitchLanguageState = rememberUpdatedState(onSwitchLanguage)
+    val onChangePositionState = rememberUpdatedState(onChangePosition)
+    val namedLayoutState = rememberUpdatedState(namedLayout)
     val appHost =
-        AppCommandHost(
-            onToggleHideLetters = onToggleHideLetters,
-            onSwitchLanguage = {
-                showClipboardHistory = false
-                layer = LayoutLayer.MAIN
-                onSwitchLanguage()
-            },
-            onChangePosition = onChangePosition,
-            onSelectLayer = { requested ->
-                showClipboardHistory = false
-                layer =
-                    when (requested) {
-                        LayoutLayer.NUMERIC -> if (namedLayout.numericLayout != null) LayoutLayer.NUMERIC else layer
-                        LayoutLayer.EMOJI -> if (namedLayout.emojiBottomRow != null) LayoutLayer.EMOJI else layer
-                        LayoutLayer.MAIN -> LayoutLayer.MAIN
-                    }
-            },
-            onToggleEmojiLayer = {
-                showClipboardHistory = false
-                layer =
-                    when {
-                        layer == LayoutLayer.EMOJI -> LayoutLayer.MAIN
-                        namedLayout.emojiBottomRow != null -> LayoutLayer.EMOJI
-                        else -> layer
-                    }
-            },
-            onToggleClipboardHistory = { showClipboardHistory = !showClipboardHistory },
-        )
+        remember {
+            AppCommandHost(
+                onToggleHideLetters = { onToggleHideLettersState.value() },
+                onSwitchLanguage = {
+                    showClipboardHistory = false
+                    layer = LayoutLayer.MAIN
+                    onSwitchLanguageState.value()
+                },
+                onChangePosition = { f -> onChangePositionState.value(f) },
+                onSelectLayer = { requested ->
+                    showClipboardHistory = false
+                    val current = namedLayoutState.value
+                    layer =
+                        when (requested) {
+                            LayoutLayer.NUMERIC -> if (current.numericLayout != null) LayoutLayer.NUMERIC else layer
+                            LayoutLayer.EMOJI -> if (current.emojiBottomRow != null) LayoutLayer.EMOJI else layer
+                            LayoutLayer.MAIN -> LayoutLayer.MAIN
+                        }
+                },
+                onToggleEmojiLayer = {
+                    showClipboardHistory = false
+                    val current = namedLayoutState.value
+                    layer =
+                        when {
+                            layer == LayoutLayer.EMOJI -> LayoutLayer.MAIN
+                            current.emojiBottomRow != null -> LayoutLayer.EMOJI
+                            else -> layer
+                        }
+                },
+                onToggleClipboardHistory = { showClipboardHistory = !showClipboardHistory },
+            )
+        }
+    val onModifierStateChange =
+        remember {
+            { next: ModifierState -> modifierState = next }
+        }
+    val onExecute =
+        remember(capabilities, ime, appHost) {
+            { action: SemanticAction ->
+                ActionExecutor.execute(
+                    action = action,
+                    capabilities = capabilities,
+                    ime = ime,
+                    host = appHost,
+                )
+            }
+        }
+    val onFeedback =
+        remember(feedbackSettings, hapticPlayer) {
+            { event: FeedbackEvent -> FeedbackDispatcher.dispatch(event, feedbackSettings, hapticPlayer) }
+        }
 
     Column(modifier = Modifier.fillMaxWidth()) {
         if (showDebugBar) {
@@ -273,16 +306,9 @@ fun EngineKeyboardScreen(
                 keyHeight = keyHeight,
                 layerHeightOverrides = layerHeightOverrides,
                 modifierState = modifierState,
-                onModifierStateChange = { modifierState = it },
-                onExecute = { action ->
-                    ActionExecutor.execute(
-                        action = action,
-                        capabilities = capabilities,
-                        ime = ime,
-                        host = appHost,
-                    )
-                },
-                onFeedback = { event -> FeedbackDispatcher.dispatch(event, feedbackSettings, hapticPlayer) },
+                onModifierStateChange = onModifierStateChange,
+                onExecute = onExecute,
+                onFeedback = onFeedback,
                 minSwipeDistancePx = minSwipeDistancePx,
                 legendVisibility = legendVisibility,
                 modifierBehaviors = behaviors,
@@ -506,29 +532,38 @@ private fun LayoutGrid(
     animations: KeyAnimationSettings,
     isPasswordField: Boolean,
 ) {
-    for (row in layoutRows(layout)) {
+    val rows = remember(layout) { layoutRows(layout) }
+    for (row in rows) {
         Row(modifier = Modifier.fillMaxWidth().height(keyHeight)) {
             for (position in row) {
                 val mapping = layout[position] ?: continue
-                EngineKeyboardKey(
-                    mapping = mapping,
-                    modifierState = modifierState,
-                    onModifierStateChange = onModifierStateChange,
-                    onExecute = onExecute,
-                    onFeedback = onFeedback,
-                    shiftMappings = namedLayout.shiftMappings,
-                    minSwipeDistancePx = minSwipeDistancePx,
-                    legendVisibility = legendVisibility,
-                    modifierBehaviors = modifierBehaviors,
-                    keyHeight = keyHeight,
-                    keyPadding = keyPadding,
-                    keyPaddingVertical = keyPaddingVertical,
-                    keyBorderWidthDp = keyBorderWidthDp,
-                    keyCornerRadius = keyCornerRadius,
-                    animations = animations,
-                    isPasswordField = isPasswordField,
-                    modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
-                )
+                val keyModifierState =
+                    if (mapping.intents.values.any { it is KeyIntent.ModifierPress }) {
+                        modifierState
+                    } else {
+                        modifierState.forLetterLegends()
+                    }
+                key(position) {
+                    EngineKeyboardKey(
+                        mapping = mapping,
+                        modifierState = keyModifierState,
+                        onModifierStateChange = onModifierStateChange,
+                        onExecute = onExecute,
+                        onFeedback = onFeedback,
+                        shiftMappings = namedLayout.shiftMappings,
+                        minSwipeDistancePx = minSwipeDistancePx,
+                        legendVisibility = legendVisibility,
+                        modifierBehaviors = modifierBehaviors,
+                        keyHeight = keyHeight,
+                        keyPadding = keyPadding,
+                        keyPaddingVertical = keyPaddingVertical,
+                        keyBorderWidthDp = keyBorderWidthDp,
+                        keyCornerRadius = keyCornerRadius,
+                        animations = animations,
+                        isPasswordField = isPasswordField,
+                        modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
+                    )
+                }
             }
         }
     }

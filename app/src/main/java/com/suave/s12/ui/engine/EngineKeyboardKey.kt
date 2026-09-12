@@ -18,15 +18,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -55,7 +56,6 @@ import com.suave.s12.utils.ColorVariant
 import com.suave.s12.utils.colorVariantToColor
 import com.suave.s12.utils.fontSizeVariantToFontSize
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 private const val TICK_INTERVAL_MS = 30L
@@ -112,18 +112,23 @@ fun EngineKeyboardKey(
     val currentMapping by rememberUpdatedState(mapping)
     val currentAnimations by rememberUpdatedState(animations)
     val currentIsPasswordField by rememberUpdatedState(isPasswordField)
-    val scope = rememberCoroutineScope()
-    var isPressed by remember { mutableStateOf(false) }
-    var releasedKey by remember { mutableStateOf<String?>(null) }
+    // MutableState (not `by`) so press/release visuals are read only in draw / a child. Writing
+    // them from the pointer loop used to recompose this key mid-gesture: the highlight swapped
+    // Modifier.background, legends relaid out, and a slightly slow Shift+letter crossed the
+    // hold-repeat threshold as two characters.
+    val isPressed = remember { mutableStateOf(false) }
+    val releasedGlyph = remember { mutableStateOf<ReleasedGlyph?>(null) }
 
     val isModifierKeyActive =
         mapping.intents.values.any { it is KeyIntent.ModifierPress && modifierState.isActive(it.modifier) }
-    val backgroundColor =
-        when {
-            animations.pressHighlight && isPressed -> MaterialTheme.colorScheme.inversePrimary
-            isModifierKeyActive -> MaterialTheme.colorScheme.primary
-            else -> colorVariantToColor(ColorVariant.SURFACE_VARIANT)
+    val restingColor =
+        if (isModifierKeyActive) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            colorVariantToColor(ColorVariant.SURFACE_VARIANT)
         }
+    val pressHighlightColor = MaterialTheme.colorScheme.inversePrimary
+    val pressHighlightEnabled = animations.pressHighlight
     val keyShape = RoundedCornerShape(keyCornerRadius)
     val keyBorderColour = MaterialTheme.colorScheme.outline
     val swipeColor = colorVariantToColor(legendColorVariant(isCenter = false))
@@ -148,9 +153,15 @@ fun EngineKeyboardKey(
                     } else {
                         Modifier
                     },
-                )
-                .background(backgroundColor)
-                .pointerInput(mapping) {
+                ).drawBehind {
+                    val fill =
+                        if (pressHighlightEnabled && isPressed.value) {
+                            pressHighlightColor
+                        } else {
+                            restingColor
+                        }
+                    drawRect(fill)
+                }.pointerInput(mapping) {
                     awaitEachGesture {
                         val down = awaitFirstDown(requireUnconsumed = false)
                         down.consume()
@@ -182,7 +193,7 @@ fun EngineKeyboardKey(
 
                         fun handle(gesture: Gesture) {
                             if (gesture is Gesture.Pressed && currentAnimations.pressHighlight) {
-                                isPressed = true
+                                isPressed.value = true
                             }
                             val before = localState
                             var typed: String? = null
@@ -202,52 +213,54 @@ fun EngineKeyboardKey(
                                     currentOnFeedback,
                                 )
                             localState = newState
-                            currentOnModifierStateChange(newState)
+                            if (newState != before) {
+                                currentOnModifierStateChange(newState)
+                            }
                             if (gesture is Gesture.Released || gesture is Gesture.Cancelled) {
-                                isPressed = false
+                                isPressed.value = false
                             }
                             typed?.let { text ->
-                                releasedKey = text
-                                scope.launch {
-                                    delay(DEFAULT_ANIMATION_HELPER_SPEED.toLong())
-                                    releasedKey = null
-                                }
+                                releasedGlyph.value = ReleasedGlyph(text)
                             }
                         }
 
-                        recognizer
-                            .process(
-                                RecognizerInput.Touch(
-                                    TouchEvent(down.position.x, down.position.y, System.currentTimeMillis(), TouchPhase.DOWN),
-                                ),
-                            ).forEach(::handle)
+                        try {
+                            recognizer
+                                .process(
+                                    RecognizerInput.Touch(
+                                        TouchEvent(down.position.x, down.position.y, System.currentTimeMillis(), TouchPhase.DOWN),
+                                    ),
+                                ).forEach(::handle)
 
-                        var pressed = true
-                        while (pressed) {
-                            val event = withTimeoutOrNull(TICK_INTERVAL_MS) { awaitPointerEvent() }
-                            if (event == null) {
-                                recognizer.process(RecognizerInput.Tick(System.currentTimeMillis())).forEach(::handle)
-                                continue
+                            var pressed = true
+                            while (pressed) {
+                                val event = withTimeoutOrNull(TICK_INTERVAL_MS) { awaitPointerEvent() }
+                                if (event == null) {
+                                    recognizer.process(RecognizerInput.Tick(System.currentTimeMillis())).forEach(::handle)
+                                    continue
+                                }
+                                val change = event.changes.firstOrNull { it.id == down.id }
+                                if (change == null || !change.pressed) {
+                                    pressed = false
+                                    val phase = if (change == null) TouchPhase.CANCEL else TouchPhase.UP
+                                    val position = change?.position ?: down.position
+                                    recognizer
+                                        .process(
+                                            RecognizerInput.Touch(TouchEvent(position.x, position.y, System.currentTimeMillis(), phase)),
+                                        ).forEach(::handle)
+                                    change?.consume()
+                                } else {
+                                    recognizer
+                                        .process(
+                                            RecognizerInput.Touch(
+                                                TouchEvent(change.position.x, change.position.y, System.currentTimeMillis(), TouchPhase.MOVE),
+                                            ),
+                                        ).forEach(::handle)
+                                    change.consume()
+                                }
                             }
-                            val change = event.changes.firstOrNull { it.id == down.id }
-                            if (change == null || !change.pressed) {
-                                pressed = false
-                                val phase = if (change == null) TouchPhase.CANCEL else TouchPhase.UP
-                                val position = change?.position ?: down.position
-                                recognizer
-                                    .process(
-                                        RecognizerInput.Touch(TouchEvent(position.x, position.y, System.currentTimeMillis(), phase)),
-                                    ).forEach(::handle)
-                                change?.consume()
-                            } else {
-                                recognizer
-                                    .process(
-                                        RecognizerInput.Touch(
-                                            TouchEvent(change.position.x, change.position.y, System.currentTimeMillis(), TouchPhase.MOVE),
-                                        ),
-                                    ).forEach(::handle)
-                                change.consume()
-                            }
+                        } finally {
+                            isPressed.value = false
                         }
                     }
                 },
@@ -297,40 +310,68 @@ fun EngineKeyboardKey(
                 )
             }
         }
-        val showRelease = releasedKey != null && !isPasswordField
-        if (animations.releaseFlash) {
-            AnimatedVisibility(
-                modifier = Modifier.fillMaxSize(),
-                visible = showRelease,
-                enter = EnterTransition.None,
-                exit = fadeOut(tween(DEFAULT_ANIMATION_SPEED)),
-            ) {
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.tertiaryContainer),
-                )
-            }
+        KeyReleaseEffects(
+            releasedGlyph = releasedGlyph,
+            animations = animations,
+            isPasswordField = isPasswordField,
+            keyHeight = keyHeight,
+        )
+    }
+}
+
+private class ReleasedGlyph(
+    val text: String,
+)
+
+@Composable
+private fun KeyReleaseEffects(
+    releasedGlyph: MutableState<ReleasedGlyph?>,
+    animations: KeyAnimationSettings,
+    isPasswordField: Boolean,
+    keyHeight: Dp,
+) {
+    val glyph = releasedGlyph.value
+    val showRelease = glyph != null && !isPasswordField
+    LaunchedEffect(glyph) {
+        if (glyph == null) return@LaunchedEffect
+        delay(DEFAULT_ANIMATION_HELPER_SPEED.toLong())
+        if (releasedGlyph.value === glyph) {
+            releasedGlyph.value = null
         }
-        if (animations.letterDrop) {
-            AnimatedVisibility(
-                modifier = Modifier.fillMaxSize(),
-                visible = showRelease,
-                enter = slideInVertically(tween(DEFAULT_ANIMATION_SPEED)),
-                exit = fadeOut(tween(DEFAULT_ANIMATION_SPEED)),
-            ) {
-                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-                    releasedKey?.let { text ->
-                        val dropSize =
-                            fontSizeVariantToFontSize(legendFontSizeVariant(isCenter = true), keyHeight, isUpperCase = false)
-                        Text(
-                            text = text,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = with(density) { dropSize.toSp() },
-                            color = MaterialTheme.colorScheme.tertiary,
-                        )
-                    }
+    }
+    if (animations.releaseFlash) {
+        AnimatedVisibility(
+            modifier = Modifier.fillMaxSize(),
+            visible = showRelease,
+            enter = EnterTransition.None,
+            exit = fadeOut(tween(DEFAULT_ANIMATION_SPEED)),
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.tertiaryContainer),
+            )
+        }
+    }
+    if (animations.letterDrop) {
+        AnimatedVisibility(
+            modifier = Modifier.fillMaxSize(),
+            visible = showRelease,
+            enter = slideInVertically(tween(DEFAULT_ANIMATION_SPEED)),
+            exit = fadeOut(tween(DEFAULT_ANIMATION_SPEED)),
+        ) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+                glyph?.let { shown ->
+                    val dropSize =
+                        fontSizeVariantToFontSize(legendFontSizeVariant(isCenter = true), keyHeight, isUpperCase = false)
+                    val density = LocalDensity.current
+                    Text(
+                        text = shown.text,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = with(density) { dropSize.toSp() },
+                        color = MaterialTheme.colorScheme.tertiary,
+                    )
                 }
             }
         }

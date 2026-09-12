@@ -40,4 +40,17 @@ data class ModifierState(
     ): ModifierState = copy(active = active + (id to ActiveModifier(mode)))
 
     fun deactivate(id: ModifierId): ModifierState = copy(active = active - id)
+
+    /**
+     * Letter keys only care whether Shift is on, not HELD vs ONE_SHOT. Returning a shared
+     * instance lets Compose skip their recomposition when Shift merely changes mode (the
+     * extra frame that used to restyle every letter while a tap was still in flight).
+     */
+    fun forLetterLegends(): ModifierState = if (isActive(ModifierId.SHIFT)) SHIFT_ON_FOR_LEGENDS else NONE
+
+    companion object {
+        val NONE = ModifierState()
+        val SHIFT_ON_FOR_LEGENDS =
+            ModifierState(mapOf(ModifierId.SHIFT to ActiveModifier(ActivationMode.LOCKED)))
+    }
 }
