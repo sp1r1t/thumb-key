@@ -49,6 +49,7 @@ class ComposeKeyboardView(
                             val state = settingsState.value
                             state?.let { s ->
                                 val layouts = BuiltinLayouts.enabledFromDb(s.keyboardLayouts)
+                                if (layouts.size < 2) return@let
                                 val current = BuiltinLayouts.byIndex(s.keyboardLayout)
                                 val index = layouts.indexOfFirst { it.id == current.id }.let { if (it < 0) 0 else it }
                                 val next = layouts[(index + 1).mod(layouts.size)]

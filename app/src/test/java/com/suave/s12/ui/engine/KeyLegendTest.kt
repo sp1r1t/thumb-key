@@ -159,6 +159,20 @@ class KeyLegendTest {
     }
 
     @Test
+    fun `layout switch legend is hidden when there is no other layout`() {
+        val noSwitch = LegendVisibility(canSwitchLayout = false)
+        assertNull(legend(KeyIntent.Command(CommandId.SWITCH_LANGUAGE), noSwitch))
+        assertEquals(
+            KeyLegend.Icon(Icons.Outlined.SwapHoriz),
+            legend(KeyIntent.Command(CommandId.SWITCH_LANGUAGE), shown),
+        )
+        assertEquals(
+            KeyLegend.Icon(Icons.Outlined.ViewColumn),
+            legend(KeyIntent.Command(CommandId.MOVE_KEYBOARD), noSwitch),
+        )
+    }
+
+    @Test
     fun `center legends use Thumb-Key primary large, swipes use secondary small`() {
         assertEquals(ColorVariant.PRIMARY, legendColorVariant(isCenter = true))
         assertEquals(ColorVariant.SECONDARY, legendColorVariant(isCenter = false))

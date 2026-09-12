@@ -129,4 +129,7 @@ object BuiltinLayouts {
                 .orEmpty()
         return parsed.ifEmpty { listOf(SUAVE) }
     }
+
+    /** True when cycling layouts would land on a different one. */
+    fun canSwitch(indices: String?): Boolean = enabledFromDb(indices).size > 1
 }

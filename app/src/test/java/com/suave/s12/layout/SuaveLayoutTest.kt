@@ -9,6 +9,7 @@ import com.suave.s12.engine.intent.KeyPosition
 import com.suave.s12.engine.intent.ModifierId
 import com.suave.s12.engine.intent.SlideBehavior
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -107,6 +108,9 @@ class SuaveLayoutTest {
         assertEquals(BuiltinLayouts.SUAVE, BuiltinLayouts.byIndex(99))
         assertEquals(listOf(BuiltinLayouts.SUAVE), BuiltinLayouts.enabledFromDb("0"))
         assertEquals(listOf(BuiltinLayouts.SUAVE), BuiltinLayouts.enabledFromDb(null))
+        assertFalse(BuiltinLayouts.canSwitch(null))
+        assertFalse(BuiltinLayouts.canSwitch("0"))
+        assertFalse(BuiltinLayouts.canSwitch("0,0"))
     }
 
     @Test

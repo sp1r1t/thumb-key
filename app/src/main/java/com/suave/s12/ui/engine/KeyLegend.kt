@@ -80,6 +80,8 @@ data class LegendVisibility(
     val hideSpecials: Boolean = false,
     val hideNavigation: Boolean = false,
     val hideEditing: Boolean = false,
+    /** Availability: the layout-switch legend is dead if there is nothing to cycle to. */
+    val canSwitchLayout: Boolean = true,
 ) {
     fun hides(category: LegendCategory): Boolean =
         when (category) {
@@ -118,6 +120,7 @@ fun keyLegend(
         }
 
         is KeyIntent.Command -> {
+            if (intent.id == CommandId.SWITCH_LANGUAGE && !visibility.canSwitchLayout) return null
             val legend = commandLegend(intent.id) ?: return null
             if (visibility.hides(intent.id.legendCategory())) null else legend
         }

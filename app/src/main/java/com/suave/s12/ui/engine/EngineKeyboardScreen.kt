@@ -138,6 +138,7 @@ fun EngineKeyboardScreen(
     val clipboardItems by
         (clipboardRepository?.allClipboardItems ?: emptyClipboardItems).observeAsState(emptyList())
 
+    val canSwitchLayout = BuiltinLayouts.canSwitch(settings?.keyboardLayouts)
     val vibrateOnTap = (settings?.vibrateOnTap ?: DEFAULT_VIBRATE_ON_TAP).toBool()
     val vibrateOnSlide = (settings?.vibrateOnSlide ?: DEFAULT_VIBRATE_ON_SLIDE).toBool()
     val vibrateOnHoldRepeat = (settings?.vibrateOnHoldRepeat ?: DEFAULT_VIBRATE_ON_HOLD_REPEAT).toBool()
@@ -151,6 +152,7 @@ fun EngineKeyboardScreen(
             hideSpecials = (settings?.hideSpecials ?: DEFAULT_HIDE_SPECIALS).toBool(),
             hideNavigation = (settings?.hideNavigation ?: DEFAULT_HIDE_NAVIGATION).toBool(),
             hideEditing = (settings?.hideEditing ?: DEFAULT_HIDE_EDITING).toBool(),
+            canSwitchLayout = canSwitchLayout,
         )
     val minSwipeDistancePx = (settings?.minSwipeLength ?: DEFAULT_MIN_SWIPE_LENGTH).toFloat()
     val ignoreBottomPadding = (settings?.ignoreBottomPadding ?: DEFAULT_IGNORE_BOTTOM_PADDING).toBool()
@@ -255,6 +257,7 @@ fun EngineKeyboardScreen(
 
     val onToggleHideLettersState = rememberUpdatedState(onToggleHideLetters)
     val onSwitchLanguageState = rememberUpdatedState(onSwitchLanguage)
+    val canSwitchLayoutState = rememberUpdatedState(canSwitchLayout)
     val onChangePositionState = rememberUpdatedState(onChangePosition)
     val namedLayoutState = rememberUpdatedState(namedLayout)
     val appHost =
@@ -262,8 +265,10 @@ fun EngineKeyboardScreen(
             AppCommandHost(
                 onToggleHideLetters = { onToggleHideLettersState.value() },
                 onSwitchLanguage = {
-                    layerSessionState.value = LayerSession()
-                    onSwitchLanguageState.value()
+                    if (canSwitchLayoutState.value) {
+                        layerSessionState.value = LayerSession()
+                        onSwitchLanguageState.value()
+                    }
                 },
                 onChangePosition = { f -> onChangePositionState.value(f) },
                 onSelectLayer = { requested ->
