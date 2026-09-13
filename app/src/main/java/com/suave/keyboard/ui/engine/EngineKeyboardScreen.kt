@@ -151,12 +151,12 @@ import com.suave.keyboard.layout.LayerSession
 import com.suave.keyboard.layout.LayoutPreviewSession
 import com.suave.keyboard.layout.LayoutRegistry
 import com.suave.keyboard.layout.NamedLayout
-import com.suave.keyboard.layout.boardWidthDp
 import com.suave.keyboard.layout.canCycleKeyboardPosition
 import com.suave.keyboard.layout.coerceDisplayedPosition
 import com.suave.keyboard.layout.leaveOverlay
 import com.suave.keyboard.layout.maxCellWidthDp
 import com.suave.keyboard.layout.nextKeyboardPosition
+import com.suave.keyboard.layout.parkedBoardWidthDp
 import com.suave.keyboard.layout.parkedHalfWidthDp
 import com.suave.keyboard.layout.parseKeyboardPositions
 import com.suave.keyboard.layout.parseLayerHeightOverrides
@@ -188,8 +188,8 @@ import java.util.Locale
  * [AppSettings.position] Dual draws two full copies that share modifier and layer state. Split
  * keeps one content slot and cuts the key grid in half, duplicating the middle column when the
  * count is odd. Key cell width is capped at key height so landscape does not stretch keys into
- * paddles; Center parks a capped board in the middle, Dual and Split park halves on the left and
- * right with a flexible gap between them.
+ * paddles; Center parks a capped board in the middle. Dual parks two full-size copies on the
+ * left and right (keys keep the same width as Center). Split parks narrower halves with a gap.
  */
 @Composable
 fun EngineKeyboardScreen(
@@ -366,9 +366,10 @@ fun EngineKeyboardScreen(
     val boardWidthPx =
         remember(columnCount, maxCellWidthDpValue, screenWidthDp, density) {
             with(density) {
-                minOf(
-                    screenWidthDp,
-                    boardWidthDp(columnCount, maxCellWidthDpValue),
+                parkedBoardWidthDp(
+                    columnCount = columnCount,
+                    maxCellWidthDp = maxCellWidthDpValue,
+                    screenWidthDp = screenWidthDp,
                 ).dp.toPx()
             }
         }
@@ -740,9 +741,12 @@ fun EngineKeyboardScreen(
                                 rects.add(Rect(0, 0, view.width.coerceAtLeast(right), top))
                             }
                             when (keyboardPosition) {
-                                KeyboardPosition.Dual,
-                                KeyboardPosition.Split,
-                                -> {
+                                KeyboardPosition.Dual -> {
+                                    val copy = boardWidthPx.roundToInt().coerceIn(0, width)
+                                    rects.add(Rect(left, top, left + copy, bottom))
+                                    rects.add(Rect(right - copy, top, right, bottom))
+                                }
+                                KeyboardPosition.Split -> {
                                     val half = parkedHalfWidthPx.roundToInt().coerceIn(0, width)
                                     rects.add(Rect(left, top, left + half, bottom))
                                     rects.add(Rect(right - half, top, right, bottom))
@@ -766,16 +770,21 @@ fun EngineKeyboardScreen(
             ) {
                 when (keyboardPosition) {
                     KeyboardPosition.Dual -> {
-                        val halfWidth =
-                            parkedHalfWidthDp(
+                        val copyWidth =
+                            parkedBoardWidthDp(
                                 columnCount = namedLayout.gridFor(activeLayer).columnCount(),
                                 maxCellWidthDp = maxCellWidthDpValue,
                                 screenWidthDp = screenWidthDp,
                             ).dp
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            renderPanel(Modifier.width(halfWidth), false)
-                            Spacer(modifier = Modifier.weight(1f))
-                            renderPanel(Modifier.width(halfWidth), false)
+                        Box(modifier = Modifier.fillMaxWidth()) {
+                            renderPanel(
+                                Modifier.align(Alignment.CenterStart).width(copyWidth),
+                                false,
+                            )
+                            renderPanel(
+                                Modifier.align(Alignment.CenterEnd).width(copyWidth),
+                                false,
+                            )
                         }
                     }
 
@@ -785,12 +794,10 @@ fun EngineKeyboardScreen(
 
                     KeyboardPosition.Left -> {
                         val boardWidth =
-                            minOf(
-                                screenWidthDp,
-                                boardWidthDp(
-                                    namedLayout.gridFor(activeLayer).columnCount(),
-                                    maxCellWidthDpValue,
-                                ),
+                            parkedBoardWidthDp(
+                                columnCount = namedLayout.gridFor(activeLayer).columnCount(),
+                                maxCellWidthDp = maxCellWidthDpValue,
+                                screenWidthDp = screenWidthDp,
                             ).dp
                         Row(modifier = Modifier.fillMaxWidth()) {
                             renderPanel(Modifier.width(boardWidth), false)
@@ -800,12 +807,10 @@ fun EngineKeyboardScreen(
 
                     KeyboardPosition.Right -> {
                         val boardWidth =
-                            minOf(
-                                screenWidthDp,
-                                boardWidthDp(
-                                    namedLayout.gridFor(activeLayer).columnCount(),
-                                    maxCellWidthDpValue,
-                                ),
+                            parkedBoardWidthDp(
+                                columnCount = namedLayout.gridFor(activeLayer).columnCount(),
+                                maxCellWidthDp = maxCellWidthDpValue,
+                                screenWidthDp = screenWidthDp,
                             ).dp
                         Row(modifier = Modifier.fillMaxWidth()) {
                             Spacer(modifier = Modifier.weight(1f))
@@ -815,12 +820,10 @@ fun EngineKeyboardScreen(
 
                     KeyboardPosition.Center -> {
                         val boardWidth =
-                            minOf(
-                                screenWidthDp,
-                                boardWidthDp(
-                                    namedLayout.gridFor(activeLayer).columnCount(),
-                                    maxCellWidthDpValue,
-                                ),
+                            parkedBoardWidthDp(
+                                columnCount = namedLayout.gridFor(activeLayer).columnCount(),
+                                maxCellWidthDp = maxCellWidthDpValue,
+                                screenWidthDp = screenWidthDp,
                             ).dp
                         Box(
                             modifier = Modifier.fillMaxWidth(),

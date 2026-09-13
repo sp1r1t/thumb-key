@@ -4,7 +4,8 @@ import com.suave.keyboard.utils.KeyboardPosition
 
 /**
  * Arrangements the user can enable for Move keyboard. Center parks a capped board in the
- * middle; Left / Right / Dual / Split park against the edges with a flexible gap.
+ * middle; Left / Right park one capped board at an edge. Dual parks two full-size copies
+ * (same key width as Center). Split parks narrower halves with a flexible gap.
  */
 val TOGGLEABLE_KEYBOARD_POSITIONS: List<KeyboardPosition> =
     listOf(
@@ -91,8 +92,19 @@ fun boardWidthDp(
 ): Int = columnCount.coerceAtLeast(1) * maxCellWidthDp
 
 /**
- * Width of one Split/Dual half. Ideal is half-column-count * cell cap; never more than half
- * the screen so two parked halves always fit with a center gap when there is spare room.
+ * Width of one full board (Center / Left / Right / each Dual copy). Never wider than the
+ * screen; never stretched past the cell cap. Dual may use more than half the screen - two
+ * copies can sit closer than Split, or overflow when cramped-skip is off.
+ */
+fun parkedBoardWidthDp(
+    columnCount: Int,
+    maxCellWidthDp: Int,
+    screenWidthDp: Int,
+): Int = minOf(boardWidthDp(columnCount, maxCellWidthDp), screenWidthDp.coerceAtLeast(1))
+
+/**
+ * Width of one Split half. Ideal is half-column-count * cell cap; never more than half the
+ * screen so two parked halves always fit with a center gap when there is spare room.
  */
 fun parkedHalfWidthDp(
     columnCount: Int,

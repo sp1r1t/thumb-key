@@ -85,20 +85,37 @@ class KeyboardPlacementTest {
         val cell = maxCellWidthDp(keyHeightDp = 64)
         assertEquals(64, cell)
         assertEquals(320, boardWidthDp(columnCount = 5, maxCellWidthDp = cell))
-        // Phone landscape: ideal half is 3*64=192, half screen is 400 -> park at 192, gap remains.
+        // Dual copies use the full Center board width, not Split's 3-column half.
+        assertEquals(
+            320,
+            parkedBoardWidthDp(columnCount = 5, maxCellWidthDp = cell, screenWidthDp = phoneLandscapeW),
+        )
+        assertTrue(
+            parkedBoardWidthDp(columnCount = 5, maxCellWidthDp = cell, screenWidthDp = phoneLandscapeW) >
+                parkedHalfWidthDp(columnCount = 5, maxCellWidthDp = cell, screenWidthDp = phoneLandscapeW),
+        )
+        // Phone landscape: ideal Split half is 3*64=192, half screen is 400 -> park at 192, gap remains.
         assertEquals(
             192,
             parkedHalfWidthDp(columnCount = 5, maxCellWidthDp = cell, screenWidthDp = phoneLandscapeW),
         )
-        // Narrow screen: never exceed half the screen.
+        // Narrow screen: Split never exceeds half the screen; Dual still keeps key width up to the screen.
         assertEquals(
             100,
             parkedHalfWidthDp(columnCount = 5, maxCellWidthDp = cell, screenWidthDp = 200),
         )
-        // Portrait phone: ideal half 192, half screen 180 -> 180 (gap collapses toward zero).
+        assertEquals(
+            200,
+            parkedBoardWidthDp(columnCount = 5, maxCellWidthDp = cell, screenWidthDp = 200),
+        )
+        // Portrait phone: Split half 192 vs half screen 180 -> 180. Dual stays 320 (full keys).
         assertEquals(
             180,
             parkedHalfWidthDp(columnCount = 5, maxCellWidthDp = cell, screenWidthDp = phonePortraitW),
+        )
+        assertEquals(
+            320,
+            parkedBoardWidthDp(columnCount = 5, maxCellWidthDp = cell, screenWidthDp = phonePortraitW),
         )
     }
 

@@ -22,8 +22,8 @@
     <string name="enabled_keyboard_positions_many">%1$s und %2$s</string>
     <string name="prevent_cramped_dual">Doppelt bei Platzmangel überspringen</string>
     <string name="prevent_cramped_dual_on">An - Doppelt wird übersprungen, wenn zwei Kopien die Tasten schmaler als %1$d dp machen würden</string>
-    <string name="prevent_cramped_dual_off">Aus - Doppelt wird auch genutzt, wenn die Tasten gequetscht würden</string>
-    <string name="prevent_cramped_dual_info">Auf einem Handy im Hochformat werden zwei volle Kopien eines 5-Spalten-Layouts zu schmal zum Tippen. Schalte das aus, wenn du Doppelt trotzdem auf einem schmalen Bildschirm willst.</string>
+    <string name="prevent_cramped_dual_off">Aus - Doppelt wird auch genutzt, wenn zwei Kopien in voller Tastenbreite nicht passen</string>
+    <string name="prevent_cramped_dual_info">Auf einem Handy im Hochformat passen zwei volle Kopien eines 5-Spalten-Layouts nicht in Tastenbreite. Doppelt behält diese Breite (es darf mehr Platz brauchen als Geteilt). Schalte das aus, wenn du Doppelt trotzdem auf einem schmalen Bildschirm willst.</string>
     <string name="prevent_needless_split">Geteilt im Hochformat überspringen</string>
     <string name="prevent_needless_split_on">An - Geteilt wird übersprungen, wenn der Bildschirm höher als breit ist</string>
     <string name="prevent_needless_split_off">Aus - Geteilt wird genutzt, sobald es aktiviert ist</string>
