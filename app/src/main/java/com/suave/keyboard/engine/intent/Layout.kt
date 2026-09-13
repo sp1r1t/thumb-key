@@ -28,6 +28,9 @@ enum class KeyFillRole {
 
     /** Force control (surfaceVariant) fill. */
     CONTROL,
+
+    /** Invisible width-only cell (row insets, gaps). Not drawn, not interactive. */
+    SPACER,
 }
 
 /**
@@ -39,8 +42,8 @@ enum class KeyFillRole {
  * buzzes twice and then types nothing.
  *
  * [columnSpan] is how many grid columns this key occupies in its row (Enter is 2 on Suave so
- * the 4-key bottom row still fills the same width as the 5-key letter rows). The renderer
- * weights keys by this value; it is layout data, not a special-case in the screen.
+ * the 4-key bottom row still fills the same width as the 5-key letter rows). Fractional spans
+ * (e.g. 0.5) inset a row relative to neighbors. The renderer weights keys by this value.
  *
  * [fillRole] is optional look metadata from layout JSON; [displayLabels] maps a zone to a
  * legend string that differs from the commit text (e.g. combining marks).
@@ -49,13 +52,13 @@ data class KeyMapping(
     val gestureConfig: GestureConfig,
     val intents: Map<Zone, KeyIntent>,
     val slideBehavior: SlideBehavior? = null,
-    val columnSpan: Int = 1,
+    val columnSpan: Float = 1f,
     val fillRole: KeyFillRole = KeyFillRole.AUTO,
     val displayLabels: Map<Zone, String> = emptyMap(),
     val repeatOverrides: Map<Zone, Boolean> = emptyMap(),
 ) {
     init {
-        require(columnSpan >= 1) { "columnSpan must be at least 1, got $columnSpan" }
+        require(columnSpan > 0f) { "columnSpan must be > 0, got $columnSpan" }
     }
 }
 
@@ -78,7 +81,8 @@ fun layoutRows(layout: Layout): List<List<KeyPosition>> =
 
 /** How many grid columns [this] occupies, counting [KeyMapping.columnSpan]. Empty is 1. */
 fun Layout.columnCount(): Int =
-    maxOfOrNull { (pos, mapping) -> pos.col + mapping.columnSpan } ?: 1
+    maxOfOrNull { (pos, mapping) -> pos.col + kotlin.math.ceil(mapping.columnSpan.toDouble()).toInt() }
+        ?: 1
 
 /** Keys whose origin column sits in [columns]. Span is ignored: Enter at col 3 stays with 3. */
 fun Layout.filterColumns(columns: IntRange): Layout = filterKeys { it.col in columns }

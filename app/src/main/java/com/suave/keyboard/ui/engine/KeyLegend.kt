@@ -51,7 +51,7 @@ import com.suave.keyboard.engine.intent.ModifierId
 import com.suave.keyboard.engine.modifier.ActivationMode
 import com.suave.keyboard.engine.modifier.ModifierEngine
 import com.suave.keyboard.engine.modifier.ModifierState
-import com.suave.keyboard.layout.LayoutLayer
+import com.suave.keyboard.layout.ActiveLayer
 import com.suave.keyboard.utils.ColorVariant
 import com.suave.keyboard.utils.FontSizeVariant
 
@@ -126,7 +126,14 @@ fun keyLegend(
 
         is KeyIntent.Text -> {
             val source = displayLabel ?: intent.text
-            val shown = ModifierEngine.applyCase(source, modifierState, shiftMappings, capsLockMappings)
+            val shown =
+                ModifierEngine.applyCase(
+                    source,
+                    modifierState,
+                    shiftMappings,
+                    capsLockMappings,
+                    intent.case,
+                )
             when {
                 shown.isBlank() -> null
                 visibility.hides(classifyText(shown)) -> null
@@ -137,8 +144,9 @@ fun keyLegend(
         is KeyIntent.Command -> {
             if (intent.id == CommandId.SWITCH_LANGUAGE && !visibility.canSwitchLayout) return null
             if (intent.id == CommandId.MOVE_KEYBOARD && !visibility.canMoveKeyboard) return null
-            val legend = commandLegend(intent.id) ?: return null
-            if (visibility.hides(intent.id.legendCategory())) null else legend
+            if (visibility.hides(intent.id.legendCategory())) return null
+            if (!displayLabel.isNullOrBlank()) return KeyLegend.Text(displayLabel)
+            commandLegend(intent.id)
         }
 
         is KeyIntent.SwitchLayer -> {
@@ -163,18 +171,12 @@ private fun switchLayerLegendIcon(
     switchLayerIcons: Map<String, ImageVector>,
 ): ImageVector {
     switchLayerIcons[layerId]?.let { return it }
-    return when (
-        try {
-            LayoutLayer.valueOf(layerId)
-        } catch (_: IllegalArgumentException) {
-            null
-        }
-    ) {
-        LayoutLayer.MAIN -> Icons.Outlined.Abc
-        LayoutLayer.NUMERIC -> Icons.Outlined.Numbers
-        LayoutLayer.EMOJI -> Icons.Outlined.EmojiEmotions
-        LayoutLayer.CLIPBOARD -> Icons.Outlined.History
-        null -> Icons.Outlined.Functions
+    return when (layerId) {
+        "main", "MAIN" -> Icons.Outlined.Abc
+        "numeric", "NUMERIC" -> Icons.Outlined.Numbers
+        "emoji", "EMOJI" -> Icons.Outlined.EmojiEmotions
+        "clipboard", "CLIPBOARD" -> Icons.Outlined.History
+        else -> Icons.Outlined.Functions
     }
 }
 
@@ -245,6 +247,9 @@ internal fun CommandId.legendCategory(): LegendCategory =
         CommandId.SWITCH_IME_VOICE,
         CommandId.SWITCH_LANGUAGE,
         CommandId.MOVE_KEYBOARD,
+        CommandId.IME_ACTION,
+        CommandId.HIDE_KEYBOARD,
+        CommandId.META,
         -> LegendCategory.SPECIAL
     }
 
@@ -264,6 +269,7 @@ fun commandLegend(id: CommandId): KeyLegend? =
         CommandId.CTRL -> KeyLegend.Icon(Icons.Outlined.KeyboardControlKey)
         CommandId.ALT -> KeyLegend.Icon(Icons.Outlined.KeyboardOptionKey)
         CommandId.SHIFT -> KeyLegend.Icon(Icons.Outlined.ArrowDropUp)
+        CommandId.META -> KeyLegend.Text("Meta")
         CommandId.COPY -> KeyLegend.Icon(Icons.Outlined.ContentCopy)
         CommandId.CUT -> KeyLegend.Icon(Icons.Outlined.ContentCut)
         CommandId.PASTE -> KeyLegend.Icon(Icons.Outlined.ContentPaste)
@@ -280,6 +286,8 @@ fun commandLegend(id: CommandId): KeyLegend? =
         CommandId.TOGGLE_EMOJI_MODE -> KeyLegend.Icon(Icons.Outlined.EmojiEmotions)
         CommandId.TOGGLE_NUMERIC_MODE -> KeyLegend.Icon(Icons.Outlined.Numbers)
         CommandId.TOGGLE_ABC_MODE -> KeyLegend.Icon(Icons.Outlined.Abc)
+        CommandId.IME_ACTION -> KeyLegend.Text("Go")
+        CommandId.HIDE_KEYBOARD -> KeyLegend.Icon(Icons.Outlined.Keyboard)
     }
 
 fun CommandId.titleRes(): Int =
@@ -313,6 +321,9 @@ fun CommandId.titleRes(): Int =
         CommandId.TOGGLE_NUMERIC_MODE -> R.string.command_numeric
         CommandId.TOGGLE_ABC_MODE -> R.string.command_abc
         CommandId.TOGGLE_CLIPBOARD_HISTORY -> R.string.command_clipboard
+        CommandId.IME_ACTION -> R.string.command_ime_action
+        CommandId.HIDE_KEYBOARD -> R.string.command_hide_keyboard
+        CommandId.META -> R.string.command_meta
     }
 
 /** Legend for the layout editor: always has a mark (Space gets an icon here). */
@@ -334,6 +345,7 @@ private fun modifierLegend(
         ModifierId.CTRL -> KeyLegend.Icon(Icons.Outlined.KeyboardControlKey)
         ModifierId.ALT -> KeyLegend.Icon(Icons.Outlined.KeyboardOptionKey)
         ModifierId.ESC -> KeyLegend.Text("esc")
+        ModifierId.META -> KeyLegend.Text("Meta")
     }
 
 /**
@@ -346,6 +358,7 @@ fun KeyMapping.usesControlKeyFill(): Boolean {
     when (fillRole) {
         KeyFillRole.LETTER -> return false
         KeyFillRole.CONTROL -> return true
+        KeyFillRole.SPACER -> return true
         KeyFillRole.AUTO -> Unit
     }
     val center = intents[Zone.Center]

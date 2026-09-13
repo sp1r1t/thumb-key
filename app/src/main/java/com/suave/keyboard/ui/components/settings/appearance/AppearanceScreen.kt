@@ -10,12 +10,10 @@ import androidx.compose.material.icons.outlined.BorderOuter
 import androidx.compose.material.icons.outlined.Colorize
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Crop75
-import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.FormatColorFill
 import androidx.compose.material.icons.outlined.Height
 import androidx.compose.material.icons.outlined.Highlight
 import androidx.compose.material.icons.outlined.HideImage
-import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.KeyboardCapslock
@@ -97,8 +95,8 @@ import com.suave.keyboard.db.DEFAULT_VIBRATE_TAP_TYPE
 import com.suave.keyboard.db.AppearanceUpdate
 import com.suave.keyboard.engine.feedback.HapticType
 import com.suave.keyboard.engine.feedback.hapticTypeFromDb
+import com.suave.keyboard.layout.ActiveLayer
 import com.suave.keyboard.layout.DEFAULT_LAYER_HEIGHTS
-import com.suave.keyboard.layout.LayoutLayer
 import com.suave.keyboard.layout.LayoutRegistry
 import com.suave.keyboard.layout.MAX_LAYER_HEIGHT_ROWS
 import com.suave.keyboard.layout.MIN_DUAL_CELL_WIDTH_DP
@@ -117,6 +115,7 @@ import com.suave.keyboard.ui.components.common.SettingsScreenBody
 import com.suave.keyboard.ui.components.common.SettingsSection
 import com.suave.keyboard.ui.engine.HIDE_KEY_GROUP_ORDER
 import com.suave.keyboard.ui.engine.LegendCategory
+import com.suave.keyboard.ui.engine.asImageVector
 import com.suave.keyboard.ui.engine.formatHideKeyCategories
 import com.suave.keyboard.ui.engine.parseHideKeyCategories
 import com.suave.keyboard.ui.engine.toggleHideKeyGroupSelection
@@ -798,13 +797,14 @@ fun AppearanceScreen(
                     SettingsSection(
                         title = stringResource(R.string.settings_section_layers),
                     ) {
-                        namedLayout
-                            .availableBuiltinLayers()
-                            .filter { it != LayoutLayer.NUMERIC }
-                            .forEachIndexed { index, layer ->
-                                key(layer) {
+                        namedLayout.layers
+                            .filter { it.id != ActiveLayer.NUMERIC }
+                            .forEachIndexed { index, layerDef ->
+                                key(layerDef.id) {
                                     LayerHeightRow(
-                                        layer = layer,
+                                        layerId = layerDef.id,
+                                        layerTitle = layerDef.title,
+                                        layerIcon = layerDef.icon.asImageVector(),
                                         namedLayout = namedLayout,
                                         overrides = layerHeightOverrides,
                                         showInfo = index == 0,
@@ -1229,29 +1229,33 @@ private fun enabledKeyboardPositionsSummary(selected: List<KeyboardPosition>): S
 
 @Composable
 private fun LayerHeightRow(
-    layer: LayoutLayer,
+    layerId: String,
+    layerTitle: String,
+    layerIcon: ImageVector,
     namedLayout: NamedLayout,
-    overrides: Map<LayoutLayer, Int>,
+    overrides: Map<String, Int>,
     showInfo: Boolean,
     vibrateOnRepeat: Boolean,
     repeatHapticType: HapticType,
-    onOverridesChange: (Map<LayoutLayer, Int>) -> Unit,
+    onOverridesChange: (Map<String, Int>) -> Unit,
 ) {
-    val gridRows = namedLayout.gridRowCount(layer)
-    val currentRows = namedLayout.heightRows(layer, overrides[layer] ?: 0)
+    val active = ActiveLayer(layerId)
+    val gridRows = namedLayout.gridRowCount(active)
+    val currentRows = namedLayout.heightRows(active, overrides[layerId] ?: 0)
     val extraRows = currentRows - gridRows
+    val titleText = layerHeightTitle(layerId, layerTitle)
 
     IntStepperPreference(
         value = currentRows,
         onValueChange = { rows ->
-            onOverridesChange(overrides + (layer to rows))
+            onOverridesChange(overrides + (layerId to rows))
         },
         valueRange = gridRows..MAX_LAYER_HEIGHT_ROWS,
         vibrateOnRepeat = vibrateOnRepeat,
         repeatHapticType = repeatHapticType,
         title = {
             SettingTitle(
-                text = stringResource(layer.heightTitleRes()),
+                text = titleText,
                 infoText = if (showInfo) stringResource(R.string.layer_height_info) else null,
             )
         },
@@ -1270,31 +1274,28 @@ private fun LayerHeightRow(
         },
         icon = {
             Icon(
-                imageVector = layer.heightIcon(),
+                imageVector = layerIcon,
                 contentDescription = null,
             )
         },
         onReset = {
-            onOverridesChange(overrides - layer)
+            onOverridesChange(overrides - layerId)
         },
         resetTo = gridRows,
     )
 }
 
-private fun LayoutLayer.heightTitleRes(): Int =
-    when (this) {
-        LayoutLayer.MAIN -> R.string.layer_height_main
-        LayoutLayer.NUMERIC -> R.string.layer_height_numeric
-        LayoutLayer.EMOJI -> R.string.layer_height_emoji
-        LayoutLayer.CLIPBOARD -> R.string.layer_height_clipboard
-    }
-
-private fun LayoutLayer.heightIcon(): ImageVector =
-    when (this) {
-        LayoutLayer.MAIN -> Icons.Outlined.Keyboard
-        LayoutLayer.NUMERIC -> Icons.Outlined.Numbers
-        LayoutLayer.EMOJI -> Icons.Outlined.EmojiEmotions
-        LayoutLayer.CLIPBOARD -> Icons.Outlined.History
+@Composable
+private fun layerHeightTitle(
+    layerId: String,
+    fallbackTitle: String,
+): String =
+    when (layerId) {
+        ActiveLayer.MAIN -> stringResource(R.string.layer_height_main)
+        ActiveLayer.NUMERIC -> stringResource(R.string.layer_height_numeric)
+        ActiveLayer.EMOJI -> stringResource(R.string.layer_height_emoji)
+        ActiveLayer.CLIPBOARD -> stringResource(R.string.layer_height_clipboard)
+        else -> fallbackTitle
     }
 
 private fun tenthsOfDpLabel(tenths: Int): String {

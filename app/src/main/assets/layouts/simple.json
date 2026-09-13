@@ -1,0 +1,1019 @@
+{
+  "schemaVersion": 1,
+  "id": "simple",
+  "title": "Simple",
+  "homeLayerId": "main",
+  "layers": [
+    {
+      "id": "main",
+      "title": "ABC",
+      "icon": "Abc",
+      "rows": [
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "q"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "w"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "e"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "r"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "t"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "y"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "u"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "i"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "o"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "p"
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "spacer",
+            "columnSpan": 0.5
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "a"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "s"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "d"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "f"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "g"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "h"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "j"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "k"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "l"
+              }
+            }
+          },
+          {
+            "type": "spacer",
+            "columnSpan": 0.5
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "modifier",
+                "id": "SHIFT"
+              }
+            },
+            "columnSpan": 1.5,
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "z"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "x"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "c"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "v"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "b"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "n"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "m"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "BACKSPACE"
+              }
+            },
+            "columnSpan": 1.5,
+            "style": {
+              "fill": "control"
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "switchLayer",
+                "layerId": "numeric"
+              }
+            },
+            "columnSpan": 1.5,
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "SPACE"
+              }
+            },
+            "columnSpan": 5,
+            "slide": {
+              "axis": "HORIZONTAL",
+              "behavior": "MOVE_CURSOR"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "IME_ACTION",
+                "label": "Search"
+              }
+            },
+            "columnSpan": 1.5,
+            "style": {
+              "fill": "control"
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "TOGGLE_EMOJI_MODE"
+              }
+            },
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "spacer",
+            "columnSpan": 8
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "SWITCH_IME_VOICE"
+              }
+            },
+            "style": {
+              "fill": "control"
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "numeric",
+      "title": "123",
+      "icon": "Numbers",
+      "rows": [
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "1"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "2"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "3"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "4"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "5"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "6"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "7"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "8"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "9"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "0"
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "-"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "/"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": ":"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": ";"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "("
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": ")"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "$"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "&"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "@"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "\""
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "switchLayer",
+                "layerId": "symbols"
+              }
+            },
+            "columnSpan": 1.5,
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "."
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": ","
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "?"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "!"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "'"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "BACKSPACE"
+              }
+            },
+            "columnSpan": 1.5,
+            "style": {
+              "fill": "control"
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "switchLayer",
+                "layerId": "main"
+              }
+            },
+            "columnSpan": 1.5,
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "SPACE"
+              }
+            },
+            "columnSpan": 5
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "IME_ACTION",
+                "label": "Search"
+              }
+            },
+            "columnSpan": 1.5,
+            "style": {
+              "fill": "control"
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "symbols",
+      "title": "#+=",
+      "icon": "Tag",
+      "rows": [
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "["
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "]"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "{"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "}"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "#"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "%"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "^"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "*"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "+"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "="
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "_"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "\\"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "|"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "~"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "<"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": ">"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "$"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "€"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "£"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "•"
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "switchLayer",
+                "layerId": "numeric"
+              }
+            },
+            "columnSpan": 1.5,
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "."
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": ","
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "?"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "!"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "'"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "BACKSPACE"
+              }
+            },
+            "columnSpan": 1.5,
+            "style": {
+              "fill": "control"
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "switchLayer",
+                "layerId": "main"
+              }
+            },
+            "columnSpan": 1.5,
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "SPACE"
+              }
+            },
+            "columnSpan": 5
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "IME_ACTION",
+                "label": "Search"
+              }
+            },
+            "columnSpan": 1.5,
+            "style": {
+              "fill": "control"
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "emoji",
+      "title": "Emoji",
+      "icon": "EmojiEmotions",
+      "overlay": true,
+      "rows": [
+        [
+          {
+            "type": "emojiPicker",
+            "rowSpan": 4,
+            "columnSpan": 10
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "switchLayer",
+                "layerId": "main"
+              }
+            },
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "SPACE"
+              }
+            },
+            "columnSpan": 8
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "BACKSPACE"
+              }
+            },
+            "style": {
+              "fill": "control"
+            }
+          }
+        ]
+      ]
+    }
+  ]
+}

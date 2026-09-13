@@ -6,11 +6,13 @@ import kotlinx.coroutines.flow.asStateFlow
 
 /**
  * Layout editor <-> IME bridge. While the editor is open, [layout] holds the live draft and
- * [activeFallback] holds the keyboard to use for normal typing (selected layout, or the
- * editor baseline when that selected layout is the one being edited).
+ * [activeFallback] holds the open-time snapshot of that draft (a working keyboard if the
+ * live edit is half-broken).
  *
- * [useEdited] chooses which of those the IME renders. Try-on turns it on; the settings bar
- * toggle can flip it so you can still type on a working layout mid-edit.
+ * [useEdited] chooses what the IME renders:
+ * - true: the live draft
+ * - false: the settings-selected layout, except when that selection is the layout under
+ *   edit (registry already holds the draft) - then [activeFallback] is used instead
  *
  * Does not change [com.suave.keyboard.db.AppSettings.keyboardLayout].
  */
@@ -30,8 +32,8 @@ object LayoutPreviewSession {
         get() = _layout.value != null && _useEdited.value
 
     /**
-     * Bind the editor draft. [activeFallback] is what the IME shows when [useEdited] is false
-     * (kept as a snapshot so auto-save registering the draft cannot overwrite it).
+     * Bind the editor draft. [activeFallback] must be the open-time snapshot of [edited]
+     * (same id), kept apart so auto-save registering the draft cannot overwrite it.
      */
     fun bind(
         edited: NamedLayout,
@@ -40,6 +42,9 @@ object LayoutPreviewSession {
     ) {
         require(edited.id.isNotBlank()) { "Edited layout id must not be blank" }
         require(activeFallback.id.isNotBlank()) { "Active layout id must not be blank" }
+        require(activeFallback.id == edited.id) {
+            "activeFallback id (${activeFallback.id}) must match edited id (${edited.id})"
+        }
         LayoutRegistry.register(edited)
         _activeFallback.value = activeFallback
         _useEdited.value = useEdited
@@ -49,7 +54,7 @@ object LayoutPreviewSession {
     fun start(layout: NamedLayout) {
         bind(
             edited = layout,
-            activeFallback = _activeFallback.value ?: layout,
+            activeFallback = _activeFallback.value?.takeIf { it.id == layout.id } ?: layout,
             useEdited = true,
         )
     }
@@ -73,13 +78,19 @@ object LayoutPreviewSession {
         _useEdited.value = false
     }
 
-    /** Layout the IME should render, given the settings-selected layout as last resort. */
+    /**
+     * Layout the IME should render, given the settings-selected layout.
+     *
+     * When Edited is off, honors live [selected] so layout switch still works. The only
+     * exception is when [selected] is the layout under edit: the registry holds the draft,
+     * so we serve [activeFallback] instead and never trap typing on a broken mid-edit grid.
+     */
     fun resolve(selected: NamedLayout): NamedLayout {
         val edited = _layout.value ?: return selected
-        return if (_useEdited.value) {
-            edited
-        } else {
-            _activeFallback.value ?: selected
+        if (_useEdited.value) return edited
+        if (selected.id == edited.id) {
+            return _activeFallback.value ?: selected
         }
+        return selected
     }
 }

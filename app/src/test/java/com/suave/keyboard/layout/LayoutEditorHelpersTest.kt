@@ -96,20 +96,20 @@ class LayoutEditorHelpersTest {
                 when (pos) {
                     a ->
                         mapping.copy(
-                            columnSpan = 1,
+                            columnSpan = 1f,
                             intents = mapOf(Zone.Center to KeyIntent.Text("a")),
                         )
                     b ->
                         mapping.copy(
-                            columnSpan = 3,
+                            columnSpan = 3f,
                             intents = mapOf(Zone.Center to KeyIntent.Text("b")),
                         )
                     else -> mapping
                 }
             }
         val swapped = layout.swapKeys(a, b)
-        assertEquals(1, swapped.getValue(a).columnSpan)
-        assertEquals(3, swapped.getValue(b).columnSpan)
+        assertEquals(1f, swapped.getValue(a).columnSpan)
+        assertEquals(3f, swapped.getValue(b).columnSpan)
         assertEquals(KeyIntent.Text("b"), swapped.getValue(a).intents[Zone.Center])
         assertEquals(KeyIntent.Text("a"), swapped.getValue(b).intents[Zone.Center])
     }

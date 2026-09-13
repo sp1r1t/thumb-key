@@ -19,7 +19,7 @@ private val EDITOR_DEFAULT_GESTURE = GestureConfig(minSwipeDistancePx = 64f)
 
 /** Empty key with a center noop - the minimum the codec/engine accept. */
 fun blankKeyMapping(
-    columnSpan: Int = 1,
+    columnSpan: Float = 1f,
     fillRole: KeyFillRole = KeyFillRole.AUTO,
     slideAxis: SlideAxis? = null,
     slideBehavior: SlideBehavior? = null,
@@ -32,7 +32,7 @@ fun blankKeyMapping(
                 .withOccupiedDirections(intents),
         intents = intents,
         slideBehavior = slideBehavior,
-        columnSpan = columnSpan.coerceAtLeast(1),
+        columnSpan = columnSpan.coerceAtLeast(0.01f),
         fillRole = fillRole,
     )
 }
@@ -54,12 +54,21 @@ fun blankNamedLayout(
     id: String,
     title: String,
     rowSizes: List<Int>,
-): NamedLayout =
-    NamedLayout(
+): NamedLayout {
+    val main =
+        LayerDefinition(
+            id = ActiveLayer.MAIN,
+            title = "ABC",
+            icon = LayerIcon.Abc,
+            keyGrid = blankLayout(rowSizes),
+        )
+    return NamedLayout(
         id = id,
         title = title,
-        layout = blankLayout(rowSizes),
+        homeLayerId = ActiveLayer.MAIN,
+        layers = listOf(main),
     )
+}
 
 fun KeyMapping.withUpdatedIntents(intents: Map<Zone, KeyIntent>): KeyMapping {
     val merged = intents.toMap()
@@ -250,55 +259,16 @@ fun Layout.resizeRows(
 }
 
 fun NamedLayout.replaceGrid(
-    layer: LayoutLayer,
-    grid: Layout,
-): NamedLayout =
-    when (layer) {
-        LayoutLayer.MAIN -> copy(layout = grid)
-        LayoutLayer.NUMERIC -> copy(numericLayout = grid)
-        LayoutLayer.EMOJI -> copy(emojiBottomRow = grid)
-        LayoutLayer.CLIPBOARD -> copy(clipboardBottomRow = grid)
-    }
-
-fun NamedLayout.replaceGrid(
     active: ActiveLayer,
     grid: Layout,
-): NamedLayout =
-    when (active) {
-        is ActiveLayer.Builtin -> replaceGrid(active.layer, grid)
-        is ActiveLayer.Custom -> {
-            val updated =
-                customLayers.map { layer ->
-                    if (layer.id == active.id) layer.copy(layout = grid) else layer
-                }
-            copy(customLayers = updated)
-        }
-    }
-
-fun NamedLayout.gridOrEmpty(layer: LayoutLayer): Layout =
-    when (layer) {
-        LayoutLayer.MAIN -> layout
-        LayoutLayer.NUMERIC -> numericLayout ?: emptyMap()
-        LayoutLayer.EMOJI -> emojiBottomRow ?: emptyMap()
-        LayoutLayer.CLIPBOARD -> clipboardBottomRow ?: emptyMap()
-    }
+): NamedLayout = replaceKeyGrid(active.id, grid)
 
 fun NamedLayout.gridOrEmpty(active: ActiveLayer): Layout =
-    when (active) {
-        is ActiveLayer.Builtin -> gridOrEmpty(active.layer)
-        is ActiveLayer.Custom -> customLayer(active.id)?.layout ?: emptyMap()
-    }
+    layer(active)?.keyGrid ?: emptyMap()
 
-fun NamedLayout.withCustomLayer(layer: CustomLayer): NamedLayout {
-    val without = customLayers.filterNot { it.id == layer.id }
-    require(without.size < MAX_CUSTOM_LAYERS) {
-        "At most $MAX_CUSTOM_LAYERS custom layers"
-    }
-    return copy(customLayers = without + layer)
-}
+fun NamedLayout.withLayerDefinition(layer: LayerDefinition): NamedLayout = withLayer(layer)
 
-fun NamedLayout.withoutCustomLayer(id: String): NamedLayout =
-    copy(customLayers = customLayers.filterNot { it.id == id })
+fun NamedLayout.withoutLayerDefinition(id: String): NamedLayout = withoutLayer(id)
 
 /**
  * Undo/redo stack for [NamedLayout] edits in the layout editor. [canUndo]/[canRedo] are

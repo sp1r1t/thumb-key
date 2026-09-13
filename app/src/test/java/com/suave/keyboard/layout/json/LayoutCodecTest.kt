@@ -1,42 +1,42 @@
 package com.suave.keyboard.layout.json
 
-import com.suave.keyboard.layout.BuiltinLayouts
-import com.suave.keyboard.layout.CustomLayerIcon
+import com.suave.keyboard.layout.ActiveLayer
+import com.suave.keyboard.layout.LayerContent
+import com.suave.keyboard.layout.NamedLayout
+import com.suave.keyboard.layout.S12_CAPS_LOCK_MAPPINGS
+import com.suave.keyboard.layout.S12_SHIFT_MAPPINGS
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
 class LayoutCodecTest {
     @Test
-    fun `s12 round-trips through JSON`() {
-        val original = BuiltinLayouts.S12
+    fun `s12 asset round-trips through JSON`() {
+        val original = loadS12Asset()
         val json = encodeNamedLayout(original)
         val restored = decodeNamedLayout(json)
 
         assertEquals(original.id, restored.id)
         assertEquals(original.title, restored.title)
-        assertEquals(original.layout.keys, restored.layout.keys)
-        assertEquals(original.numericLayout?.keys, restored.numericLayout?.keys)
-        assertEquals(original.emojiBottomRow?.keys, restored.emojiBottomRow?.keys)
-        assertEquals(original.clipboardBottomRow?.keys, restored.clipboardBottomRow?.keys)
+        assertEquals(original.homeLayerId, restored.homeLayerId)
+        assertEquals(original.layers.map { it.id }, restored.layers.map { it.id })
         assertEquals(original.shiftMappings, restored.shiftMappings)
         assertEquals(original.capsLockMappings, restored.capsLockMappings)
-        assertEquals(original.layerHeights, restored.layerHeights)
-        assertEquals(original.layerContent, restored.layerContent)
 
-        for (pos in original.layout.keys) {
-            val a = original.layout.getValue(pos)
-            val b = restored.layout.getValue(pos)
-            assertEquals("intents at $pos", a.intents, b.intents)
-            assertEquals("slide at $pos", a.slideBehavior, b.slideBehavior)
-            assertEquals("span at $pos", a.columnSpan, b.columnSpan)
-            assertEquals("slideAxis at $pos", a.gestureConfig.slideAxis, b.gestureConfig.slideAxis)
-            assertEquals(
-                "occupied at $pos",
-                a.gestureConfig.occupiedDirections,
-                b.gestureConfig.occupiedDirections,
-            )
+        for (layer in original.layers) {
+            val other = restored.requireLayer(layer.id)
+            assertEquals(layer.content, other.content)
+            assertEquals(layer.contentRows, other.contentRows)
+            assertEquals(layer.overlay, other.overlay)
+            assertEquals(layer.keyGrid.keys, other.keyGrid.keys)
+            for (pos in layer.keyGrid.keys) {
+                val a = layer.keyGrid.getValue(pos)
+                val b = other.keyGrid.getValue(pos)
+                assertEquals("intents ${layer.id}@$pos", a.intents, b.intents)
+                assertEquals("span ${layer.id}@$pos", a.columnSpan, b.columnSpan)
+            }
         }
     }
 
@@ -48,31 +48,94 @@ class LayoutCodecTest {
               "schemaVersion": 1,
               "id": "uneven",
               "title": "Uneven",
-              "rows": [
-                [
-                  { "zones": { "center": { "type": "text", "value": "a" } } },
-                  { "zones": { "center": { "type": "text", "value": "b" } } }
-                ],
-                [
-                  {
-                    "columnSpan": 2,
-                    "zones": { "center": { "type": "command", "id": "ENTER" } }
-                  }
-                ]
+              "homeLayerId": "main",
+              "layers": [
+                {
+                  "id": "main",
+                  "title": "ABC",
+                  "icon": "Abc",
+                  "rows": [
+                    [
+                      { "type": "key", "zones": { "center": { "type": "text", "value": "a" } } },
+                      { "type": "key", "zones": { "center": { "type": "text", "value": "b" } } }
+                    ],
+                    [
+                      {
+                        "type": "key",
+                        "columnSpan": 2,
+                        "zones": { "center": { "type": "command", "id": "ENTER" } }
+                      }
+                    ]
+                  ]
+                }
               ]
             }
             """.trimIndent()
         val layout = decodeNamedLayout(json)
-        assertEquals(2, layout.layout.keys.count { it.row == 0 })
-        assertEquals(1, layout.layout.keys.count { it.row == 1 })
-        assertEquals(2, layout.layout.getValue(com.suave.keyboard.engine.intent.KeyPosition(1, 0)).columnSpan)
+        val grid = layout.homeLayer().keyGrid
+        assertEquals(2, grid.keys.count { it.row == 0 })
+        assertEquals(1, grid.keys.count { it.row == 1 })
+        assertEquals(2f, grid.getValue(com.suave.keyboard.engine.intent.KeyPosition(1, 0)).columnSpan)
+    }
+
+    @Test
+    fun `caseMaps and per-text case overrides round-trip`() {
+        val json =
+            """
+            {
+              "schemaVersion": 1,
+              "id": "case",
+              "title": "Case",
+              "homeLayerId": "main",
+              "caseMaps": { "shift": { "ß": "SS" }, "capsLock": { "ß": "ẞ" } },
+              "layers": [
+                {
+                  "id": "main",
+                  "title": "ABC",
+                  "icon": "Abc",
+                  "rows": [
+                    [
+                      {
+                        "type": "key",
+                        "zones": {
+                          "center": {
+                            "type": "text",
+                            "value": "ß",
+                            "case": { "shift": "ẞ", "capsLock": null }
+                          }
+                        }
+                      }
+                    ]
+                  ]
+                }
+              ]
+            }
+            """.trimIndent()
+        val layout = decodeNamedLayout(json)
+        assertEquals(mapOf("ß" to "SS"), layout.shiftMappings)
+        val text =
+            layout.homeLayer().keyGrid.values.first().intents.values.first()
+                as com.suave.keyboard.engine.intent.KeyIntent.Text
+        assertEquals(
+            com.suave.keyboard.engine.intent.CaseOverride.Fixed("ẞ"),
+            text.case.shift,
+        )
+        assertEquals(
+            com.suave.keyboard.engine.intent.CaseOverride.Disable,
+            text.case.capsLock,
+        )
+        val again = decodeNamedLayout(encodeNamedLayout(layout))
+        val text2 =
+            again.homeLayer().keyGrid.values.first().intents.values.first()
+                as com.suave.keyboard.engine.intent.KeyIntent.Text
+        assertEquals(text.case, text2.case)
     }
 
     @Test
     fun `unknown schema version is rejected`() {
         val json =
             """
-            { "schemaVersion": 99, "id": "x", "title": "X", "rows": [] }
+            { "schemaVersion": 99, "id": "x", "title": "X", "homeLayerId": "main", "layers": [] }
             """.trimIndent()
         try {
             decodeNamedLayout(json)
@@ -83,30 +146,37 @@ class LayoutCodecTest {
     }
 
     @Test
-    fun `extraLayers and switchLayer round-trip`() {
+    fun `extra layer and switchLayer survive encode`() {
         val json =
             """
             {
               "schemaVersion": 1,
-              "id": "extra",
-              "title": "Extra",
-              "rows": [
-                [
-                  {
-                    "zones": {
-                      "center": { "type": "switchLayer", "layerId": "custom_fn1" }
-                    }
-                  }
-                ]
-              ],
-              "extraLayers": [
+              "id": "x",
+              "title": "X",
+              "homeLayerId": "main",
+              "layers": [
                 {
-                  "id": "custom_fn1",
-                  "title": "Fn",
-                  "icon": "Star",
+                  "id": "main",
+                  "title": "ABC",
+                  "icon": "Abc",
                   "rows": [
                     [
-                      { "zones": { "center": { "type": "text", "value": "!" } } }
+                      {
+                        "type": "key",
+                        "zones": {
+                          "center": { "type": "switchLayer", "layerId": "symbols" }
+                        }
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "id": "symbols",
+                  "title": "Symbols",
+                  "icon": "Functions",
+                  "rows": [
+                    [
+                      { "type": "key", "zones": { "center": { "type": "text", "value": "#" } } }
                     ]
                   ]
                 }
@@ -114,23 +184,87 @@ class LayoutCodecTest {
             }
             """.trimIndent()
         val layout = decodeNamedLayout(json)
-        assertEquals(1, layout.customLayers.size)
-        assertEquals("Fn", layout.customLayers.single().title)
-        assertEquals(CustomLayerIcon.Star, layout.customLayers.single().icon)
-        val center = layout.layout.getValue(com.suave.keyboard.engine.intent.KeyPosition(0, 0))
-        assertEquals(
-            com.suave.keyboard.engine.intent.KeyIntent.SwitchLayer("custom_fn1"),
-            center.intents[com.suave.keyboard.engine.gesture.Zone.Center],
-        )
-        val restored = decodeNamedLayout(encodeNamedLayout(layout))
-        assertEquals(layout.customLayers, restored.customLayers)
-        assertEquals(center.intents, restored.layout.getValue(com.suave.keyboard.engine.intent.KeyPosition(0, 0)).intents)
+        assertEquals(2, layout.layers.size)
+        assertNotNull(layout.layer("symbols"))
+        val again = decodeNamedLayout(encodeNamedLayout(layout))
+        assertEquals(layout.layers.map { it.id }, again.layers.map { it.id })
     }
 
     @Test
-    fun `export s12 asset when EXPORT_S12_LAYOUT is set`() {
-        val out = System.getenv("EXPORT_S12_LAYOUT") ?: return
-        File(out).parentFile?.mkdirs()
-        File(out).writeText(encodeNamedLayout(BuiltinLayouts.S12))
+    fun `s12 asset has content strips and case maps`() {
+        val s12 = loadS12Asset()
+        assertEquals(ActiveLayer.MAIN, s12.homeLayerId)
+        assertEquals(LayerContent.EmojiPicker, s12.requireLayer(ActiveLayer.EMOJI).content)
+        assertEquals(5, s12.requireLayer(ActiveLayer.EMOJI).contentRows)
+        assertEquals(LayerContent.ClipboardHistory, s12.requireLayer(ActiveLayer.CLIPBOARD).content)
+        assertEquals(S12_SHIFT_MAPPINGS, s12.shiftMappings)
+        assertEquals(S12_CAPS_LOCK_MAPPINGS, s12.capsLockMappings)
     }
+    @Test
+    fun `spacer and fractional columnSpan decode`() {
+        val json =
+            """
+            {
+              "schemaVersion": 1,
+              "id": "pad",
+              "title": "Pad",
+              "homeLayerId": "main",
+              "layers": [
+                {
+                  "id": "main",
+                  "title": "ABC",
+                  "icon": "Abc",
+                  "rows": [
+                    [
+                      { "type": "spacer", "columnSpan": 0.5 },
+                      {
+                        "type": "key",
+                        "columnSpan": 1.5,
+                        "zones": { "center": { "type": "text", "value": "a" } }
+                      },
+                      { "type": "spacer", "columnSpan": 0.5 }
+                    ]
+                  ]
+                }
+              ]
+            }
+            """.trimIndent()
+        val layout = decodeNamedLayout(json)
+        val grid = layout.homeLayer().keyGrid
+        assertEquals(3, grid.size)
+        assertEquals(
+            com.suave.keyboard.engine.intent.KeyFillRole.SPACER,
+            grid.getValue(com.suave.keyboard.engine.intent.KeyPosition(0, 0)).fillRole,
+        )
+        assertEquals(0.5f, grid.getValue(com.suave.keyboard.engine.intent.KeyPosition(0, 0)).columnSpan)
+        assertEquals(1.5f, grid.getValue(com.suave.keyboard.engine.intent.KeyPosition(0, 1)).columnSpan)
+        val again = decodeNamedLayout(encodeNamedLayout(layout))
+        assertEquals(
+            com.suave.keyboard.engine.intent.KeyFillRole.SPACER,
+            again.homeLayer().keyGrid.getValue(com.suave.keyboard.engine.intent.KeyPosition(0, 0)).fillRole,
+        )
+    }
+
+    @Test
+    fun `new layout assets decode`() {
+        for (name in listOf("simple.json", "terminal.json", "unexpected.json")) {
+            val layout = loadLayoutAsset(name)
+            assertTrue(layout.id.isNotBlank())
+            assertTrue(layout.layers.isNotEmpty())
+            assertNotNull(layout.homeLayer())
+        }
+    }
+}
+
+internal fun loadS12Asset(): NamedLayout = loadLayoutAsset("s12.json")
+
+internal fun loadLayoutAsset(fileName: String): NamedLayout {
+    val candidates =
+        listOf(
+            File("app/src/main/assets/layouts/$fileName"),
+            File("src/main/assets/layouts/$fileName"),
+        )
+    val file = candidates.firstOrNull { it.isFile }
+        ?: error("$fileName not found (cwd=${File(".").absolutePath})")
+    return decodeNamedLayout(file.readText())
 }

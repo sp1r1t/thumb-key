@@ -40,6 +40,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -113,6 +115,7 @@ import com.suave.keyboard.engine.feedback.HapticChannel
 import com.suave.keyboard.engine.feedback.HapticType
 import com.suave.keyboard.engine.feedback.hapticTypeFromDb
 import com.suave.keyboard.engine.intent.CommandId
+import com.suave.keyboard.engine.intent.KeyFillRole
 import com.suave.keyboard.engine.intent.KeyPosition
 import com.suave.keyboard.engine.intent.Layout
 import com.suave.keyboard.engine.intent.ModifierId
@@ -131,13 +134,11 @@ import com.suave.keyboard.layout.ActiveLayer
 import com.suave.keyboard.layout.DEFAULT_LAYER_HEIGHTS
 import com.suave.keyboard.layout.LayerContent
 import com.suave.keyboard.layout.LayerSession
-import com.suave.keyboard.layout.LayoutLayer
 import com.suave.keyboard.layout.LayoutPreviewSession
 import com.suave.keyboard.layout.LayoutRegistry
 import com.suave.keyboard.layout.NamedLayout
 import com.suave.keyboard.layout.canCycleKeyboardPosition
 import com.suave.keyboard.layout.coerceDisplayedPosition
-import com.suave.keyboard.layout.enterOverlay
 import com.suave.keyboard.layout.leaveOverlay
 import com.suave.keyboard.layout.nextKeyboardPosition
 import com.suave.keyboard.layout.parseKeyboardPositions
@@ -145,9 +146,8 @@ import com.suave.keyboard.layout.parseLayerHeightOverrides
 import com.suave.keyboard.layout.parseLayerId
 import com.suave.keyboard.layout.reachableKeyboardPositions
 import com.suave.keyboard.layout.selectBase
-import com.suave.keyboard.layout.selectBaseLayer
 import com.suave.keyboard.layout.splitColumnRanges
-import com.suave.keyboard.layout.toggleBase
+import com.suave.keyboard.layout.switchTo
 import com.suave.keyboard.layout.toggleClipboard
 import com.suave.keyboard.layout.toggleEmoji
 import com.suave.keyboard.ui.components.clipboard.ClipboardHistoryScreen
@@ -162,7 +162,7 @@ import java.util.Locale
 /**
  * Renders the selected [NamedLayout] on the new engine end to end. Owns the two pieces of
  * state every key on the keyboard shares: [ModifierState] (modifiers are not a layout mode)
- * and [LayoutLayer] (numeric/emoji/clipboard are layout switches, not modifiers). Both survive Dual's
+ * and active layer id (numeric/emoji/clipboard are layout switches, not modifiers). Both survive Dual's
  * second copy of the grid, so Ctrl held on the left half still applies on the right.
  *
  * The grid is derived from the layout data ([layoutRows]), not a hardcoded 4x5. Suave is one
@@ -211,7 +211,7 @@ fun EngineKeyboardScreen(
             preventNeedlessSplit = (settings?.preventNeedlessSplit ?: DEFAULT_PREVENT_NEEDLESS_SPLIT).toBool(),
             screenWidthDp = screenWidthDp,
             screenHeightDp = screenHeightDp,
-            columnCount = namedLayout.layout.columnCount(),
+            columnCount = namedLayout.homeLayer().keyGrid.columnCount(),
         )
     val canMoveKeyboard = canCycleKeyboardPosition(reachablePositions)
     val feedbackSettings =
@@ -417,36 +417,10 @@ fun EngineKeyboardScreen(
                     val current = namedLayoutState.value
                     val session = layerSessionState.value
                     layerSessionState.value =
-                        when (requested) {
-                            LayoutLayer.NUMERIC -> {
-                                if (current.numericLayout != null) {
-                                    session.selectBaseLayer(LayoutLayer.NUMERIC)
-                                } else {
-                                    session
-                                }
-                            }
-
-                            LayoutLayer.MAIN -> {
-                                session.selectBaseLayer(LayoutLayer.MAIN)
-                            }
-
-                            LayoutLayer.EMOJI -> {
-                                if (current.emojiBottomRow != null) {
-                                    session.enterOverlay(LayoutLayer.EMOJI)
-                                } else {
-                                    session
-                                }
-                            }
-
-                            LayoutLayer.CLIPBOARD -> {
-                                if (current.clipboardBottomRow != null ||
-                                    current.layerContent[LayoutLayer.CLIPBOARD] != null
-                                ) {
-                                    session.enterOverlay(LayoutLayer.CLIPBOARD)
-                                } else {
-                                    session
-                                }
-                            }
+                        if (current.layer(requested) != null) {
+                            session.switchTo(requested, current)
+                        } else {
+                            session
                         }
                 },
                 onSwitchLayer = { layerId ->
@@ -454,43 +428,33 @@ fun EngineKeyboardScreen(
                     val session = layerSessionState.value
                     val target = parseLayerId(layerId)
                     layerSessionState.value =
-                        when (target) {
-                            is ActiveLayer.Builtin ->
-                                when (target.layer) {
-                                    LayoutLayer.MAIN -> session.selectBase(ActiveLayer.Main)
-                                    LayoutLayer.NUMERIC ->
-                                        if (current.numericLayout != null) {
-                                            session.selectBase(ActiveLayer.Numeric)
-                                        } else {
-                                            session
-                                        }
-                                    LayoutLayer.EMOJI ->
-                                        session.toggleEmoji(current.emojiBottomRow != null)
-                                    LayoutLayer.CLIPBOARD ->
-                                        session.toggleClipboard(
-                                            current.clipboardBottomRow != null ||
-                                                current.layerContent[LayoutLayer.CLIPBOARD] != null,
-                                        )
-                                }
-                            is ActiveLayer.Custom ->
-                                if (current.customLayer(target.id) != null) {
-                                    session.toggleBase(target)
-                                } else {
-                                    session
-                                }
+                        if (current.layer(target) != null) {
+                            // Toggle: same overlay/base again returns home / leaves overlay.
+                            when {
+                                session.current == target && current.isOverlay(target) ->
+                                    session.leaveOverlay()
+                                session.current == target ->
+                                    session.selectBase(current.homeActive())
+                                else -> session.switchTo(target, current)
+                            }
+                        } else {
+                            session
                         }
                 },
                 onToggleEmojiLayer = {
                     val current = namedLayoutState.value
                     layerSessionState.value =
-                        layerSessionState.value.toggleEmoji(current.emojiBottomRow != null)
+                        layerSessionState.value.toggleEmoji(
+                            available = current.layer(ActiveLayer.Emoji) != null,
+                            layout = current,
+                        )
                 },
                 onToggleClipboardHistory = {
                     val current = namedLayoutState.value
                     layerSessionState.value =
                         layerSessionState.value.toggleClipboard(
-                            current.clipboardBottomRow != null ||
-                                current.layerContent[LayoutLayer.CLIPBOARD] != null,
+                            available = current.layer(ActiveLayer.Clipboard) != null,
+                            layout = current,
                         )
                 },
             )
@@ -681,7 +645,7 @@ private fun EngineKeyboardPanel(
     activeLayer: ActiveLayer,
     clipboardSession: ClipboardLayerSession,
     keyHeight: Dp,
-    layerHeightOverrides: Map<LayoutLayer, Int>,
+    layerHeightOverrides: Map<String, Int>,
     modifierState: MutableState<ModifierState>,
     onExecute: (SemanticAction) -> Unit,
     onFeedback: (FeedbackEvent) -> Unit,
@@ -704,11 +668,7 @@ private fun EngineKeyboardPanel(
     splitHalves: Boolean,
 ) {
     val grid = namedLayout.gridFor(activeLayer)
-    val overrideRows =
-        when (activeLayer) {
-            is ActiveLayer.Builtin -> layerHeightOverrides[activeLayer.layer] ?: 0
-            is ActiveLayer.Custom -> 0
-        }
+    val overrideRows = layerHeightOverrides[activeLayer.id] ?: 0
     val contentRows = namedLayout.contentRows(activeLayer, overrideRows)
     Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
         if (contentRows > 0) {
@@ -966,31 +926,40 @@ private fun RowScope.LayoutRowKeys(
     for (position in positions) {
         val mapping = layout[position] ?: continue
         key(keyPrefix, position) {
-            EngineKeyboardKey(
-                mapping = mapping,
-                modifierState = modifierState,
-                shiftLegendState = shiftLegendState,
-                onExecute = onExecute,
-                onFeedback = onFeedback,
-                shiftMappings = namedLayout.shiftMappings,
-                capsLockMappings = namedLayout.capsLockMappings,
-                minSwipeDistancePx = minSwipeDistancePx,
-                legendVisibility = legendVisibility,
-                modifierBehaviors = modifierBehaviors,
-                keyHeight = keyHeight,
-                keyPadding = keyPadding,
-                keyPaddingVertical = keyPaddingVertical,
-                keyBorderWidthDp = keyBorderWidthDp,
-                keyCornerRadius = keyCornerRadius,
-                animations = animations,
-                isPasswordField = isPasswordField,
-                distinctLetterControlColors = distinctLetterControlColors,
-                spacebarMultitap = spacebarMultitap,
-                spacebarMultitapEnabled = spacebarMultitapEnabled,
-                spaceMultitapCycle = namedLayout.spaceMultitapCycle,
-                switchLayerIcons = namedLayout.switchLayerIconMap(),
-                modifier = Modifier.weight(mapping.columnSpan.toFloat()).fillMaxHeight(),
-            )
+            if (mapping.fillRole == KeyFillRole.SPACER) {
+                Spacer(
+                    modifier =
+                        Modifier
+                            .weight(mapping.columnSpan)
+                            .fillMaxHeight(),
+                )
+            } else {
+                EngineKeyboardKey(
+                    mapping = mapping,
+                    modifierState = modifierState,
+                    shiftLegendState = shiftLegendState,
+                    onExecute = onExecute,
+                    onFeedback = onFeedback,
+                    shiftMappings = namedLayout.shiftMappings,
+                    capsLockMappings = namedLayout.capsLockMappings,
+                    minSwipeDistancePx = minSwipeDistancePx,
+                    legendVisibility = legendVisibility,
+                    modifierBehaviors = modifierBehaviors,
+                    keyHeight = keyHeight,
+                    keyPadding = keyPadding,
+                    keyPaddingVertical = keyPaddingVertical,
+                    keyBorderWidthDp = keyBorderWidthDp,
+                    keyCornerRadius = keyCornerRadius,
+                    animations = animations,
+                    isPasswordField = isPasswordField,
+                    distinctLetterControlColors = distinctLetterControlColors,
+                    spacebarMultitap = spacebarMultitap,
+                    spacebarMultitapEnabled = spacebarMultitapEnabled,
+                    spaceMultitapCycle = namedLayout.spaceMultitapCycle,
+                    switchLayerIcons = namedLayout.switchLayerIconMap(),
+                    modifier = Modifier.weight(mapping.columnSpan).fillMaxHeight(),
+                )
+            }
         }
     }
 }
@@ -1067,31 +1036,34 @@ private fun EditorDebugBar(
     onCopy: (String) -> Unit,
 ) {
     val onError = MaterialTheme.colorScheme.onError
+    val lineStyle =
+        TextStyle(
+            color = onError,
+            fontSize = 9.sp,
+            lineHeight = 10.sp,
+            textAlign = TextAlign.Center,
+            platformStyle = PlatformTextStyle(includeFontPadding = false),
+        )
     Column(
         modifier =
             Modifier
                 .fillMaxWidth()
                 .background(MaterialTheme.colorScheme.error)
                 .clickable { onCopy(verbose) }
-                .padding(horizontal = 8.dp, vertical = 4.dp),
+                .padding(horizontal = 6.dp, vertical = 1.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Text(
             text = meta,
-            color = onError,
-            fontSize = 9.sp,
+            style = lineStyle,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
         )
         Text(
             text = compact,
-            color = onError,
-            fontSize = 9.sp,
+            style = lineStyle,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
         )
     }
 }

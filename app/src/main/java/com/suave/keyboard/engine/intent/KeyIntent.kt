@@ -13,6 +13,7 @@ sealed class KeyIntent {
      *  KeyEvent treatment; see [com.suave.keyboard.engine.modifier.ModifierEngine]. */
     data class Text(
         val text: String,
+        val case: TextCaseOverrides = TextCaseOverrides.DEFAULT,
     ) : KeyIntent()
 
     data class Command(
@@ -24,8 +25,7 @@ sealed class KeyIntent {
     ) : KeyIntent()
 
     /**
-     * Switch to a named layer. [layerId] is a [LayoutLayer] name (`MAIN`, `NUMERIC`, ...) or a
-     * custom function-layer id from [com.suave.keyboard.layout.CustomLayer.id].
+     * Switch to a named layer. [layerId] matches a layout `layers[].id` (e.g. `main`, `emoji`).
      */
     data class SwitchLayer(
         val layerId: String,

@@ -41,7 +41,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Redo
 import androidx.compose.material.icons.automirrored.outlined.Undo
-import androidx.compose.material.icons.outlined.Abc
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DragHandle
@@ -53,8 +52,8 @@ import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.KeyboardControlKey
 import androidx.compose.material.icons.outlined.KeyboardOptionKey
-import androidx.compose.material.icons.outlined.Numbers
 import androidx.compose.material.icons.outlined.RestartAlt
+import androidx.compose.material.icons.outlined.Widgets
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -105,7 +104,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -139,16 +137,15 @@ import com.suave.keyboard.engine.intent.SlideBehavior
 import com.suave.keyboard.engine.intent.layoutRows
 import com.suave.keyboard.engine.modifier.ModifierState
 import com.suave.keyboard.layout.ActiveLayer
-import com.suave.keyboard.layout.CustomLayer
-import com.suave.keyboard.layout.CustomLayerIcon
 import com.suave.keyboard.layout.KeyInsertGap
 import com.suave.keyboard.layout.LayerContent
+import com.suave.keyboard.layout.LayerDefinition
+import com.suave.keyboard.layout.LayerIcon
 import com.suave.keyboard.layout.LayoutDraftHistory
-import com.suave.keyboard.layout.LayoutLayer
 import com.suave.keyboard.layout.LayoutPreviewSession
 import com.suave.keyboard.layout.LayoutRegistry
 import com.suave.keyboard.layout.LayoutResizeMemory
-import com.suave.keyboard.layout.MAX_CUSTOM_LAYERS
+import com.suave.keyboard.layout.MAX_LAYERS
 import com.suave.keyboard.layout.MAX_LAYER_HEIGHT_ROWS
 import com.suave.keyboard.layout.NamedLayout
 import com.suave.keyboard.layout.S12_CLIPBOARD_LAYER_HEIGHT_ROWS
@@ -162,7 +159,7 @@ import com.suave.keyboard.layout.json.decodeNamedLayout
 import com.suave.keyboard.layout.json.encodeNamedLayout
 import com.suave.keyboard.layout.moveKeyToGap
 import com.suave.keyboard.layout.moveRow
-import com.suave.keyboard.layout.newCustomLayerId
+import com.suave.keyboard.layout.newLayerId
 import com.suave.keyboard.layout.putKey
 import com.suave.keyboard.layout.removeKeyAndCompact
 import com.suave.keyboard.layout.removeRow
@@ -170,9 +167,7 @@ import com.suave.keyboard.layout.replaceGrid
 import com.suave.keyboard.layout.resizeRows
 import com.suave.keyboard.layout.sameExceptTitle
 import com.suave.keyboard.layout.swapKeys
-import com.suave.keyboard.layout.withCustomLayer
 import com.suave.keyboard.layout.withUpdatedIntents
-import com.suave.keyboard.layout.withoutCustomLayer
 import com.suave.keyboard.ui.components.clipboard.ClipboardHistoryScreen
 import com.suave.keyboard.ui.components.common.IntStepperPreference
 import com.suave.keyboard.ui.components.common.SettingRow
@@ -312,19 +307,12 @@ fun LayoutEditorScreen(
         layout: NamedLayout,
         tryingOut: Boolean,
     ) {
-        val selectedId =
-            appSettingsViewModel.appSettings.value?.keyboardLayout ?: LayoutRegistry.DEFAULT_ID
-        val activeFallback =
-            if (selectedId == layout.id) {
-                // Editing the daily-driver layout: keep the open-time snapshot so the IME
-                // can fall back to a working keyboard while the draft is half-broken.
-                sessionBaseline ?: layout
-            } else {
-                LayoutRegistry.byId(ctx, selectedId)
-            }
+        // Fallback is always the open-time snapshot of this draft (same id). When Edited is
+        // off and settings still select this layout, the IME uses that snapshot so a
+        // half-broken mid-edit grid cannot trap typing. Other selected layouts resolve live.
         LayoutPreviewSession.bind(
             edited = layout,
-            activeFallback = activeFallback,
+            activeFallback = sessionBaseline?.takeIf { it.id == layout.id } ?: layout,
             useEdited = tryingOut,
         )
     }
@@ -375,8 +363,12 @@ fun LayoutEditorScreen(
                 if (current != null) {
                     if (!existedOnOpen) {
                         runCatching { store.delete(current.id) }
+                        LayoutRegistry.unregister(current.id)
                     } else {
-                        sessionBaseline?.let { store.save(layoutForDisk(it)) }
+                        sessionBaseline?.let {
+                            store.save(layoutForDisk(it))
+                            LayoutRegistry.register(it)
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -397,9 +389,8 @@ fun LayoutEditorScreen(
         coalesceTitle: Boolean = false,
     ) {
         val cur = draft
-        val selectedCustom = selectedLayer as? ActiveLayer.Custom
-        if (selectedCustom != null && next.customLayer(selectedCustom.id) == null) {
-            selectedLayer = ActiveLayer.Main
+        if (next.layer(selectedLayer) == null) {
+            selectedLayer = next.homeActive()
         }
         if (cur == null) {
             draft = next
@@ -596,7 +587,8 @@ fun LayoutEditorScreen(
     val keyBeingEdited = editingKey?.let { grid[it] }
     val previewLayout by LayoutPreviewSession.layout.collectAsState()
     val useEditedLayout by LayoutPreviewSession.useEdited.collectAsState()
-    val isPreviewing = previewLayout?.id == layout.id && useEditedLayout
+    val sessionBoundHere = previewLayout?.id == layout.id
+    val isPreviewing = sessionBoundHere && useEditedLayout
 
     DisposableEffect(Unit) {
         onDispose { LayoutPreviewSession.stop() }
@@ -777,37 +769,56 @@ fun LayoutEditorScreen(
                             }
                         },
                         onLayerHeightRowsChange = { layer, totalRows ->
-                            val gridRows = layout.gridRowCount(layer)
+                            val def = layout.layer(layer) ?: return@LayerSwitchAssigner
+                            val gridRows = def.gridRowCount()
+                            val contentRows = (totalRows - gridRows).coerceAtLeast(0)
+                            if (contentRows > 0 && def.content == LayerContent.None) {
+                                return@LayerSwitchAssigner
+                            }
                             commitDraft(
-                                layout.copy(
-                                    layerHeights =
-                                        if (totalRows <= gridRows) {
-                                            layout.layerHeights - layer
-                                        } else {
-                                            layout.layerHeights + (layer to totalRows)
-                                        },
-                                ),
+                                layout.withLayer(def.copy(contentRows = contentRows)),
                             )
                         },
+                        onLayerContentChange = { layer, content ->
+                            val def = layout.layer(layer) ?: return@LayerSwitchAssigner
+                            val gridRows = def.gridRowCount()
+                            val next =
+                                when (content) {
+                                    LayerContent.None ->
+                                        def.copy(content = LayerContent.None, contentRows = 0)
+                                    LayerContent.EmojiPicker,
+                                    LayerContent.ClipboardHistory,
+                                    -> {
+                                        val rows =
+                                            if (def.content == content && def.contentRows > 0) {
+                                                def.contentRows
+                                            } else {
+                                                defaultContentRows(layer.id, gridRows)
+                                            }
+                                        def.copy(content = content, contentRows = rows)
+                                    }
+                                }
+                            commitDraft(layout.withLayer(next))
+                        },
                         onAddCustomLayer = {
-                            if (layout.customLayers.size < MAX_CUSTOM_LAYERS) {
+                            if (layout.layers.size < MAX_LAYERS) {
                                 customLayerDialog = CustomLayerDialogMode.Add
                             }
                         },
                         onEditCustomLayer = { id ->
-                            layout.customLayer(id)?.let {
+                            layout.layer(id)?.let {
                                 customLayerDialog = CustomLayerDialogMode.Edit(it)
                             }
                         },
                         onSeedLayer =
-                            if (selectedLayer != ActiveLayer.Main && grid.isEmpty()) {
+                            if (selectedLayer != layout.homeActive() && grid.isEmpty()) {
                                 {
                                     val seed =
-                                        when (selectedLayer) {
-                                            ActiveLayer.Numeric,
-                                            is ActiveLayer.Custom,
-                                            -> listOf(5, 5, 5, 4)
-                                            else -> listOf(4)
+                                        when (selectedLayer.id) {
+                                            ActiveLayer.EMOJI,
+                                            ActiveLayer.CLIPBOARD,
+                                            -> listOf(4)
+                                            else -> listOf(5, 5, 5, 4)
                                         }
                                     val cur = draft
                                     if (cur != null) {
@@ -820,13 +831,16 @@ fun LayoutEditorScreen(
                                 null
                             },
                         onClearLayer =
-                            if (selectedLayer is ActiveLayer.Custom && grid.isNotEmpty()) {
+                            if (
+                                isUserLayerId(selectedLayer.id) &&
+                                    selectedLayer.id != layout.homeLayerId &&
+                                    layout.layer(selectedLayer) != null
+                            ) {
                                 {
                                     val cur = draft
-                                    val layer = selectedLayer as? ActiveLayer.Custom
-                                    if (cur != null && layer != null) {
-                                        commitDraft(cur.withoutCustomLayer(layer.id))
-                                        selectedLayer = ActiveLayer.Main
+                                    if (cur != null) {
+                                        commitDraft(cur.withoutLayer(selectedLayer.id))
+                                        selectedLayer = cur.homeActive()
                                     }
                                 }
                             } else {
@@ -841,25 +855,26 @@ fun LayoutEditorScreen(
                                 val cur = draft ?: return@CustomLayerConfigDialog
                                 when (mode) {
                                     CustomLayerDialogMode.Add -> {
-                                        if (cur.customLayers.size >= MAX_CUSTOM_LAYERS) {
+                                        if (cur.layers.size >= MAX_LAYERS) {
                                             customLayerDialog = null
                                             return@CustomLayerConfigDialog
                                         }
-                                        val id = newCustomLayerId()
+                                        val id = newLayerId()
                                         val layer =
-                                            CustomLayer(
+                                            LayerDefinition(
                                                 id = id,
                                                 title = title,
                                                 icon = icon,
-                                                layout = blankLayout(listOf(5, 5, 5, 4)),
+                                                overlay = false,
+                                                keyGrid = blankLayout(listOf(5, 5, 5, 4)),
                                             )
-                                        commitDraft(cur.withCustomLayer(layer))
-                                        selectedLayer = ActiveLayer.Custom(id)
+                                        commitDraft(cur.withLayer(layer))
+                                        selectedLayer = ActiveLayer(id)
                                     }
                                     is CustomLayerDialogMode.Edit -> {
                                         val updated =
                                             mode.layer.copy(title = title, icon = icon)
-                                        commitDraft(cur.withCustomLayer(updated))
+                                        commitDraft(cur.withLayer(updated))
                                     }
                                 }
                                 customLayerDialog = null
@@ -1022,6 +1037,12 @@ fun LayoutEditorScreen(
                             color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.bodySmall,
                         )
+                    } else if (sessionBoundHere) {
+                        Text(
+                            text = stringResource(R.string.layout_stable_preview_hint),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
                     }
                     Text(
                         text = stringResource(R.string.layout_unsaved_changes),
@@ -1050,8 +1071,10 @@ fun LayoutEditorScreen(
                     }
                 }
                 }
-                if (isPreviewing) {
-                    LayoutPreviewTestField()
+                // Keep the test field mounted for the whole editor session so toggling
+                // Edited/Active only swaps the IME layout and does not hide the keyboard.
+                if (sessionBoundHere) {
+                    LayoutPreviewTestField(requestShow = isPreviewing)
                 }
             }
         }
@@ -1100,27 +1123,24 @@ private sealed class PreviewDrag {
     data class Row(val from: Int) : PreviewDrag()
 }
 
-/** Pinned under the editor while Try on keyboard is active; focuses so the IME opens. */
+/**
+ * Pinned under the editor while a preview session is bound. Stays composed across Edited
+ * toggles so the IME is not torn down. [requestShow] focuses and opens the keyboard when
+ * Edited/Try-on turns on; turning Edited off leaves focus alone.
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun LayoutPreviewTestField() {
+private fun LayoutPreviewTestField(requestShow: Boolean) {
     var text by remember { mutableStateOf("") }
     val focusRequester = remember { FocusRequester() }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
-    val focusManager = LocalFocusManager.current
     val density = LocalDensity.current
     val ime = WindowInsets.ime
     val imeTarget = WindowInsets.imeAnimationTarget
 
-    DisposableEffect(Unit) {
-        onDispose {
-            keyboardController?.hide()
-            focusManager.clearFocus()
-        }
-    }
-
-    LaunchedEffect(Unit) {
+    LaunchedEffect(requestShow) {
+        if (!requestShow) return@LaunchedEffect
         withFrameNanos { }
         focusRequester.requestFocus()
         keyboardController?.show()
@@ -1161,7 +1181,8 @@ private fun LayerSwitchAssigner(
     onMoveRow: (Int, Int) -> Unit,
     onRemoveRow: (Int) -> Unit,
     onResizeRows: (List<Int>) -> Unit,
-    onLayerHeightRowsChange: (LayoutLayer, Int) -> Unit,
+    onLayerHeightRowsChange: (ActiveLayer, Int) -> Unit,
+    onLayerContentChange: (ActiveLayer, LayerContent) -> Unit,
     onAddCustomLayer: () -> Unit,
     onEditCustomLayer: (String) -> Unit,
     onSeedLayer: (() -> Unit)? = null,
@@ -1368,38 +1389,30 @@ private fun LayerSwitchAssigner(
                     clearHover()
                 },
             )
-            val contentRows = namedLayout.contentRows(selected)
-            val heightLayer =
-                (selected as? ActiveLayer.Builtin)?.layer?.takeIf {
-                    it == LayoutLayer.EMOJI || it == LayoutLayer.CLIPBOARD
-                }
-            if (heightLayer != null || contentRows > 0) {
-                val panelRows = contentRows.coerceAtLeast(if (heightLayer != null) 1 else 0)
-                if (panelRows > 0) {
-                    LayoutPreviewLayerPanel(
-                        content =
-                            if (contentRows > 0) {
-                                namedLayout.contentFor(selected)
-                            } else {
-                                LayerContent.None
-                            },
-                        height = PREVIEW_KEY_HEIGHT * panelRows,
-                        keyHeight = PREVIEW_KEY_HEIGHT,
-                        heightControls =
-                            heightLayer?.let { layer ->
-                                val totalRows = namedLayout.heightRows(selected)
-                                val minRows = namedLayout.gridRowCount(selected)
-                                val defaultRows = defaultPanelHeightRows(layer)
-                                PanelHeightControls(
-                                    totalRows = totalRows,
-                                    minRows = minRows,
-                                    maxRows = MAX_LAYER_HEIGHT_ROWS,
-                                    defaultRows = defaultRows,
-                                    onChange = { onLayerHeightRowsChange(layer, it) },
-                                )
-                            },
-                    )
-                }
+            val selectedDef = namedLayout.layer(selected)
+            val layerContent = selectedDef?.content ?: LayerContent.None
+            LayerWidgetPicker(
+                content = layerContent,
+                onContentChange = { onLayerContentChange(selected, it) },
+            )
+            if (layerContent != LayerContent.None) {
+                val contentRows = namedLayout.contentRows(selected)
+                val panelRows = contentRows.coerceAtLeast(1)
+                LayoutPreviewLayerPanel(
+                    content = if (contentRows > 0) layerContent else LayerContent.None,
+                    height = PREVIEW_KEY_HEIGHT * panelRows,
+                    keyHeight = PREVIEW_KEY_HEIGHT,
+                    heightControls =
+                        PanelHeightControls(
+                            totalRows = namedLayout.heightRows(selected),
+                            minRows = namedLayout.gridRowCount(selected),
+                            maxRows = MAX_LAYER_HEIGHT_ROWS,
+                            defaultRows =
+                                defaultPanelHeightTotal(selected.id)
+                                    .coerceAtLeast(namedLayout.gridRowCount(selected)),
+                            onChange = { onLayerHeightRowsChange(selected, it) },
+                        ),
+                )
             }
             LayoutPreviewGrid(
                 layout = grid,
@@ -1460,10 +1473,13 @@ private fun LayerSwitchAssigner(
                     clearHover()
                 },
             )
-            val selectedCustom = (selected as? ActiveLayer.Custom)?.id
-            if (selectedCustom != null) {
+            val selectedUserLayer =
+                selected.takeIf {
+                    isUserLayerId(it.id) && it.id != namedLayout.homeLayerId
+                }
+            if (selectedUserLayer != null) {
                 TextButton(
-                    onClick = { onEditCustomLayer(selectedCustom) },
+                    onClick = { onEditCustomLayer(selectedUserLayer.id) },
                     modifier = Modifier.padding(horizontal = 8.dp),
                 ) {
                     Text(stringResource(R.string.layout_edit_custom_layer))
@@ -1787,54 +1803,147 @@ private val LAYER_ZONE_DROP_GRID: List<List<Zone>> =
 
 private val LAYER_ZONE_DROP_MIN_SIZE = 108.dp
 
-@Composable
-private fun layerChipLabel(layer: LayoutLayer): String =
-    when (layer) {
-        LayoutLayer.MAIN -> stringResource(R.string.layout_layer_main)
-        LayoutLayer.NUMERIC -> stringResource(R.string.layout_layer_numeric)
-        LayoutLayer.EMOJI -> stringResource(R.string.layout_layer_emoji)
-        LayoutLayer.CLIPBOARD -> stringResource(R.string.layout_layer_clipboard)
-    }
+private val WELL_KNOWN_LAYER_IDS =
+    setOf(
+        ActiveLayer.MAIN,
+        ActiveLayer.NUMERIC,
+        ActiveLayer.EMOJI,
+        ActiveLayer.CLIPBOARD,
+    )
+
+private fun isUserLayerId(id: String): Boolean = id !in WELL_KNOWN_LAYER_IDS
 
 @Composable
 private fun activeLayerChipLabel(
     layer: ActiveLayer,
     namedLayout: NamedLayout,
-): String =
-    when (layer) {
-        is ActiveLayer.Builtin -> layerChipLabel(layer.layer)
-        is ActiveLayer.Custom ->
-            namedLayout.customLayer(layer.id)?.title
-                ?: stringResource(R.string.layout_custom_layer_fallback)
+): String {
+    namedLayout.layer(layer)?.title?.takeIf { it.isNotBlank() }?.let { return it }
+    return when (layer.id) {
+        ActiveLayer.MAIN -> stringResource(R.string.layout_layer_main)
+        ActiveLayer.NUMERIC -> stringResource(R.string.layout_layer_numeric)
+        ActiveLayer.EMOJI -> stringResource(R.string.layout_layer_emoji)
+        ActiveLayer.CLIPBOARD -> stringResource(R.string.layout_layer_clipboard)
+        else -> stringResource(R.string.layout_custom_layer_fallback)
+    }
+}
+
+/** S12-style panel defaults: total rows including the key grid. */
+private fun defaultPanelHeightTotal(layerId: String): Int =
+    when (layerId) {
+        ActiveLayer.EMOJI -> S12_EMOJI_LAYER_HEIGHT_ROWS
+        ActiveLayer.CLIPBOARD -> S12_CLIPBOARD_LAYER_HEIGHT_ROWS
+        else -> 0
     }
 
-/** S12-style panel defaults: room above the key row for emoji picker / clipboard list. */
-private fun defaultPanelHeightRows(layer: LayoutLayer): Int =
-    when (layer) {
-        LayoutLayer.EMOJI -> S12_EMOJI_LAYER_HEIGHT_ROWS
-        LayoutLayer.CLIPBOARD -> S12_CLIPBOARD_LAYER_HEIGHT_ROWS
-        LayoutLayer.MAIN, LayoutLayer.NUMERIC -> 0
-    }
+/** Default content strip height when enabling a panel on this layer. */
+private fun defaultContentRows(
+    layerId: String,
+    gridRows: Int,
+): Int {
+    val fromBuiltin = defaultPanelHeightTotal(layerId) - gridRows
+    return if (fromBuiltin > 0) fromBuiltin else 5
+}
 
-/** Same icons the live keyboard uses for ABC / Numbers / Emoji / Clipboard toggles. */
-private fun layerChipIcon(layer: LayoutLayer): ImageVector =
-    when (layer) {
-        LayoutLayer.MAIN -> Icons.Outlined.Abc
-        LayoutLayer.NUMERIC -> Icons.Outlined.Numbers
-        LayoutLayer.EMOJI -> Icons.Outlined.EmojiEmotions
-        LayoutLayer.CLIPBOARD -> Icons.Outlined.History
+private enum class LayerPanelChoice {
+    NONE,
+    EMOJI,
+    CLIPBOARD,
+}
+
+/**
+ * Layer widgets (emoji picker / clipboard history) live above the key grid - they are not
+ * key-zone actions. Chips make that obvious next to the preview.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LayerWidgetPicker(
+    content: LayerContent,
+    onContentChange: (LayerContent) -> Unit,
+) {
+    val choice =
+        when (content) {
+            LayerContent.None -> LayerPanelChoice.NONE
+            LayerContent.EmojiPicker -> LayerPanelChoice.EMOJI
+            LayerContent.ClipboardHistory -> LayerPanelChoice.CLIPBOARD
+        }
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp)
+                .padding(bottom = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.Widgets,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            SettingTitle(
+                text = stringResource(R.string.layout_layer_widget),
+                infoText = stringResource(R.string.layout_layer_widget_info),
+            )
+        }
+        Text(
+            text =
+                stringResource(
+                    when (choice) {
+                        LayerPanelChoice.NONE -> R.string.layout_layer_widget_summary_none
+                        LayerPanelChoice.EMOJI -> R.string.layout_layer_widget_summary_emoji
+                        LayerPanelChoice.CLIPBOARD -> R.string.layout_layer_widget_summary_clipboard
+                    },
+                ),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            FilterChip(
+                selected = choice == LayerPanelChoice.NONE,
+                onClick = { onContentChange(LayerContent.None) },
+                label = { Text(stringResource(R.string.layout_layer_widget_none)) },
+            )
+            FilterChip(
+                selected = choice == LayerPanelChoice.EMOJI,
+                onClick = { onContentChange(LayerContent.EmojiPicker) },
+                label = { Text(stringResource(R.string.layout_layer_widget_emoji)) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.EmojiEmotions,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                },
+            )
+            FilterChip(
+                selected = choice == LayerPanelChoice.CLIPBOARD,
+                onClick = { onContentChange(LayerContent.ClipboardHistory) },
+                label = { Text(stringResource(R.string.layout_layer_widget_clipboard)) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.History,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                    )
+                },
+            )
+        }
     }
+}
 
 private fun activeLayerChipIcon(
     layer: ActiveLayer,
     namedLayout: NamedLayout,
 ): ImageVector =
-    when (layer) {
-        is ActiveLayer.Builtin -> layerChipIcon(layer.layer)
-        is ActiveLayer.Custom ->
-            namedLayout.customLayer(layer.id)?.icon?.asImageVector()
-                ?: Icons.Outlined.Functions
-    }
+    namedLayout.layer(layer)?.icon?.asImageVector() ?: Icons.Outlined.Functions
 
 private fun ActiveLayer.toSwitchIntent(): KeyIntent = KeyIntent.SwitchLayer(idString())
 
@@ -1842,7 +1951,7 @@ private sealed class CustomLayerDialogMode {
     data object Add : CustomLayerDialogMode()
 
     data class Edit(
-        val layer: CustomLayer,
+        val layer: LayerDefinition,
     ) : CustomLayerDialogMode()
 }
 
@@ -1858,17 +1967,7 @@ private fun LayerChips(
     onDragEnd: () -> Unit,
     onDragCancel: () -> Unit,
 ) {
-    val layers =
-        remember(namedLayout.customLayers) {
-            buildList {
-                for (layer in LayoutLayer.entries) {
-                    add(ActiveLayer.Builtin(layer))
-                }
-                for (custom in namedLayout.customLayers) {
-                    add(ActiveLayer.Custom(custom.id))
-                }
-            }
-        }
+    val layers = remember(namedLayout.layers) { namedLayout.availableLayers() }
     // Wrap instead of squeezing the last chip into a tall sliver on narrow screens.
     FlowRow(
         modifier =
@@ -1932,7 +2031,7 @@ private fun LayerChips(
                 )
             }
         }
-        if (namedLayout.customLayers.size < MAX_CUSTOM_LAYERS) {
+        if (namedLayout.layers.size < MAX_LAYERS) {
             FilterChip(
                 selected = false,
                 onClick = onAddCustomLayer,
@@ -1954,7 +2053,7 @@ private fun LayerChips(
 private fun CustomLayerConfigDialog(
     mode: CustomLayerDialogMode,
     onDismiss: () -> Unit,
-    onSave: (title: String, icon: CustomLayerIcon) -> Unit,
+    onSave: (title: String, icon: LayerIcon) -> Unit,
 ) {
     val initial =
         when (mode) {
@@ -1965,7 +2064,7 @@ private fun CustomLayerConfigDialog(
         mutableStateOf(initial?.title ?: "")
     }
     var icon by remember(mode) {
-        mutableStateOf(initial?.icon ?: CustomLayerIcon.Functions)
+        mutableStateOf(initial?.icon ?: LayerIcon.Functions)
     }
     val canSave = title.isNotBlank()
     AlertDialog(
@@ -1999,7 +2098,7 @@ private fun CustomLayerConfigDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    CustomLayerIcon.entries.forEach { option ->
+                    LayerIcon.entries.forEach { option ->
                         FilterChip(
                             selected = icon == option,
                             onClick = { icon = option },
@@ -2386,26 +2485,35 @@ private fun LayoutPreviewGrid(
                 row.forEach { pos ->
                     key(pos) {
                         val mapping = layout.getValue(pos)
-                        LayoutPreviewKey(
-                            mapping = mapping,
-                            legendVisibility = legendVisibility,
-                            legendModifierState = legendModifierState,
-                            switchLayerIcons = switchLayerIcons,
-                            highlighted = highlightedKey == pos,
-                            dragging = draggingKey == pos || rowDragging,
-                            flashGeneration =
-                                if (pos in keyFlashPositions) keyFlashGeneration else 0,
-                            onClick = { onKeyClick(pos) },
-                            onBoundsInRoot = { rect -> onKeyBoundsInRoot(pos, rect) },
-                            onDragStart = { root -> onKeyDragStart(pos, root) },
-                            onDrag = onKeyDrag,
-                            onDragEnd = onKeyDragEnd,
-                            onDragCancel = onKeyDragCancel,
-                            modifier =
-                                Modifier
-                                    .weight(mapping.columnSpan.toFloat())
-                                    .fillMaxHeight(),
-                        )
+                        if (mapping.fillRole == KeyFillRole.SPACER) {
+                            Spacer(
+                                modifier =
+                                    Modifier
+                                        .weight(mapping.columnSpan)
+                                        .fillMaxHeight(),
+                            )
+                        } else {
+                            LayoutPreviewKey(
+                                mapping = mapping,
+                                legendVisibility = legendVisibility,
+                                legendModifierState = legendModifierState,
+                                switchLayerIcons = switchLayerIcons,
+                                highlighted = highlightedKey == pos,
+                                dragging = draggingKey == pos || rowDragging,
+                                flashGeneration =
+                                    if (pos in keyFlashPositions) keyFlashGeneration else 0,
+                                onClick = { onKeyClick(pos) },
+                                onBoundsInRoot = { rect -> onKeyBoundsInRoot(pos, rect) },
+                                onDragStart = { root -> onKeyDragStart(pos, root) },
+                                onDrag = onKeyDrag,
+                                onDragEnd = onKeyDragEnd,
+                                onDragCancel = onKeyDragCancel,
+                                modifier =
+                                    Modifier
+                                        .weight(mapping.columnSpan)
+                                        .fillMaxHeight(),
+                            )
+                        }
                     }
                 }
                 PreviewAddKeyButton(
@@ -2778,7 +2886,7 @@ private fun KeyEditorZonePad(
     mapping: KeyMapping,
     onZoneClick: (Zone) -> Unit,
 ) {
-    val span = mapping.columnSpan.coerceIn(1, 5)
+    val span = mapping.columnSpan.coerceIn(1f, 5f)
     val shape = RoundedCornerShape(16.dp)
     val fill = colorVariantToColor(mapping.restingFillVariant(distinctLetterControlColors = true))
     val swipeColor = colorVariantToColor(legendColorVariant(isCenter = false))
@@ -2880,15 +2988,14 @@ private fun ZonePadLegend(
     val iconSize = if (large) 40.dp else 22.dp
     when (intent) {
         null, is KeyIntent.Noop -> {
-            if (large) {
-                Text(
-                    text = "·",
-                    modifier = modifier,
-                    fontSize = 28.sp,
-                    color = color.copy(alpha = 0.45f),
-                    textAlign = TextAlign.Center,
-                )
-            }
+            // Empty zones still show a soft dot so every swipe slot is an obvious tap target
+            // (same visual language as the center sensor and the app logo).
+            Box(
+                modifier =
+                    modifier
+                        .size(if (large) 10.dp else 7.dp)
+                        .background(color.copy(alpha = 0.45f), CircleShape),
+            )
         }
         is KeyIntent.Command -> {
             KeyLegendMark(
@@ -2915,6 +3022,13 @@ private fun ZonePadLegend(
                     iconSize = iconSize,
                     color = color,
                     modifier = modifier,
+                )
+            } else {
+                Box(
+                    modifier =
+                        modifier
+                            .size(if (large) 10.dp else 7.dp)
+                            .background(color.copy(alpha = 0.45f), CircleShape),
                 )
             }
         }
@@ -2963,8 +3077,8 @@ private fun KeyEditorDialog(
 
                 Box(modifier = Modifier.height(12.dp))
                 IntStepperPreference(
-                    value = draft.columnSpan,
-                    onValueChange = { draft = draft.copy(columnSpan = it) },
+                    value = draft.columnSpan.toInt().coerceIn(1, 5),
+                    onValueChange = { draft = draft.copy(columnSpan = it.toFloat()) },
                     valueRange = 1..5,
                     title = {
                         SettingTitle(
@@ -2973,9 +3087,14 @@ private fun KeyEditorDialog(
                         )
                     },
                     summary = {
-                        Text(stringResource(R.string.layout_column_span_summary, draft.columnSpan))
+                        Text(
+                            stringResource(
+                                R.string.layout_column_span_summary,
+                                draft.columnSpan.toInt().coerceIn(1, 5),
+                            ),
+                        )
                     },
-                    onReset = { draft = draft.copy(columnSpan = 1) },
+                    onReset = { draft = draft.copy(columnSpan = 1f) },
                     resetTo = 1,
                 )
 
@@ -2988,7 +3107,7 @@ private fun KeyEditorDialog(
                             type = ListPreferenceType.DROPDOWN_MENU,
                             value = fillValue,
                             onValueChange = { draft = draft.copy(fillRole = KeyFillRole.valueOf(it)) },
-                            values = KeyFillRole.entries.map { it.name },
+                            values = KeyFillRole.entries.filter { it != KeyFillRole.SPACER }.map { it.name },
                             title = {
                                 SettingTitle(
                                     text = stringResource(R.string.layout_fill_role),
@@ -3529,21 +3648,19 @@ private fun modifierDisplayTitle(id: ModifierId): String =
             ModifierId.ALT -> R.string.layout_zone_modifier_alt
             ModifierId.SHIFT -> R.string.layout_zone_modifier_shift
             ModifierId.ESC -> R.string.layout_zone_modifier_esc
+            ModifierId.META -> R.string.layout_zone_modifier_meta
         },
     )
 
 @Composable
 private fun switchLayerPressEffect(layer: ActiveLayer): String =
     stringResource(
-        when (layer) {
-            is ActiveLayer.Builtin ->
-                when (layer.layer) {
-                    LayoutLayer.MAIN -> R.string.layout_zone_switch_effect_main
-                    LayoutLayer.NUMERIC -> R.string.layout_zone_switch_effect_numeric
-                    LayoutLayer.EMOJI -> R.string.layout_zone_switch_effect_emoji
-                    LayoutLayer.CLIPBOARD -> R.string.layout_zone_switch_effect_clipboard
-                }
-            is ActiveLayer.Custom -> R.string.layout_zone_switch_effect_custom
+        when (layer.id) {
+            ActiveLayer.MAIN -> R.string.layout_zone_switch_effect_main
+            ActiveLayer.NUMERIC -> R.string.layout_zone_switch_effect_numeric
+            ActiveLayer.EMOJI -> R.string.layout_zone_switch_effect_emoji
+            ActiveLayer.CLIPBOARD -> R.string.layout_zone_switch_effect_clipboard
+            else -> R.string.layout_zone_switch_effect_custom
         },
     )
 
@@ -3592,6 +3709,7 @@ private fun ZoneModifierPicker(
                         ModifierId.CTRL -> KeyLegend.Icon(Icons.Outlined.KeyboardControlKey)
                         ModifierId.ALT -> KeyLegend.Icon(Icons.Outlined.KeyboardOptionKey)
                         ModifierId.ESC -> KeyLegend.Text("esc")
+                        ModifierId.META -> KeyLegend.Text("Meta")
                     },
                 title = modifierDisplayTitle(id),
             )

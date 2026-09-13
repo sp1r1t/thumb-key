@@ -140,6 +140,7 @@ object OutputExecutor {
             CommandId.CTRL -> KeyEvent.KEYCODE_CTRL_LEFT
             CommandId.ALT -> KeyEvent.KEYCODE_ALT_LEFT
             CommandId.SHIFT -> KeyEvent.KEYCODE_SHIFT_LEFT
+            CommandId.META -> KeyEvent.KEYCODE_META_LEFT
             else -> null
         }
 
@@ -286,6 +287,7 @@ object OutputExecutor {
         if (ModifierId.CTRL in modifiers) meta = meta or KeyEvent.META_CTRL_ON
         if (ModifierId.ALT in modifiers) meta = meta or KeyEvent.META_ALT_ON
         if (ModifierId.SHIFT in modifiers) meta = meta or KeyEvent.META_SHIFT_ON
+        if (ModifierId.META in modifiers) meta = meta or KeyEvent.META_META_ON
         return meta
     }
 

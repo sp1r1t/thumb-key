@@ -50,12 +50,14 @@ class KeyboardPlacementTest {
 
     @Test
     fun `suave split duplicates only the center column`() {
-        assertEquals(5, BuiltinLayouts.S12.layout.columnCount())
-        val (left, right) = splitColumnRanges(BuiltinLayouts.S12.layout.columnCount())
+        val s12 = com.suave.keyboard.layout.json.loadS12Asset()
+        val grid = s12.homeLayer().keyGrid
+        assertEquals(5, grid.columnCount())
+        val (left, right) = splitColumnRanges(grid.columnCount())
         assertEquals(0..2, left)
         assertEquals(2 until 5, right)
-        val leftKeys = BuiltinLayouts.S12.layout.filterColumns(left)
-        val rightKeys = BuiltinLayouts.S12.layout.filterColumns(right)
+        val leftKeys = grid.filterColumns(left)
+        val rightKeys = grid.filterColumns(right)
         assertTrue(leftKeys.keys.all { it.col in 0..2 })
         assertTrue(rightKeys.keys.all { it.col in 2..4 })
         assertEquals(
@@ -73,7 +75,7 @@ class KeyboardPlacementTest {
             mapOf(
                 KeyPosition(0, 0) to KeyMapping(config, mapOf(Zone.Center to KeyIntent.Text("a"))),
                 KeyPosition(0, 3) to
-                    KeyMapping(config, mapOf(Zone.Center to KeyIntent.Text("enter")), columnSpan = 2),
+                    KeyMapping(config, mapOf(Zone.Center to KeyIntent.Text("enter")), columnSpan = 2f),
             )
         assertEquals(5, layout.columnCount())
     }

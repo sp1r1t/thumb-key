@@ -1,8 +1,10 @@
 package com.suave.keyboard.engine.modifier
 
 import com.suave.keyboard.engine.gesture.Gesture
+import com.suave.keyboard.engine.intent.CaseOverride
 import com.suave.keyboard.engine.intent.KeyIntent
 import com.suave.keyboard.engine.intent.ModifierId
+import com.suave.keyboard.engine.intent.TextCaseOverrides
 
 /**
  * Pure `(ModifierState, input) -> ModifierState'` / `-> ResolvedIntent` transforms. No touch
@@ -22,40 +24,62 @@ import com.suave.keyboard.engine.intent.ModifierId
  */
 object ModifierEngine {
     /**
-     * What [KeyIntent.Text] becomes while one-shot/held Shift is active: the layout's shift
-     * table first, then single-character uppercase. The keyboard preview uses this same
-     * function so the label matches what will actually be committed.
+     * What [KeyIntent.Text] becomes while one-shot/held Shift is active: per-text override,
+     * then the layout's shift table, then single-character uppercase.
+     * [CaseOverride.Disable] commits the raw value (no map, no uppercase).
      */
     fun applyShift(
         text: String,
         shiftMappings: Map<String, String> = emptyMap(),
-    ): String = shiftMappings[text] ?: if (text.length == 1) text.uppercase() else text
+        override: CaseOverride = CaseOverride.Inherit,
+    ): String =
+        when (override) {
+            is CaseOverride.Fixed -> override.value
+            CaseOverride.Disable -> text
+            CaseOverride.Inherit ->
+                shiftMappings[text] ?: if (text.length == 1) text.uppercase() else text
+        }
 
     /**
-     * What [KeyIntent.Text] becomes while Shift is LOCKED (caps lock): the layout's caps-lock
-     * overrides first, then the same fallback as [applyShift]. Digraphs that title-case under
-     * Shift (e.g. "sch" -> "Sch") only need a caps entry when they should fully uppercase.
+     * What [KeyIntent.Text] becomes while Shift is LOCKED (caps lock): per-text override,
+     * then caps-lock table, then the same fallback as [applyShift].
      */
     fun applyCapsLock(
         text: String,
         capsLockMappings: Map<String, String> = emptyMap(),
         shiftMappings: Map<String, String> = emptyMap(),
-    ): String = capsLockMappings[text] ?: applyShift(text, shiftMappings)
+        override: CaseOverride = CaseOverride.Inherit,
+        shiftOverride: CaseOverride = CaseOverride.Inherit,
+    ): String =
+        when (override) {
+            is CaseOverride.Fixed -> override.value
+            CaseOverride.Disable -> text
+            CaseOverride.Inherit ->
+                capsLockMappings[text]
+                    ?: applyShift(text, shiftMappings, shiftOverride)
+        }
 
     /**
-     * Applies the case transform that matches how Shift is currently active: caps-lock table
-     * (falling back to shift) when LOCKED, shift table for ONE_SHOT/HELD, unchanged when Shift
-     * is off.
+     * Applies the case transform that matches how Shift is currently active.
      */
     fun applyCase(
         text: String,
         state: ModifierState,
         shiftMappings: Map<String, String> = emptyMap(),
         capsLockMappings: Map<String, String> = emptyMap(),
+        case: TextCaseOverrides = TextCaseOverrides.DEFAULT,
     ): String =
         when (state.active[ModifierId.SHIFT]?.mode) {
-            ActivationMode.LOCKED -> applyCapsLock(text, capsLockMappings, shiftMappings)
-            ActivationMode.HELD, ActivationMode.ONE_SHOT -> applyShift(text, shiftMappings)
+            ActivationMode.LOCKED ->
+                applyCapsLock(
+                    text,
+                    capsLockMappings,
+                    shiftMappings,
+                    override = case.capsLock,
+                    shiftOverride = case.shift,
+                )
+            ActivationMode.HELD, ActivationMode.ONE_SHOT ->
+                applyShift(text, shiftMappings, case.shift)
             null -> text
         }
 
@@ -67,22 +91,15 @@ object ModifierEngine {
     ): ResolvedIntent =
         when (intent) {
             is KeyIntent.Text -> {
-                // Ctrl/Alt/Esc-combo and raw-editor KeyEvent treatment only make sense for a
-                // single character - there's no KeyEvent for "Ctrl+sch". Multi-character text
-                // (Suave's "sch"/"ch" keys) always ignores those modifiers and just commits as
-                // text, matching the layout's own pre-rewrite behavior. The check uses the
-                // *original* text, before Shift's transform below - Shift can itself change
-                // length (e.g. German "ß" -> "SS").
                 val modifiersApply = intent.text.length == 1
-                val text = applyCase(intent.text, state, shiftMappings, capsLockMappings)
-                // Shift alone is already fully expressed above as a text-case transform, so it's
-                // dropped from the modifier set here - that keeps a plain capital letter on the
-                // commitText fast path (OutputExecutor.typeText) instead of forcing every shifted
-                // character through a raw KeyEvent. But once a *real* modifier (Ctrl/Alt/Esc) is
-                // also active, a raw KeyEvent is already unavoidable, and Shift needs to ride
-                // along as a genuine meta flag too - e.g. Termux's paste binding is Ctrl+Shift+V,
-                // not Ctrl+V (which is the terminal's own "quoted insert"), so dropping Shift here
-                // silently downgraded every Ctrl+Shift+<key> combo into a plain Ctrl+<key> one.
+                val text =
+                    applyCase(
+                        intent.text,
+                        state,
+                        shiftMappings,
+                        capsLockMappings,
+                        intent.case,
+                    )
                 val others = state.active.keys - ModifierId.SHIFT
                 val modifiers = if (modifiersApply && others.isNotEmpty()) state.active.keys else emptySet()
                 ResolvedIntent.TypedText(text, modifiers)
@@ -96,8 +113,6 @@ object ModifierEngine {
                 ResolvedIntent.SwitchLayer(intent.layerId)
             }
 
-            // ModifierPress routes through applyModifierGesture, not resolve(). Inert if
-            // resolve() is called anyway.
             is KeyIntent.ModifierPress -> {
                 ResolvedIntent.Noop
             }

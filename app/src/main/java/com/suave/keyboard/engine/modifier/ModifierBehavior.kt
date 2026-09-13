@@ -29,6 +29,7 @@ val DEFAULT_MODIFIER_BEHAVIORS: Map<ModifierId, ModifierBehavior> =
     mapOf(
         ModifierId.CTRL to ModifierBehavior(ActivationMode.HELD),
         ModifierId.ALT to ModifierBehavior(ActivationMode.HELD),
+        ModifierId.META to ModifierBehavior(ActivationMode.HELD),
         ModifierId.ESC to ModifierBehavior(ActivationMode.HELD, tapWhileQueuedSendsCommand = true),
         ModifierId.SHIFT to ModifierBehavior(ActivationMode.LOCKED),
     )

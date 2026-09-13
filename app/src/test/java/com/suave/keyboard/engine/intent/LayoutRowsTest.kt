@@ -34,7 +34,7 @@ class LayoutRowsTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun `columnSpan below 1 is rejected as layout data, not silently clamped`() {
-        KeyMapping(config, mapOf(Zone.Center to KeyIntent.Text("a")), columnSpan = 0)
+        KeyMapping(config, mapOf(Zone.Center to KeyIntent.Text("a")), columnSpan = 0f)
     }
 
     @Test
@@ -57,7 +57,7 @@ class LayoutRowsTest {
             mapOf(
                 KeyPosition(0, 0) to key("a"),
                 KeyPosition(0, 3) to
-                    KeyMapping(config, mapOf(Zone.Center to KeyIntent.Text("enter")), columnSpan = 2),
+                    KeyMapping(config, mapOf(Zone.Center to KeyIntent.Text("enter")), columnSpan = 2f),
             )
         assertEquals(5, layout.columnCount())
         assertEquals(setOf(KeyPosition(0, 0)), layout.filterColumns(0..2).keys)

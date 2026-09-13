@@ -15,24 +15,36 @@ const val S12_CLIPBOARD_LAYER_HEIGHT_ROWS = 6
 const val COMPACT_EMOJI_LAYER_HEIGHT_ROWS = 4
 
 /**
- * Parses the settings blob (`EMOJI=8,MAIN=5`) into per-layer overrides. Unknown names and
- * non-positive values are ignored so a future layer name does not break older clients.
+ * Parses the settings blob (`emoji=8,main=5`) into per-layer overrides.
+ * Also accepts legacy uppercase names (`EMOJI=8`) and maps them to lowercase ids.
+ * Unknown names and non-positive values are ignored.
  */
-fun parseLayerHeightOverrides(stored: String): Map<LayoutLayer, Int> {
+fun parseLayerHeightOverrides(stored: String): Map<String, Int> {
     if (stored.isBlank()) return emptyMap()
     return stored
         .split(",")
         .mapNotNull { part ->
             val pieces = part.split("=", limit = 2)
             if (pieces.size != 2) return@mapNotNull null
-            val layer = LayoutLayer.entries.find { it.name == pieces[0].trim() } ?: return@mapNotNull null
+            val raw = pieces[0].trim()
+            if (raw.isEmpty()) return@mapNotNull null
+            val layerId = normalizeLayerHeightKey(raw)
             val rows = pieces[1].trim().toIntOrNull()?.takeIf { it > 0 } ?: return@mapNotNull null
-            layer to rows
+            layerId to rows
         }.toMap()
 }
 
-fun formatLayerHeightOverrides(overrides: Map<LayoutLayer, Int>): String =
-    LayoutLayer.entries
-        .mapNotNull { layer ->
-            overrides[layer]?.takeIf { it > 0 }?.let { "${layer.name}=$it" }
-        }.joinToString(",")
+fun formatLayerHeightOverrides(overrides: Map<String, Int>): String =
+    overrides.entries
+        .sortedBy { it.key }
+        .mapNotNull { (id, rows) -> rows.takeIf { it > 0 }?.let { "$id=$it" } }
+        .joinToString(",")
+
+private fun normalizeLayerHeightKey(raw: String): String =
+    when (raw) {
+        "MAIN" -> ActiveLayer.MAIN
+        "NUMERIC" -> ActiveLayer.NUMERIC
+        "EMOJI" -> ActiveLayer.EMOJI
+        "CLIPBOARD" -> ActiveLayer.CLIPBOARD
+        else -> raw
+    }

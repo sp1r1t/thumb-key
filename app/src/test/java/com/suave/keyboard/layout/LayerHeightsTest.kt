@@ -1,5 +1,6 @@
 package com.suave.keyboard.layout
 
+import com.suave.keyboard.layout.json.loadS12Asset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -7,80 +8,80 @@ import org.junit.Test
 class LayerHeightsTest {
     @Test
     fun `empty blob means no overrides`() {
-        assertEquals(emptyMap<LayoutLayer, Int>(), parseLayerHeightOverrides(""))
-        assertEquals(emptyMap<LayoutLayer, Int>(), parseLayerHeightOverrides("   "))
+        assertEquals(emptyMap<String, Int>(), parseLayerHeightOverrides(""))
+        assertEquals(emptyMap<String, Int>(), parseLayerHeightOverrides("   "))
         assertEquals("", formatLayerHeightOverrides(emptyMap()))
     }
 
     @Test
-    fun `round trip keeps known layers in enum order`() {
-        val stored = formatLayerHeightOverrides(
-            mapOf(
-                LayoutLayer.EMOJI to 8,
-                LayoutLayer.CLIPBOARD to 6,
-                LayoutLayer.MAIN to 5,
-            ),
-        )
-        assertEquals("MAIN=5,EMOJI=8,CLIPBOARD=6", stored)
+    fun `round trip keeps known layers sorted by id`() {
+        val stored =
+            formatLayerHeightOverrides(
+                mapOf(
+                    ActiveLayer.EMOJI to 8,
+                    ActiveLayer.CLIPBOARD to 6,
+                    ActiveLayer.MAIN to 5,
+                ),
+            )
+        assertEquals("clipboard=6,emoji=8,main=5", stored)
         assertEquals(
-            mapOf(LayoutLayer.MAIN to 5, LayoutLayer.EMOJI to 8, LayoutLayer.CLIPBOARD to 6),
+            mapOf(
+                ActiveLayer.MAIN to 5,
+                ActiveLayer.EMOJI to 8,
+                ActiveLayer.CLIPBOARD to 6,
+            ),
             parseLayerHeightOverrides(stored),
         )
     }
 
     @Test
-    fun `unknown names and non-positive values are ignored`() {
+    fun `legacy uppercase names normalize and junk is ignored`() {
         val parsed = parseLayerHeightOverrides("EMOJI=6,CLIPBOARD=7,FUTURE=9,MAIN=0,NUMERIC=abc")
-        assertEquals(mapOf(LayoutLayer.EMOJI to 6, LayoutLayer.CLIPBOARD to 7), parsed)
+        assertEquals(
+            mapOf(ActiveLayer.EMOJI to 6, ActiveLayer.CLIPBOARD to 7, "FUTURE" to 9),
+            parsed,
+        )
     }
 
     @Test
     fun `S12 emoji default is taller than the bottom row, letters match the grid`() {
-        val s12 = BuiltinLayouts.S12
+        val s12 = loadS12Asset()
 
-        assertEquals(4, s12.gridRowCount(LayoutLayer.MAIN))
-        assertEquals(4, s12.heightRows(LayoutLayer.MAIN))
-        assertEquals(0, s12.contentRows(LayoutLayer.MAIN))
-        assertEquals(LayerContent.None, s12.contentFor(LayoutLayer.MAIN))
+        assertEquals(4, s12.gridRowCount(ActiveLayer.Main))
+        assertEquals(4, s12.heightRows(ActiveLayer.Main))
+        assertEquals(0, s12.contentRows(ActiveLayer.Main))
+        assertEquals(LayerContent.None, s12.contentFor(ActiveLayer.Main))
 
-        assertEquals(4, s12.heightRows(LayoutLayer.NUMERIC))
-        assertEquals(0, s12.contentRows(LayoutLayer.NUMERIC))
+        assertEquals(4, s12.heightRows(ActiveLayer.Numeric))
+        assertEquals(0, s12.contentRows(ActiveLayer.Numeric))
 
-        assertEquals(1, s12.gridRowCount(LayoutLayer.EMOJI))
-        assertEquals(S12_EMOJI_LAYER_HEIGHT_ROWS, s12.heightRows(LayoutLayer.EMOJI))
-        assertEquals(5, s12.contentRows(LayoutLayer.EMOJI))
-        assertEquals(LayerContent.EmojiPicker, s12.contentFor(LayoutLayer.EMOJI))
+        assertEquals(1, s12.gridRowCount(ActiveLayer.Emoji))
+        assertEquals(S12_EMOJI_LAYER_HEIGHT_ROWS, s12.heightRows(ActiveLayer.Emoji))
+        assertEquals(5, s12.contentRows(ActiveLayer.Emoji))
+        assertEquals(LayerContent.EmojiPicker, s12.contentFor(ActiveLayer.Emoji))
 
-        assertEquals(1, s12.gridRowCount(LayoutLayer.CLIPBOARD))
-        assertEquals(S12_CLIPBOARD_LAYER_HEIGHT_ROWS, s12.heightRows(LayoutLayer.CLIPBOARD))
-        assertEquals(5, s12.contentRows(LayoutLayer.CLIPBOARD))
-        assertEquals(LayerContent.ClipboardHistory, s12.contentFor(LayoutLayer.CLIPBOARD))
+        assertEquals(1, s12.gridRowCount(ActiveLayer.Clipboard))
+        assertEquals(S12_CLIPBOARD_LAYER_HEIGHT_ROWS, s12.heightRows(ActiveLayer.Clipboard))
+        assertEquals(5, s12.contentRows(ActiveLayer.Clipboard))
+        assertEquals(LayerContent.ClipboardHistory, s12.contentFor(ActiveLayer.Clipboard))
     }
 
     @Test
     fun `settings override cannot shrink a layer below its key grid`() {
-        val s12 = BuiltinLayouts.S12
+        val s12 = loadS12Asset()
 
-        assertEquals(4, s12.heightRows(LayoutLayer.MAIN, overrideRows = 2))
-        assertEquals(8, s12.heightRows(LayoutLayer.EMOJI, overrideRows = 8))
-        assertEquals(4, s12.heightRows(LayoutLayer.EMOJI, overrideRows = 4))
-        assertEquals(3, s12.contentRows(LayoutLayer.EMOJI, overrideRows = 4))
-        assertEquals(1, s12.heightRows(LayoutLayer.CLIPBOARD, overrideRows = 1))
-        assertEquals(6, s12.heightRows(LayoutLayer.CLIPBOARD, overrideRows = 6))
-        assertEquals(5, s12.contentRows(LayoutLayer.CLIPBOARD, overrideRows = 6))
-        // Numbers has no content panel; height always matches the key grid.
-        assertEquals(4, s12.heightRows(LayoutLayer.NUMERIC, overrideRows = 8))
-        assertEquals(0, s12.contentRows(LayoutLayer.NUMERIC, overrideRows = 8))
+        assertEquals(4, s12.heightRows(ActiveLayer.Main, overrideTotal = 2))
+        assertEquals(8, s12.heightRows(ActiveLayer.Emoji, overrideTotal = 8))
+        assertEquals(4, s12.heightRows(ActiveLayer.Emoji, overrideTotal = 4))
+        assertEquals(3, s12.contentRows(ActiveLayer.Emoji, overrideTotal = 4))
+        assertEquals(1, s12.heightRows(ActiveLayer.Clipboard, overrideTotal = 1))
+        assertEquals(6, s12.heightRows(ActiveLayer.Clipboard, overrideTotal = 6))
+        assertEquals(5, s12.contentRows(ActiveLayer.Clipboard, overrideTotal = 6))
     }
 
     @Test
-    fun `available layers follow which optional grids the layout actually has`() {
-        val s12 = BuiltinLayouts.S12
-        assertEquals(
-            listOf(LayoutLayer.MAIN, LayoutLayer.NUMERIC, LayoutLayer.EMOJI, LayoutLayer.CLIPBOARD),
-            s12.availableBuiltinLayers(),
-        )
-        assertTrue(LayoutLayer.MAIN in s12.availableBuiltinLayers())
+    fun `available layers follow the document`() {
+        val s12 = loadS12Asset()
         assertEquals(
             listOf(
                 ActiveLayer.Main,
@@ -90,5 +91,6 @@ class LayerHeightsTest {
             ),
             s12.availableLayers(),
         )
+        assertTrue(s12.layer(ActiveLayer.Main) != null)
     }
 }

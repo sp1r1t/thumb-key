@@ -36,6 +36,12 @@ enum class CommandId {
     TOGGLE_NUMERIC_MODE,
     TOGGLE_ABC_MODE,
     TOGGLE_CLIPBOARD_HISTORY,
+    /** Perform the editor's current IME action (Search / Done / Go / Send / ...). */
+    IME_ACTION,
+    /** Request the system hide this IME. */
+    HIDE_KEYBOARD,
+    /** Super/Meta/Win modifier (also sendable as a standalone key). */
+    META,
     ;
 
     /**
@@ -76,6 +82,9 @@ enum class CommandId {
             TOGGLE_NUMERIC_MODE,
             TOGGLE_ABC_MODE,
             TOGGLE_CLIPBOARD_HISTORY,
+            IME_ACTION,
+            HIDE_KEYBOARD,
+            META,
             -> false
         }
 
@@ -95,6 +104,7 @@ enum class CommandId {
             CTRL,
             ALT,
             SHIFT,
+            META,
             -> true
 
             else -> false
@@ -106,13 +116,13 @@ enum class CommandId {
      */
     fun isLayerSwitchCommand(): Boolean = switchLayerIdOrNull() != null
 
-    /** [LayoutLayer.name] when this command is a builtin layer switch; otherwise null. */
+    /** Layer id when this command is a builtin layer switch; otherwise null. */
     fun switchLayerIdOrNull(): String? =
         when (this) {
-            TOGGLE_ABC_MODE -> "MAIN"
-            TOGGLE_NUMERIC_MODE -> "NUMERIC"
-            TOGGLE_EMOJI_MODE -> "EMOJI"
-            TOGGLE_CLIPBOARD_HISTORY -> "CLIPBOARD"
+            TOGGLE_ABC_MODE -> "main"
+            TOGGLE_NUMERIC_MODE -> "numeric"
+            TOGGLE_EMOJI_MODE -> "emoji"
+            TOGGLE_CLIPBOARD_HISTORY -> "clipboard"
             else -> null
         }
 
@@ -128,6 +138,7 @@ enum class CommandId {
             ALT -> ModifierId.ALT
             SHIFT -> ModifierId.SHIFT
             ESCAPE -> ModifierId.ESC
+            META -> ModifierId.META
             else -> null
         }
 }

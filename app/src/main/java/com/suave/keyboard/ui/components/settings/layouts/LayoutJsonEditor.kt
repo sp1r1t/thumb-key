@@ -1,8 +1,14 @@
 package com.suave.keyboard.ui.components.settings.layouts
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,6 +26,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -64,7 +72,7 @@ import kotlinx.serialization.json.longOrNull
 
 /**
  * Editable layout JSON with 2-space pretty print, syntax colors, and collapsible
- * object/array nodes when the text parses as JSON.
+ * object/array nodes when the text parses as JSON. Long-press a node to copy or paste.
  */
 @Composable
 fun LayoutJsonEditor(
@@ -75,6 +83,8 @@ fun LayoutJsonEditor(
 ) {
     val parsed = remember(text) { runCatching { LayoutJsonFormat.parseToJsonElement(text) }.getOrNull() }
     val colors = jsonSyntaxColors()
+    val context = LocalContext.current
+    var nodeMenu by remember { mutableStateOf<JsonNodeMenu?>(null) }
     Column(
         modifier =
             modifier
@@ -141,7 +151,58 @@ fun LayoutJsonEditor(
                         val next = parsed.setAt(pathSegments, value)
                         onTextChange(LayoutJsonFormat.encodeToString(next))
                     },
+                    onNodeLongPress = { element, pathSegments ->
+                        nodeMenu = JsonNodeMenu(element = element, pathSegments = pathSegments)
+                    },
                     pathSegments = emptyList(),
+                )
+            }
+            nodeMenu?.let { menu ->
+                JsonNodeActionsDialog(
+                    isArray = menu.element is JsonArray,
+                    onDismiss = { nodeMenu = null },
+                    onCopy = {
+                        copyJsonNode(context, menu.element)
+                        nodeMenu = null
+                    },
+                    onPasteReplace = {
+                        val clip = readClipboardJson(context)
+                        if (clip == null) {
+                            Toast
+                                .makeText(
+                                    context,
+                                    context.getString(R.string.layout_json_node_paste_invalid),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                        } else if (menu.pathSegments.isEmpty()) {
+                            onTextChange(LayoutJsonFormat.encodeToString(clip))
+                            nodeMenu = null
+                        } else {
+                            val next = parsed.setAt(menu.pathSegments, clip)
+                            onTextChange(LayoutJsonFormat.encodeToString(next))
+                            nodeMenu = null
+                        }
+                    },
+                    onPasteAppend =
+                        if (menu.element is JsonArray) {
+                            {
+                                val clip = readClipboardJson(context)
+                                if (clip == null) {
+                                    Toast
+                                        .makeText(
+                                            context,
+                                            context.getString(R.string.layout_json_node_paste_invalid),
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                } else {
+                                    val next = parsed.appendAt(menu.pathSegments, clip)
+                                    onTextChange(LayoutJsonFormat.encodeToString(next))
+                                    nodeMenu = null
+                                }
+                            }
+                        } else {
+                            null
+                        },
                 )
             }
         } else {
@@ -170,6 +231,77 @@ fun LayoutJsonEditor(
     }
 }
 
+private data class JsonNodeMenu(
+    val element: JsonElement,
+    val pathSegments: List<Any>,
+)
+
+@Composable
+private fun JsonNodeActionsDialog(
+    isArray: Boolean,
+    onDismiss: () -> Unit,
+    onCopy: () -> Unit,
+    onPasteReplace: () -> Unit,
+    onPasteAppend: (() -> Unit)?,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.layout_json_node_actions)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                TextButton(onClick = onCopy, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.layout_json_node_copy))
+                }
+                TextButton(onClick = onPasteReplace, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.layout_json_node_paste_replace))
+                }
+                if (onPasteAppend != null && isArray) {
+                    TextButton(onClick = onPasteAppend, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.layout_json_node_paste_append))
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+    )
+}
+
+private fun copyJsonNode(
+    context: Context,
+    element: JsonElement,
+) {
+    val text = LayoutJsonFormat.encodeToString(element)
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    clipboard.setPrimaryClip(ClipData.newPlainText("layout-json-node", text))
+    Toast.makeText(context, context.getString(R.string.layout_json_node_copied), Toast.LENGTH_SHORT).show()
+}
+
+private fun readClipboardJson(context: Context): JsonElement? {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val text =
+        clipboard.primaryClip
+            ?.takeIf { it.itemCount > 0 }
+            ?.getItemAt(0)
+            ?.coerceToText(context)
+            ?.toString()
+            ?.trim()
+            .orEmpty()
+    if (text.isEmpty()) {
+        Toast
+            .makeText(
+                context,
+                context.getString(R.string.layout_json_node_paste_empty),
+                Toast.LENGTH_SHORT,
+            ).show()
+        return null
+    }
+    return runCatching { LayoutJsonFormat.parseToJsonElement(text) }.getOrNull()
+}
+
 @Composable
 private fun jsonSyntaxColors(): JsonSyntaxColors {
     val scheme = MaterialTheme.colorScheme
@@ -196,6 +328,7 @@ private data class JsonSyntaxColors(
     val index: Color,
 )
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun JsonTreeNode(
     element: JsonElement,
@@ -207,6 +340,7 @@ private fun JsonTreeNode(
     onToggle: (String) -> Unit,
     onReplaceRoot: (JsonElement) -> Unit,
     replaceAt: (List<Any>, JsonElement) -> Unit,
+    onNodeLongPress: (JsonElement, List<Any>) -> Unit,
     pathSegments: List<Any>,
 ) {
     val mono =
@@ -220,7 +354,13 @@ private fun JsonTreeNode(
         is JsonObject -> {
             val isCollapsed = path != "$" && path in collapsed
             Row(
-                modifier = indent.fillMaxWidth(),
+                modifier =
+                    indent
+                        .fillMaxWidth()
+                        .combinedClickable(
+                            onClick = { if (path != "$") onToggle(path) },
+                            onLongClick = { onNodeLongPress(element, pathSegments) },
+                        ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (path != "$") {
@@ -232,10 +372,7 @@ private fun JsonTreeNode(
                                 Icons.Outlined.ExpandLess
                             },
                         contentDescription = null,
-                        modifier =
-                            Modifier
-                                .size(18.dp)
-                                .clickable { onToggle(path) },
+                        modifier = Modifier.size(18.dp),
                         tint = colors.punctuation,
                     )
                 }
@@ -261,6 +398,7 @@ private fun JsonTreeNode(
                         onToggle = onToggle,
                         onReplaceRoot = onReplaceRoot,
                         replaceAt = replaceAt,
+                        onNodeLongPress = onNodeLongPress,
                         pathSegments = pathSegments + childKey,
                     )
                 }
@@ -275,7 +413,13 @@ private fun JsonTreeNode(
         is JsonArray -> {
             val isCollapsed = path in collapsed
             Row(
-                modifier = indent.fillMaxWidth(),
+                modifier =
+                    indent
+                        .fillMaxWidth()
+                        .combinedClickable(
+                            onClick = { onToggle(path) },
+                            onLongClick = { onNodeLongPress(element, pathSegments) },
+                        ),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(
@@ -286,10 +430,7 @@ private fun JsonTreeNode(
                             Icons.Outlined.ExpandLess
                         },
                     contentDescription = null,
-                    modifier =
-                        Modifier
-                            .size(18.dp)
-                            .clickable { onToggle(path) },
+                    modifier = Modifier.size(18.dp),
                     tint = colors.punctuation,
                 )
                 if (keyLabel != null) {
@@ -319,6 +460,7 @@ private fun JsonTreeNode(
                         onToggle = onToggle,
                         onReplaceRoot = onReplaceRoot,
                         replaceAt = replaceAt,
+                        onNodeLongPress = onNodeLongPress,
                         pathSegments = pathSegments + index,
                     )
                 }
@@ -341,6 +483,7 @@ private fun JsonTreeNode(
                 editable = false,
                 editValue = "",
                 onCommit = {},
+                onLongPress = { onNodeLongPress(element, pathSegments) },
             )
         }
         is JsonPrimitive -> {
@@ -382,11 +525,13 @@ private fun JsonTreeNode(
                         replaceAt(pathSegments, next)
                     }
                 },
+                onLongPress = { onNodeLongPress(element, pathSegments) },
             )
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun JsonPrimitiveRow(
     keyLabel: String?,
@@ -398,6 +543,7 @@ private fun JsonPrimitiveRow(
     editable: Boolean,
     editValue: String,
     onCommit: (String) -> Unit,
+    onLongPress: () -> Unit,
 ) {
     var editing by remember(display) { mutableStateOf(false) }
     var draft by remember(editValue) { mutableStateOf(editValue) }
@@ -408,7 +554,11 @@ private fun JsonPrimitiveRow(
         modifier =
             Modifier
                 .padding(start = (depth * 12).dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = { if (editable && !editing) editing = true },
+                    onLongClick = onLongPress,
+                ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (keyLabel != null) {
@@ -451,14 +601,7 @@ private fun JsonPrimitiveRow(
                 text = display,
                 style = mono,
                 color = color,
-                modifier =
-                    if (editable) {
-                        Modifier
-                            .clickable { editing = true }
-                            .padding(vertical = 2.dp)
-                    } else {
-                        Modifier
-                    },
+                modifier = Modifier.padding(vertical = 2.dp),
             )
         }
     }
@@ -539,6 +682,33 @@ private fun JsonElement.setAt(
             JsonArray(toMutableList().apply { set(index, child.setAt(tail, value)) })
         }
         else -> value
+    }
+}
+
+/** Append [value] to the array at [path] (path may be empty when this element is the array). */
+private fun JsonElement.appendAt(
+    path: List<Any>,
+    value: JsonElement,
+): JsonElement {
+    if (path.isEmpty()) {
+        require(this is JsonArray) { "appendAt requires a JSON array" }
+        return JsonArray(this + value)
+    }
+    val head = path.first()
+    val tail = path.drop(1)
+    return when (this) {
+        is JsonObject -> {
+            val key = head as String
+            val child = this[key] ?: error("Missing object key for append: $key")
+            JsonObject(toMutableMap().apply { put(key, child.appendAt(tail, value)) })
+        }
+        is JsonArray -> {
+            val index = head as Int
+            require(index in indices) { "JSON array index out of range: $index" }
+            val child = this[index]
+            JsonArray(toMutableList().apply { set(index, child.appendAt(tail, value)) })
+        }
+        else -> error("Cannot append under a primitive")
     }
 }
 

@@ -1,0 +1,1124 @@
+{
+  "schemaVersion": 1,
+  "id": "unexpected",
+  "title": "Unexpected",
+  "homeLayerId": "main",
+  "layers": [
+    {
+      "id": "main",
+      "title": "ABC",
+      "icon": "Abc",
+      "rows": [
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "q"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "1"
+              },
+              "downLeft": {
+                "type": "command",
+                "id": "ESCAPE"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "w"
+              },
+              "upLeft": {
+                "type": "text",
+                "value": "~"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "2"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "@"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "e"
+              },
+              "upLeft": {
+                "type": "text",
+                "value": "!"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "3"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "#"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "r"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "4"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "$"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "t"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "5"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "%"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "y"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "6"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "^"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "u"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "7"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "&"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "i"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "8"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "*"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "o"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "9"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "("
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "p"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "0"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": ")"
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "spacer",
+            "columnSpan": 0.5
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "a"
+              },
+              "upLeft": {
+                "type": "command",
+                "id": "TAB"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "`"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "s"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "d"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "f"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "g"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "-"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "_"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "h"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "="
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "+"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "j"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "{"
+              },
+              "downRight": {
+                "type": "text",
+                "value": "}"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "k"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "["
+              },
+              "downRight": {
+                "type": "text",
+                "value": "]"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "l"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "|"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "\\"
+              }
+            }
+          },
+          {
+            "type": "spacer",
+            "columnSpan": 0.5
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "modifier",
+                "id": "SHIFT"
+              }
+            },
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "z"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "x"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "c"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "<"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "."
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "v"
+              },
+              "upRight": {
+                "type": "text",
+                "value": ">"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": ","
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "b"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "?"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "/"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "n"
+              },
+              "upRight": {
+                "type": "text",
+                "value": ":"
+              },
+              "downLeft": {
+                "type": "text",
+                "value": ";"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "m"
+              },
+              "upRight": {
+                "type": "text",
+                "value": "\""
+              },
+              "downLeft": {
+                "type": "text",
+                "value": "'"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "BACKSPACE"
+              },
+              "up": {
+                "type": "command",
+                "id": "DELETE_FORWARD"
+              }
+            },
+            "style": {
+              "fill": "control"
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "modifier",
+                "id": "CTRL"
+              },
+              "downLeft": {
+                "type": "command",
+                "id": "TOGGLE_CLIPBOARD_HISTORY"
+              },
+              "downRight": {
+                "type": "switchLayer",
+                "layerId": "numeric"
+              }
+            },
+            "columnSpan": 1,
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "switchLayer",
+                "layerId": "fn"
+              },
+              "upRight": {
+                "type": "command",
+                "id": "HIDE_KEYBOARD"
+              },
+              "downLeft": {
+                "type": "command",
+                "id": "TOGGLE_EMOJI_MODE"
+              },
+              "downRight": {
+                "type": "command",
+                "id": "GOTO_SETTINGS"
+              }
+            },
+            "columnSpan": 1,
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "SPACE"
+              },
+              "left": {
+                "type": "command",
+                "id": "ARROW_LEFT"
+              },
+              "right": {
+                "type": "command",
+                "id": "ARROW_RIGHT"
+              }
+            },
+            "columnSpan": 4,
+            "slide": {
+              "axis": "HORIZONTAL",
+              "behavior": "MOVE_CURSOR"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "noop"
+              },
+              "up": {
+                "type": "command",
+                "id": "ARROW_UP"
+              },
+              "down": {
+                "type": "command",
+                "id": "ARROW_DOWN"
+              },
+              "left": {
+                "type": "command",
+                "id": "ARROW_LEFT"
+              },
+              "right": {
+                "type": "command",
+                "id": "ARROW_RIGHT"
+              }
+            },
+            "columnSpan": 2,
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "IME_ACTION",
+                "label": "Done"
+              },
+              "upLeft": {
+                "type": "command",
+                "id": "SWITCH_IME_VOICE"
+              },
+              "upRight": {
+                "type": "command",
+                "id": "ENTER"
+              }
+            },
+            "columnSpan": 2,
+            "style": {
+              "fill": "control"
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "numeric",
+      "title": "123+",
+      "icon": "Numbers",
+      "rows": [
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "1"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "2"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "3"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "4"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "5"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "6"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "7"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "8"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "9"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "0"
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "@"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "#"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "$"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "%"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "&"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "*"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "-"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "+"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "="
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "!"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": ","
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": ";"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": ":"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "'"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "_"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "\""
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "?"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "text",
+                "value": "/"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "BACKSPACE"
+              }
+            },
+            "style": {
+              "fill": "control"
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "switchLayer",
+                "layerId": "main"
+              }
+            },
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "SPACE"
+              }
+            },
+            "columnSpan": 6
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "BACKSPACE"
+              }
+            },
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "IME_ACTION",
+                "label": "Done"
+              }
+            },
+            "style": {
+              "fill": "control"
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "emoji",
+      "title": "Emoji",
+      "icon": "EmojiEmotions",
+      "overlay": true,
+      "rows": [
+        [
+          {
+            "type": "emojiPicker",
+            "rowSpan": 4,
+            "columnSpan": 10
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "switchLayer",
+                "layerId": "main"
+              }
+            },
+            "style": {
+              "fill": "control"
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "SPACE"
+              }
+            },
+            "columnSpan": 8
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "BACKSPACE"
+              }
+            },
+            "style": {
+              "fill": "control"
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "fn",
+      "title": "Fn",
+      "icon": "Functions",
+      "rows": [
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "COPY"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "CUT"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "PASTE"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "SELECT_ALL"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "UNDO"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "REDO"
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "GOTO_SETTINGS"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "SWITCH_IME"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "SWITCH_IME_VOICE"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "SWITCH_LANGUAGE"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "MOVE_KEYBOARD"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "HIDE_KEYBOARD"
+              }
+            }
+          }
+        ],
+        [
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "TOGGLE_HIDE_LETTERS"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "switchLayer",
+                "layerId": "emoji"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "command",
+                "id": "TOGGLE_CLIPBOARD_HISTORY"
+              }
+            }
+          },
+          {
+            "type": "key",
+            "zones": {
+              "center": {
+                "type": "switchLayer",
+                "layerId": "main"
+              }
+            },
+            "style": {
+              "fill": "control"
+            }
+          }
+        ]
+      ]
+    }
+  ]
+}

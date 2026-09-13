@@ -32,7 +32,7 @@ class UserLayoutStoreTest {
         assertNotNull(restored)
         assertEquals(original.id, restored!!.id)
         assertEquals(original.title, restored.title)
-        assertEquals(original.layout.keys, restored.layout.keys)
+        assertEquals(original.homeLayer().keyGrid.keys, restored.homeLayer().keyGrid.keys)
         assertEquals(original.shiftMappings, restored.shiftMappings)
         assertEquals(
             encodeNamedLayout(original),
@@ -42,10 +42,11 @@ class UserLayoutStoreTest {
 
     @Test
     fun `import export helpers round-trip`() {
-        val json = UserLayoutFiles.exportToJson(BuiltinLayouts.S12)
+        val s12 = com.suave.keyboard.layout.json.loadS12Asset()
+        val json = UserLayoutFiles.exportToJson(s12)
         val decoded = UserLayoutFiles.importFromJson(json)
-        assertEquals(BuiltinLayouts.S12.id, decoded.id)
-        assertEquals(BuiltinLayouts.S12.layout.keys, decoded.layout.keys)
+        assertEquals(s12.id, decoded.id)
+        assertEquals(s12.homeLayer().keyGrid.keys, decoded.homeLayer().keyGrid.keys)
     }
 
     @Test

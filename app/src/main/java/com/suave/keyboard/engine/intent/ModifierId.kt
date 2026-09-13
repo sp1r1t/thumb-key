@@ -15,6 +15,7 @@ enum class ModifierId {
     ALT,
     SHIFT,
     ESC,
+    META,
     ;
 
     val standaloneCommand: CommandId
@@ -24,5 +25,6 @@ enum class ModifierId {
                 ALT -> CommandId.ALT
                 SHIFT -> CommandId.SHIFT
                 ESC -> CommandId.ESCAPE
+                META -> CommandId.META
             }
 }

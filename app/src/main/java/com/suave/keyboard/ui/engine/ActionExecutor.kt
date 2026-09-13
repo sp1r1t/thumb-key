@@ -17,7 +17,7 @@ import com.suave.keyboard.engine.intent.CommandId
 import com.suave.keyboard.engine.intent.ModifierId
 import com.suave.keyboard.engine.output.ClipboardPaste
 import com.suave.keyboard.engine.output.OutputExecutor
-import com.suave.keyboard.layout.LayoutLayer
+import com.suave.keyboard.layout.ActiveLayer
 import com.suave.keyboard.utils.KeyboardPosition
 
 /**
@@ -28,7 +28,7 @@ data class AppCommandHost(
     val onToggleHideLetters: () -> Unit,
     val onSwitchLanguage: () -> Unit,
     val onChangePosition: ((old: KeyboardPosition) -> KeyboardPosition) -> Unit,
-    val onSelectLayer: (LayoutLayer) -> Unit,
+    val onSelectLayer: (ActiveLayer) -> Unit,
     val onSwitchLayer: (String) -> Unit,
     val onToggleEmojiLayer: () -> Unit,
     val onToggleClipboardHistory: () -> Unit,
@@ -101,11 +101,30 @@ object ActionExecutor {
             CommandId.SWITCH_LANGUAGE -> host.onSwitchLanguage()
             CommandId.MOVE_KEYBOARD -> cycleKeyboardRight(host)
             CommandId.TOGGLE_EMOJI_MODE -> host.onToggleEmojiLayer()
-            CommandId.TOGGLE_NUMERIC_MODE -> host.onSelectLayer(LayoutLayer.NUMERIC)
-            CommandId.TOGGLE_ABC_MODE -> host.onSelectLayer(LayoutLayer.MAIN)
+            CommandId.TOGGLE_NUMERIC_MODE -> host.onSelectLayer(ActiveLayer.Numeric)
+            CommandId.TOGGLE_ABC_MODE -> host.onSelectLayer(ActiveLayer.Main)
             CommandId.TOGGLE_CLIPBOARD_HISTORY -> host.onToggleClipboardHistory()
+            CommandId.IME_ACTION -> performImeAction(ime)
+            CommandId.HIDE_KEYBOARD -> ime.requestHideSelf(0)
             else -> {}
         }
+    }
+
+    private fun performImeAction(ime: IMEService) {
+        val editor = ime.currentInputEditorInfo ?: return
+        val action = editor.imeOptions and android.view.inputmethod.EditorInfo.IME_MASK_ACTION
+        if (action == android.view.inputmethod.EditorInfo.IME_ACTION_NONE ||
+            action == android.view.inputmethod.EditorInfo.IME_ACTION_UNSPECIFIED
+        ) {
+            val ic = ime.currentInputConnection ?: return
+            OutputExecutor.execute(
+                SemanticAction.TypeCommand(CommandId.ENTER, emptySet()),
+                com.suave.keyboard.engine.capability.EditorCapabilityResolver.resolve(editor),
+                ic,
+            )
+            return
+        }
+        ime.currentInputConnection?.performEditorAction(action)
     }
 
     private fun copy(
