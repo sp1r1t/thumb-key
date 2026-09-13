@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "id": "simple",
   "title": "Simple",
+  "tags": ["en", "thumbkey", "simple"],
   "homeLayerId": "main",
   "layers": [
     {

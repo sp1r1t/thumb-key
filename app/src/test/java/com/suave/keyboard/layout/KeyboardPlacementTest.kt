@@ -81,18 +81,49 @@ class KeyboardPlacementTest {
     }
 
     @Test
-    fun `parse and format keep toggleable order and drop Left Right`() {
+    fun `board and half widths cap cells and leave a landscape gap`() {
+        val cell = maxCellWidthDp(keyHeightDp = 64)
+        assertEquals(64, cell)
+        assertEquals(320, boardWidthDp(columnCount = 5, maxCellWidthDp = cell))
+        // Phone landscape: ideal half is 3*64=192, half screen is 400 -> park at 192, gap remains.
+        assertEquals(
+            192,
+            parkedHalfWidthDp(columnCount = 5, maxCellWidthDp = cell, screenWidthDp = phoneLandscapeW),
+        )
+        // Narrow screen: never exceed half the screen.
+        assertEquals(
+            100,
+            parkedHalfWidthDp(columnCount = 5, maxCellWidthDp = cell, screenWidthDp = 200),
+        )
+        // Portrait phone: ideal half 192, half screen 180 -> 180 (gap collapses toward zero).
+        assertEquals(
+            180,
+            parkedHalfWidthDp(columnCount = 5, maxCellWidthDp = cell, screenWidthDp = phonePortraitW),
+        )
+    }
+
+    @Test
+    fun `parse and format keep toggleable order including Left Right`() {
         assertEquals(all, parseKeyboardPositions(null))
         assertEquals(all, parseKeyboardPositions(""))
-        assertEquals(all, parseKeyboardPositions("Left,Right,Nope"))
         assertEquals(
-            listOf(KeyboardPosition.Center, KeyboardPosition.Split),
+            listOf(KeyboardPosition.Center, KeyboardPosition.Dual, KeyboardPosition.Split),
+            parseKeyboardPositions("Center,Dual,Split,Nope"),
+        )
+        assertEquals(
+            listOf(KeyboardPosition.Center, KeyboardPosition.Left, KeyboardPosition.Split),
             parseKeyboardPositions("Split,Center,Left"),
         )
         assertEquals(
-            "Center,Dual,Split",
+            "Center,Left,Right,Dual,Split",
             formatKeyboardPositions(
-                listOf(KeyboardPosition.Split, KeyboardPosition.Dual, KeyboardPosition.Center, KeyboardPosition.Left),
+                listOf(
+                    KeyboardPosition.Split,
+                    KeyboardPosition.Dual,
+                    KeyboardPosition.Center,
+                    KeyboardPosition.Left,
+                    KeyboardPosition.Right,
+                ),
             ),
         )
     }
@@ -128,8 +159,11 @@ class KeyboardPlacementTest {
                 width = phonePortraitW,
                 height = phonePortraitH,
             )
-        assertEquals(listOf(KeyboardPosition.Center), reachable)
-        assertFalse(canCycleKeyboardPosition(reachable))
+        assertEquals(
+            listOf(KeyboardPosition.Center, KeyboardPosition.Left, KeyboardPosition.Right),
+            reachable,
+        )
+        assertTrue(canCycleKeyboardPosition(reachable))
     }
 
     @Test
@@ -165,7 +199,7 @@ class KeyboardPlacementTest {
     @Test
     fun `reachable drops Split in portrait even when Dual is cramped`() {
         assertEquals(
-            listOf(KeyboardPosition.Center),
+            listOf(KeyboardPosition.Center, KeyboardPosition.Left, KeyboardPosition.Right),
             reachable(width = phonePortraitW, height = phonePortraitH),
         )
         assertEquals(
@@ -177,7 +211,12 @@ class KeyboardPlacementTest {
             reachable(width = tabletLandscapeW, height = tabletLandscapeH),
         )
         assertEquals(
-            listOf(KeyboardPosition.Center, KeyboardPosition.Dual),
+            listOf(
+                KeyboardPosition.Center,
+                KeyboardPosition.Left,
+                KeyboardPosition.Right,
+                KeyboardPosition.Dual,
+            ),
             reachable(width = 600, height = 960),
         )
         assertEquals(
@@ -205,8 +244,10 @@ class KeyboardPlacementTest {
     }
 
     @Test
-    fun `cycle walks Center Dual Split when Dual fits`() {
-        assertEquals(KeyboardPosition.Dual, nextKeyboardPosition(KeyboardPosition.Center, all))
+    fun `cycle walks Center Left Right Dual Split when Dual fits`() {
+        assertEquals(KeyboardPosition.Left, nextKeyboardPosition(KeyboardPosition.Center, all))
+        assertEquals(KeyboardPosition.Right, nextKeyboardPosition(KeyboardPosition.Left, all))
+        assertEquals(KeyboardPosition.Dual, nextKeyboardPosition(KeyboardPosition.Right, all))
         assertEquals(KeyboardPosition.Split, nextKeyboardPosition(KeyboardPosition.Dual, all))
         assertEquals(KeyboardPosition.Center, nextKeyboardPosition(KeyboardPosition.Split, all))
     }
@@ -217,5 +258,69 @@ class KeyboardPlacementTest {
         assertEquals(KeyboardPosition.Dual, coerceDisplayedPosition(KeyboardPosition.Dual, all))
         assertEquals(KeyboardPosition.Center, coerceDisplayedPosition(KeyboardPosition.Dual, reachable))
         assertEquals(KeyboardPosition.Split, coerceDisplayedPosition(KeyboardPosition.Split, reachable))
+    }
+
+    @Test
+    fun `resolveKeyHeight prefers layout then settings then defaults`() {
+        assertEquals(
+            72,
+            resolveKeyHeightDp(
+                landscape = false,
+                layoutKeyHeight = 72,
+                layoutLandscapeKeyHeight = 40,
+                settingsKeyHeight = 64,
+                settingsLandscapeKeyHeight = 48,
+            ),
+        )
+        assertEquals(
+            40,
+            resolveKeyHeightDp(
+                landscape = true,
+                layoutKeyHeight = 72,
+                layoutLandscapeKeyHeight = 40,
+                settingsKeyHeight = 64,
+                settingsLandscapeKeyHeight = 48,
+            ),
+        )
+        assertEquals(
+            64,
+            resolveKeyHeightDp(
+                landscape = false,
+                layoutKeyHeight = null,
+                layoutLandscapeKeyHeight = null,
+                settingsKeyHeight = 64,
+                settingsLandscapeKeyHeight = 48,
+            ),
+        )
+        assertEquals(
+            48,
+            resolveKeyHeightDp(
+                landscape = true,
+                layoutKeyHeight = null,
+                layoutLandscapeKeyHeight = null,
+                settingsKeyHeight = 64,
+                settingsLandscapeKeyHeight = 48,
+            ),
+        )
+        assertEquals(
+            64,
+            resolveKeyHeightDp(
+                landscape = false,
+                layoutKeyHeight = null,
+                layoutLandscapeKeyHeight = null,
+                settingsKeyHeight = null,
+                settingsLandscapeKeyHeight = null,
+            ),
+        )
+        assertEquals(
+            48,
+            resolveKeyHeightDp(
+                landscape = true,
+                layoutKeyHeight = null,
+                layoutLandscapeKeyHeight = null,
+                settingsKeyHeight = null,
+                settingsLandscapeKeyHeight = null,
+            ),
+        )
     }
 }

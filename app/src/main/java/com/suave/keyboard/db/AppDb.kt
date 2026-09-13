@@ -18,6 +18,7 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Update
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.suave.keyboard.BuildConfig
 import com.suave.keyboard.layout.DEFAULT_LAYER_HEIGHTS
@@ -32,6 +33,8 @@ const val DEFAULT_AUTO_SIZE_KEYS = 1
 const val DEFAULT_NON_SQUARE_KEYS = 0
 const val DEFAULT_KEY_WIDTH = 64
 const val DEFAULT_KEY_HEIGHT = DEFAULT_KEY_WIDTH
+/** Shorter default for landscape so thumb-key boards leave room for the app. */
+const val DEFAULT_LANDSCAPE_KEY_HEIGHT = 48
 const val DEFAULT_ANIMATION_SPEED = 250
 const val DEFAULT_ANIMATION_HELPER_SPEED = 250
 const val DEFAULT_POSITION = 0
@@ -193,6 +196,11 @@ data class AppSettings(
         defaultValue = DEFAULT_KEY_HEIGHT.toString(),
     )
     val keyHeight: Int,
+    @ColumnInfo(
+        name = "landscape_key_height",
+        defaultValue = DEFAULT_LANDSCAPE_KEY_HEIGHT.toString(),
+    )
+    val landscapeKeyHeight: Int = DEFAULT_LANDSCAPE_KEY_HEIGHT,
     @ColumnInfo(
         name = "layer_heights",
         defaultValue = DEFAULT_LAYER_HEIGHTS,
@@ -487,6 +495,8 @@ data class AppearanceUpdate(
     val disableFullscreenEditor: Int,
     @ColumnInfo(name = "key_height")
     val keyHeight: Int,
+    @ColumnInfo(name = "landscape_key_height")
+    val landscapeKeyHeight: Int,
     @ColumnInfo(name = "layer_heights")
     val layerHeights: String,
     @ColumnInfo(name = "vibrate_on_tap")
@@ -704,7 +714,7 @@ class AppSettingsRepository(
 }
 
 @Database(
-    version = 4,
+    version = 6,
     entities = [
         AppSettings::class,
         com.suave.keyboard.ui.theme.UserThemeIndex::class,
@@ -722,6 +732,25 @@ abstract class AppDB : RoomDatabase() {
     companion object {
         @Volatile
         private var instance: AppDB? = null
+
+        private val MIGRATION_4_5 =
+            object : Migration(4, 5) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "ALTER TABLE AppSettings ADD COLUMN landscape_key_height " +
+                            "INTEGER NOT NULL DEFAULT $DEFAULT_LANDSCAPE_KEY_HEIGHT",
+                    )
+                }
+            }
+
+        private val MIGRATION_5_6 =
+            object : Migration(5, 6) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        "ALTER TABLE UserLayoutIndex ADD COLUMN tags TEXT NOT NULL DEFAULT ''",
+                    )
+                }
+            }
 
         fun getDatabase(context: Context): AppDB {
             val appContext = context.applicationContext
@@ -747,7 +776,8 @@ abstract class AppDB : RoomDatabase() {
                             AppDB::class.java,
                             APP_SETTINGS_DB_NAME,
                         ).allowMainThreadQueries()
-                        // Fresh Suave schema (v4: user layout index). Wipe older DBs.
+                        .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
+                        // Wipe pre-v4 / unknown DBs; v4->v6 is handled above.
                         .fallbackToDestructiveMigration(dropAllTables = true)
                         .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
                         // Necessary because it can't insert data on creation

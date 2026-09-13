@@ -63,6 +63,7 @@ import com.suave.keyboard.db.DEFAULT_KEY_HEIGHT
 import com.suave.keyboard.db.DEFAULT_KEY_PADDING
 import com.suave.keyboard.db.DEFAULT_KEY_PADDING_VERTICAL
 import com.suave.keyboard.db.DEFAULT_KEY_RADIUS
+import com.suave.keyboard.db.DEFAULT_LANDSCAPE_KEY_HEIGHT
 import com.suave.keyboard.db.DEFAULT_MIN_SWIPE_LENGTH
 import com.suave.keyboard.db.DEFAULT_POSITION
 import com.suave.keyboard.db.DEFAULT_PUSHUP_SIZE
@@ -244,6 +245,7 @@ private fun resetAppSettingsToDefault(appSettingsViewModel: AppSettingsViewModel
             ignoreBottomPadding = DEFAULT_IGNORE_BOTTOM_PADDING,
             disableFullscreenEditor = DEFAULT_DISABLE_FULLSCREEN_EDITOR,
             keyHeight = DEFAULT_KEY_HEIGHT,
+            landscapeKeyHeight = DEFAULT_LANDSCAPE_KEY_HEIGHT,
             layerHeights = DEFAULT_LAYER_HEIGHTS,
             vibrateOnTap = DEFAULT_VIBRATE_ON_TAP,
             vibrateOnSlide = DEFAULT_VIBRATE_ON_SLIDE,

@@ -4,7 +4,9 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Rect
 import android.os.Build
+import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,26 +20,35 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.PlatformTextStyle
@@ -54,8 +65,10 @@ import com.suave.keyboard.IMEService
 import com.suave.keyboard.MainActivity
 import com.suave.keyboard.R
 import com.suave.keyboard.SettingsSession
+import com.suave.keyboard.SuaveApplication
 import com.suave.keyboard.db.AppSettings
 import com.suave.keyboard.db.ClipboardItem
+import kotlin.math.roundToInt
 import com.suave.keyboard.db.ClipboardRepository
 import com.suave.keyboard.db.DEFAULT_ALT_AS_MODIFIER
 import com.suave.keyboard.db.DEFAULT_ANIMATION_LETTER_DROP
@@ -82,6 +95,7 @@ import com.suave.keyboard.db.DEFAULT_INLINE_SUGGESTION_HEIGHT
 import com.suave.keyboard.db.DEFAULT_KEYBOARD_POSITIONS
 import com.suave.keyboard.db.DEFAULT_KEY_BORDER_WIDTH
 import com.suave.keyboard.db.DEFAULT_KEY_HEIGHT
+import com.suave.keyboard.db.DEFAULT_LANDSCAPE_KEY_HEIGHT
 import com.suave.keyboard.db.DEFAULT_KEY_PADDING
 import com.suave.keyboard.db.DEFAULT_KEY_PADDING_VERTICAL
 import com.suave.keyboard.db.DEFAULT_KEY_RADIUS
@@ -137,14 +151,18 @@ import com.suave.keyboard.layout.LayerSession
 import com.suave.keyboard.layout.LayoutPreviewSession
 import com.suave.keyboard.layout.LayoutRegistry
 import com.suave.keyboard.layout.NamedLayout
+import com.suave.keyboard.layout.boardWidthDp
 import com.suave.keyboard.layout.canCycleKeyboardPosition
 import com.suave.keyboard.layout.coerceDisplayedPosition
 import com.suave.keyboard.layout.leaveOverlay
+import com.suave.keyboard.layout.maxCellWidthDp
 import com.suave.keyboard.layout.nextKeyboardPosition
+import com.suave.keyboard.layout.parkedHalfWidthDp
 import com.suave.keyboard.layout.parseKeyboardPositions
 import com.suave.keyboard.layout.parseLayerHeightOverrides
 import com.suave.keyboard.layout.parseLayerId
 import com.suave.keyboard.layout.reachableKeyboardPositions
+import com.suave.keyboard.layout.resolveKeyHeightDp
 import com.suave.keyboard.layout.selectBase
 import com.suave.keyboard.layout.splitColumnRanges
 import com.suave.keyboard.layout.switchTo
@@ -169,8 +187,9 @@ import java.util.Locale
  * [LayoutRegistry] entry; switching [AppSettings.keyboardLayout] selects another.
  * [AppSettings.position] Dual draws two full copies that share modifier and layer state. Split
  * keeps one content slot and cuts the key grid in half, duplicating the middle column when the
- * count is odd. Left, Right, and Center are all full width until the layout has a real (narrower)
- * key width to park. Key width comes from [com.suave.keyboard.engine.intent.KeyMapping.columnSpan].
+ * count is odd. Key cell width is capped at key height so landscape does not stretch keys into
+ * paddles; Center parks a capped board in the middle, Dual and Split park halves on the left and
+ * right with a flexible gap between them.
  */
 @Composable
 fun EngineKeyboardScreen(
@@ -198,9 +217,15 @@ fun EngineKeyboardScreen(
     val previewLayout by LayoutPreviewSession.layout.collectAsState()
     val useEditedLayout by LayoutPreviewSession.useEdited.collectAsState()
     val settingsOpen by SettingsSession.open.collectAsState()
+    var layoutTick by remember { mutableIntStateOf(0) }
     val selectedLayout =
         LayoutRegistry.byId(ctx, settings?.keyboardLayout ?: LayoutRegistry.DEFAULT_ID)
-    val namedLayout = LayoutPreviewSession.resolve(selectedLayout)
+    // layoutTick forces a re-read after per-app float overrides update the registry.
+    val namedLayout =
+        run {
+            layoutTick
+            LayoutPreviewSession.resolve(selectedLayout)
+        }
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp
     val screenHeightDp = configuration.screenHeightDp
@@ -305,9 +330,54 @@ fun EngineKeyboardScreen(
             )
         }
     // Row height is always keyHeight. Horizontal size is each key's columnSpan as a Row
-    // weight, so a span-2 Enter fills two letter-columns without a separate width setting.
-    val keyHeight = (settings?.keyHeight ?: DEFAULT_KEY_HEIGHT).dp
+    // weight inside a board whose cell width is capped at keyHeight, so landscape never
+    // stretches keys into paddles. Layout can override Appearance heights.
+    val landscape = screenWidthDp > screenHeightDp
+    val keyHeightDp =
+        resolveKeyHeightDp(
+            landscape = landscape,
+            layoutKeyHeight = namedLayout.keyHeight,
+            layoutLandscapeKeyHeight = namedLayout.landscapeKeyHeight,
+            settingsKeyHeight = settings?.keyHeight,
+            settingsLandscapeKeyHeight = settings?.landscapeKeyHeight,
+            defaultKeyHeight = DEFAULT_KEY_HEIGHT,
+            defaultLandscapeKeyHeight = DEFAULT_LANDSCAPE_KEY_HEIGHT,
+        )
+    val keyHeight = keyHeightDp.dp
+    val maxCellWidthDpValue = maxCellWidthDp(keyHeightDp)
     val keyCornerRadius = keyHeight * (keyRadiusPercent / 200f)
+    val parkHalves =
+        keyboardPosition == KeyboardPosition.Dual || keyboardPosition == KeyboardPosition.Split
+    val hostPackageName = ime.currentInputEditorInfo?.packageName
+    val floatingLandscape =
+        landscape && namedLayout.effectiveLandscapeFloating(hostPackageName)
+    val density = LocalDensity.current
+    val columnCount = namedLayout.gridFor(activeLayer).columnCount()
+    val parkedHalfWidthPx =
+        remember(columnCount, maxCellWidthDpValue, screenWidthDp, density) {
+            with(density) {
+                parkedHalfWidthDp(
+                    columnCount = columnCount,
+                    maxCellWidthDp = maxCellWidthDpValue,
+                    screenWidthDp = screenWidthDp,
+                ).dp.toPx()
+            }
+        }
+    val boardWidthPx =
+        remember(columnCount, maxCellWidthDpValue, screenWidthDp, density) {
+            with(density) {
+                minOf(
+                    screenWidthDp,
+                    boardWidthDp(columnCount, maxCellWidthDpValue),
+                ).dp.toPx()
+            }
+        }
+
+    DisposableEffect(floatingLandscape) {
+        ime.setLandscapeFloating(floatingLandscape)
+        onDispose { ime.setLandscapeFloating(false) }
+    }
+
     val layerHeightOverrides = parseLayerHeightOverrides(settings?.layerHeights ?: DEFAULT_LAYER_HEIGHTS)
     val animations =
         KeyAnimationSettings(
@@ -396,6 +466,7 @@ fun EngineKeyboardScreen(
     val reachablePositionsState = rememberUpdatedState(reachablePositions)
     val onChangePositionState = rememberUpdatedState(onChangePosition)
     val namedLayoutState = rememberUpdatedState(namedLayout)
+    val bumpLayoutTickState = rememberUpdatedState { layoutTick++ }
     val appHost =
         remember {
             AppCommandHost(
@@ -457,6 +528,47 @@ fun EngineKeyboardScreen(
                             layout = current,
                         )
                 },
+                onToggleLandscapeFloating = {
+                    val pkg = ime.currentInputEditorInfo?.packageName
+                    if (pkg.isNullOrBlank()) {
+                        ime.showNotice(ime.getString(R.string.landscape_floating_need_app))
+                    } else {
+                        val layoutId = namedLayoutState.value.id
+                        clipboardScope.launch {
+                            try {
+                                val store = (ime.application as SuaveApplication).userLayoutStore
+                                val updated = store.toggleLandscapeFloatingForApp(layoutId, pkg)
+                                LayoutPreviewSession.updateIfActive(updated)
+                                bumpLayoutTickState.value()
+                                val label =
+                                    try {
+                                        val pm = ime.packageManager
+                                        pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString()
+                                    } catch (_: Exception) {
+                                        pkg
+                                    }
+                                val on = updated.effectiveLandscapeFloating(pkg)
+                                val metrics = ime.resources.displayMetrics
+                                val inLandscape = metrics.widthPixels > metrics.heightPixels
+                                ime.showNotice(
+                                    ime.getString(
+                                        when {
+                                            !inLandscape && on ->
+                                                R.string.landscape_floating_portrait_on
+                                            !inLandscape && !on ->
+                                                R.string.landscape_floating_portrait_off
+                                            on -> R.string.landscape_floating_on_for_app
+                                            else -> R.string.landscape_floating_off_for_app
+                                        },
+                                        label,
+                                    ),
+                                )
+                            } catch (e: Exception) {
+                                ime.showNotice(e.message ?: "Failed")
+                            }
+                        }
+                    }
+                },
             )
         }
     val onExecute =
@@ -491,6 +603,12 @@ fun EngineKeyboardScreen(
             { event: FeedbackEvent -> FeedbackDispatcher.dispatch(event, feedbackSettings, hapticPlayer) }
         }
 
+    val imeAction =
+        remember(inputEpoch) {
+            val options = ime.currentInputEditorInfo?.imeOptions ?: 0
+            options and EditorInfo.IME_MASK_ACTION
+        }
+    CompositionLocalProvider(LocalImeAction provides imeAction) {
     Column(modifier = Modifier.fillMaxWidth()) {
         if (settingsOpen) {
             SettingsGarageBar(
@@ -548,6 +666,8 @@ fun EngineKeyboardScreen(
                 activeLayer = activeLayer,
                 clipboardSession = clipboardSession,
                 keyHeight = keyHeight,
+                maxCellWidthDp = maxCellWidthDpValue,
+                screenWidthDp = screenWidthDp,
                 layerHeightOverrides = layerHeightOverrides,
                 modifierState = modifierState,
                 onExecute = onExecute,
@@ -569,6 +689,7 @@ fun EngineKeyboardScreen(
                 spacebarMultitap = spacebarMultitap,
                 spacebarMultitapEnabled = spacebarMultitapEnabled,
                 splitHalves = splitHalves,
+                paintBoardBackground = true,
             )
         }
         Box(
@@ -576,7 +697,9 @@ fun EngineKeyboardScreen(
                 Modifier
                     .fillMaxWidth()
                     .then(
-                        if (backdropEnabled) {
+                        // Dual/Split park opaque halves; never fill the gap between them.
+                        // Floating landscape also skips a full-width strip so hosts show through.
+                        if (backdropEnabled && !parkHalves && !floatingLandscape) {
                             Modifier.background(MaterialTheme.colorScheme.background)
                         } else {
                             Modifier
@@ -599,13 +722,60 @@ fun EngineKeyboardScreen(
                         .fillMaxWidth()
                         .then(if (!ignoreBottomPadding) Modifier.safeDrawingPadding() else Modifier)
                         .padding(bottom = pushupSize)
-                        .then(if (backdropEnabled) Modifier.padding(top = 6.dp) else Modifier),
+                        .then(if (backdropEnabled) Modifier.padding(top = 6.dp) else Modifier)
+                        .onGloballyPositioned { coords ->
+                            if (!floatingLandscape) {
+                                ime.setFloatingTouchableRects(view, emptyList())
+                                return@onGloballyPositioned
+                            }
+                            val bounds = coords.boundsInRoot()
+                            val left = bounds.left.roundToInt()
+                            val top = bounds.top.roundToInt()
+                            val right = bounds.right.roundToInt()
+                            val bottom = bounds.bottom.roundToInt()
+                            val width = (right - left).coerceAtLeast(0)
+                            val rects = ArrayList<Rect>(3)
+                            // Garage / debug / suggestion chrome above the key grid.
+                            if (top > 0) {
+                                rects.add(Rect(0, 0, view.width.coerceAtLeast(right), top))
+                            }
+                            when (keyboardPosition) {
+                                KeyboardPosition.Dual,
+                                KeyboardPosition.Split,
+                                -> {
+                                    val half = parkedHalfWidthPx.roundToInt().coerceIn(0, width)
+                                    rects.add(Rect(left, top, left + half, bottom))
+                                    rects.add(Rect(right - half, top, right, bottom))
+                                }
+                                KeyboardPosition.Left -> {
+                                    val board = boardWidthPx.roundToInt().coerceIn(0, width)
+                                    rects.add(Rect(left, top, left + board, bottom))
+                                }
+                                KeyboardPosition.Right -> {
+                                    val board = boardWidthPx.roundToInt().coerceIn(0, width)
+                                    rects.add(Rect(right - board, top, right, bottom))
+                                }
+                                KeyboardPosition.Center -> {
+                                    val board = boardWidthPx.roundToInt().coerceIn(0, width)
+                                    val start = left + ((width - board) / 2)
+                                    rects.add(Rect(start, top, start + board, bottom))
+                                }
+                            }
+                            ime.setFloatingTouchableRects(view, rects)
+                        },
             ) {
                 when (keyboardPosition) {
                     KeyboardPosition.Dual -> {
+                        val halfWidth =
+                            parkedHalfWidthDp(
+                                columnCount = namedLayout.gridFor(activeLayer).columnCount(),
+                                maxCellWidthDp = maxCellWidthDpValue,
+                                screenWidthDp = screenWidthDp,
+                            ).dp
                         Row(modifier = Modifier.fillMaxWidth()) {
-                            renderPanel(Modifier.weight(1f), false)
-                            renderPanel(Modifier.weight(1f), false)
+                            renderPanel(Modifier.width(halfWidth), false)
+                            Spacer(modifier = Modifier.weight(1f))
+                            renderPanel(Modifier.width(halfWidth), false)
                         }
                     }
 
@@ -613,12 +783,56 @@ fun EngineKeyboardScreen(
                         renderPanel(Modifier.fillMaxWidth(), true)
                     }
 
-                    else -> {
-                        renderPanel(Modifier.fillMaxWidth(), false)
+                    KeyboardPosition.Left -> {
+                        val boardWidth =
+                            minOf(
+                                screenWidthDp,
+                                boardWidthDp(
+                                    namedLayout.gridFor(activeLayer).columnCount(),
+                                    maxCellWidthDpValue,
+                                ),
+                            ).dp
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            renderPanel(Modifier.width(boardWidth), false)
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+
+                    KeyboardPosition.Right -> {
+                        val boardWidth =
+                            minOf(
+                                screenWidthDp,
+                                boardWidthDp(
+                                    namedLayout.gridFor(activeLayer).columnCount(),
+                                    maxCellWidthDpValue,
+                                ),
+                            ).dp
+                        Row(modifier = Modifier.fillMaxWidth()) {
+                            Spacer(modifier = Modifier.weight(1f))
+                            renderPanel(Modifier.width(boardWidth), false)
+                        }
+                    }
+
+                    KeyboardPosition.Center -> {
+                        val boardWidth =
+                            minOf(
+                                screenWidthDp,
+                                boardWidthDp(
+                                    namedLayout.gridFor(activeLayer).columnCount(),
+                                    maxCellWidthDpValue,
+                                ),
+                            ).dp
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            renderPanel(Modifier.width(boardWidth), false)
+                        }
                     }
                 }
             }
         }
+    }
     }
 }
 
@@ -645,6 +859,8 @@ private fun EngineKeyboardPanel(
     activeLayer: ActiveLayer,
     clipboardSession: ClipboardLayerSession,
     keyHeight: Dp,
+    maxCellWidthDp: Int,
+    screenWidthDp: Int,
     layerHeightOverrides: Map<String, Int>,
     modifierState: MutableState<ModifierState>,
     onExecute: (SemanticAction) -> Unit,
@@ -666,11 +882,22 @@ private fun EngineKeyboardPanel(
     spacebarMultitap: SpacebarMultitapTracker,
     spacebarMultitapEnabled: Boolean,
     splitHalves: Boolean,
+    paintBoardBackground: Boolean,
 ) {
     val grid = namedLayout.gridFor(activeLayer)
     val overrideRows = layerHeightOverrides[activeLayer.id] ?: 0
     val contentRows = namedLayout.contentRows(activeLayer, overrideRows)
-    Column(modifier = modifier.background(MaterialTheme.colorScheme.background)) {
+    val boardBg = MaterialTheme.colorScheme.background
+    Column(
+        modifier =
+            modifier.then(
+                if (paintBoardBackground && !splitHalves) {
+                    Modifier.background(boardBg)
+                } else {
+                    Modifier
+                },
+            ),
+    ) {
         if (contentRows > 0) {
             LayerContentSlot(
                 content = namedLayout.contentFor(activeLayer),
@@ -683,12 +910,20 @@ private fun EngineKeyboardPanel(
                 keyHeight = keyHeight,
                 keyPadding = keyPadding,
                 keyCornerRadius = keyCornerRadius,
+                modifier =
+                    if (splitHalves) {
+                        Modifier.fillMaxWidth().background(boardBg)
+                    } else {
+                        Modifier.fillMaxWidth()
+                    },
             )
         }
         LayoutGrid(
             layout = grid,
             namedLayout = namedLayout,
             keyHeight = keyHeight,
+            maxCellWidthDp = maxCellWidthDp,
+            screenWidthDp = screenWidthDp,
             modifierState = modifierState,
             onExecute = onExecute,
             onFeedback = onFeedback,
@@ -705,6 +940,7 @@ private fun EngineKeyboardPanel(
             spacebarMultitap = spacebarMultitap,
             spacebarMultitapEnabled = spacebarMultitapEnabled,
             splitHalves = splitHalves,
+            halfBackground = if (splitHalves) boardBg else null,
         )
     }
 }
@@ -721,11 +957,13 @@ private fun LayerContentSlot(
     keyHeight: Dp,
     keyPadding: Int,
     keyCornerRadius: Dp,
+    modifier: Modifier = Modifier,
 ) {
     val view = LocalView.current
+    val slotModifier = modifier.fillMaxWidth().height(height)
     when (content) {
         LayerContent.None -> {
-            Spacer(modifier = Modifier.fillMaxWidth().height(height))
+            Spacer(modifier = slotModifier)
         }
 
         LayerContent.EmojiPicker -> {
@@ -756,7 +994,7 @@ private fun LayerContentSlot(
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(height),
+                    modifier = slotModifier,
                 )
             }
         }
@@ -781,7 +1019,7 @@ private fun LayerContentSlot(
                 onLiveImageClick = clipboardSession.onPasteLiveAndLeave,
                 onLiveImagePaste = clipboardSession.onPasteLiveAndStay,
                 imagesEnabled = clipboardSession.imagesEnabled,
-                modifier = Modifier.fillMaxWidth().height(height),
+                modifier = slotModifier,
             )
         }
     }
@@ -792,6 +1030,8 @@ private fun LayoutGrid(
     layout: Layout,
     namedLayout: NamedLayout,
     keyHeight: Dp,
+    maxCellWidthDp: Int,
+    screenWidthDp: Int,
     modifierState: MutableState<ModifierState>,
     onExecute: (SemanticAction) -> Unit,
     onFeedback: (FeedbackEvent) -> Unit,
@@ -808,11 +1048,24 @@ private fun LayoutGrid(
     spacebarMultitap: SpacebarMultitapTracker,
     spacebarMultitapEnabled: Boolean,
     splitHalves: Boolean,
+    halfBackground: Color? = null,
 ) {
     val rows = remember(layout) { layoutRows(layout) }
     val splitRanges =
         remember(layout, splitHalves) {
             if (splitHalves) splitColumnRanges(layout.columnCount()) else null
+        }
+    val halfWidth =
+        remember(layout, maxCellWidthDp, screenWidthDp, splitHalves) {
+            if (splitHalves) {
+                parkedHalfWidthDp(
+                    columnCount = layout.columnCount(),
+                    maxCellWidthDp = maxCellWidthDp,
+                    screenWidthDp = screenWidthDp,
+                ).dp
+            } else {
+                0.dp
+            }
         }
     val shiftLegendState = modifierState.value.forLetterLegends()
     for (row in rows) {
@@ -844,7 +1097,18 @@ private fun LayoutGrid(
                 )
             } else {
                 val (leftCols, rightCols) = ranges
-                Row(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                val halfMod =
+                    Modifier
+                        .width(halfWidth)
+                        .fillMaxHeight()
+                        .then(
+                            if (halfBackground != null) {
+                                Modifier.background(halfBackground)
+                            } else {
+                                Modifier
+                            },
+                        )
+                Row(modifier = halfMod) {
                     LayoutRowKeys(
                         positions = row.filter { it.col in leftCols },
                         layout = layout,
@@ -869,7 +1133,8 @@ private fun LayoutGrid(
                         keyPrefix = "L",
                     )
                 }
-                Row(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                Spacer(modifier = Modifier.weight(1f))
+                Row(modifier = halfMod) {
                     LayoutRowKeys(
                         positions = row.filter { it.col in rightCols },
                         layout = layout,

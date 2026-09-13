@@ -322,4 +322,5 @@ class LayoutDraftHistory(
     }
 }
 
-fun NamedLayout.sameExceptTitle(other: NamedLayout): Boolean = copy(title = other.title) == other
+fun NamedLayout.sameExceptTitle(other: NamedLayout): Boolean =
+    copy(title = other.title, tags = other.tags) == other

@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.imeAnimationTarget
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.relocation.BringIntoViewRequester
@@ -42,11 +43,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Redo
 import androidx.compose.material.icons.automirrored.outlined.Undo
 import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Crop75
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.DragHandle
 import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.Functions
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
@@ -63,12 +66,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -76,6 +81,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -107,6 +113,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
@@ -122,6 +129,8 @@ import com.suave.keyboard.R
 import com.suave.keyboard.SuaveApplication
 import com.suave.keyboard.db.AppSettingsViewModel
 import com.suave.keyboard.db.ClipboardItem
+import com.suave.keyboard.db.DEFAULT_KEY_HEIGHT
+import com.suave.keyboard.db.DEFAULT_LANDSCAPE_KEY_HEIGHT
 import com.suave.keyboard.db.LayoutsUpdate
 import com.suave.keyboard.engine.gesture.Direction
 import com.suave.keyboard.engine.gesture.SlideAxis
@@ -153,6 +162,7 @@ import com.suave.keyboard.layout.S12_EMOJI_LAYER_HEIGHT_ROWS
 import com.suave.keyboard.layout.UserLayoutStore
 import com.suave.keyboard.layout.blankLayout
 import com.suave.keyboard.layout.blankNamedLayout
+import com.suave.keyboard.layout.normalizeTags
 import com.suave.keyboard.layout.gridOrEmpty
 import com.suave.keyboard.layout.idString
 import com.suave.keyboard.layout.json.decodeNamedLayout
@@ -179,6 +189,7 @@ import com.suave.keyboard.ui.engine.KeyLegend
 import com.suave.keyboard.ui.engine.KeyLegendMark
 import com.suave.keyboard.ui.engine.LegendVisibility
 import com.suave.keyboard.ui.engine.asImageVector
+import dev.jeziellago.compose.markdowntext.MarkdownText
 import com.suave.keyboard.ui.engine.commandDisplayTitle
 import com.suave.keyboard.ui.engine.commandEditorLegend
 import com.suave.keyboard.ui.engine.createThemedEmojiPicker
@@ -192,6 +203,7 @@ import com.suave.keyboard.utils.colorVariantToColor
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ListPreferenceType
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
+import me.zhanghai.compose.preference.SwitchPreference
 import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -232,10 +244,14 @@ fun LayoutEditorScreen(
     val app = ctx.applicationContext as SuaveApplication
     val store = app.userLayoutStore
     val scope = rememberCoroutineScope()
+    val appSettings by appSettingsViewModel.appSettings.observeAsState()
+    val appearanceKeyHeight = appSettings?.keyHeight ?: DEFAULT_KEY_HEIGHT
+    val appearanceLandscapeKeyHeight = appSettings?.landscapeKeyHeight ?: DEFAULT_LANDSCAPE_KEY_HEIGHT
 
     var draft by remember { mutableStateOf<NamedLayout?>(null) }
     var sessionBaseline by remember { mutableStateOf<NamedLayout?>(null) }
     var existedOnOpen by remember { mutableStateOf(false) }
+    var tagsField by remember { mutableStateOf("") }
     var persistJob by remember { mutableStateOf<Job?>(null) }
     var blankSetup by remember { mutableStateOf(createFrom == "blank" && editId == null) }
     var blankRowCount by remember { mutableStateOf(4) }
@@ -291,7 +307,10 @@ fun LayoutEditorScreen(
                 delay(LAYOUT_AUTO_SAVE_DEBOUNCE_MS)
                 try {
                     store.save(layoutForDisk(layout))
-                    ensureLayoutEnabled(layout.id)
+                    // Keep a first-open copy out of the enabled list until Back keeps it.
+                    if (existedOnOpen) {
+                        ensureLayoutEnabled(layout.id)
+                    }
                 } catch (e: Exception) {
                     Toast
                         .makeText(
@@ -322,35 +341,43 @@ fun LayoutEditorScreen(
         existed: Boolean,
     ) {
         sessionBaseline = layout
-        // Keep new layouts on disk from the start so Cancel can revert to this snapshot
-        // without a separate Save. Remove unwanted copies from the layouts list.
-        existedOnOpen = true
+        existedOnOpen = existed
+        tagsField = layout.tags.joinToString(", ")
         history.clear()
         dirty = !existed
         bindPreviewSession(layout, tryingOut = false)
-        if (!existed) {
-            scope.launch {
-                try {
-                    store.save(layoutForDisk(layout))
-                    ensureLayoutEnabled(layout.id)
-                } catch (e: Exception) {
-                    Toast
-                        .makeText(
-                            ctx,
-                            ctx.getString(R.string.layout_action_failed, e.message ?: ""),
-                            Toast.LENGTH_LONG,
-                        ).show()
-                }
-            }
-        }
     }
 
-    fun leaveEditor() {
+    fun popEditor() {
         LayoutPreviewSession.stop()
         if (navController.previousBackStackEntry == null) {
             activity?.finish()
         } else {
             navController.popBackStack()
+        }
+    }
+
+    fun leaveEditor() {
+        persistJob?.cancel()
+        val current = draft
+        if (current == null) {
+            popEditor()
+            return
+        }
+        scope.launch {
+            try {
+                store.save(layoutForDisk(current))
+                ensureLayoutEnabled(current.id)
+            } catch (e: Exception) {
+                Toast
+                    .makeText(
+                        ctx,
+                        ctx.getString(R.string.layout_action_failed, e.message ?: ""),
+                        Toast.LENGTH_LONG,
+                    ).show()
+            } finally {
+                popEditor()
+            }
         }
     }
 
@@ -379,7 +406,7 @@ fun LayoutEditorScreen(
                         Toast.LENGTH_LONG,
                     ).show()
             } finally {
-                leaveEditor()
+                popEditor()
             }
         }
     }
@@ -427,6 +454,7 @@ fun LayoutEditorScreen(
         val cur = draft ?: return
         val previous = history.undo(cur) ?: return
         draft = previous
+        tagsField = previous.tags.joinToString(", ")
         markDirtyAgainstBaseline(previous)
         schedulePersist(previous)
     }
@@ -435,6 +463,7 @@ fun LayoutEditorScreen(
         val cur = draft ?: return
         val next = history.redo(cur) ?: return
         draft = next
+        tagsField = next.tags.joinToString(", ")
         markDirtyAgainstBaseline(next)
         schedulePersist(next)
     }
@@ -550,7 +579,6 @@ fun LayoutEditorScreen(
                             draft = created
                             beginSession(created, existed = false)
                             blankSetup = false
-                            schedulePersist(created)
                         },
                         modifier =
                             Modifier
@@ -699,6 +727,23 @@ fun LayoutEditorScreen(
                         Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp, vertical = 8.dp),
+                    singleLine = true,
+                )
+                OutlinedTextField(
+                    value = tagsField,
+                    onValueChange = { text ->
+                        tagsField = text
+                        commitDraft(
+                            layout.copy(tags = normalizeTags(text.split(',', ';'))),
+                            coalesceTitle = true,
+                        )
+                    },
+                    label = { Text(stringResource(R.string.layout_tags)) },
+                    supportingText = { Text(stringResource(R.string.layout_tags_hint)) },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
                     singleLine = true,
                 )
                 Text(
@@ -887,6 +932,108 @@ fun LayoutEditorScreen(
                     title = stringResource(R.string.layout_settings),
                     initiallyExpanded = false,
                 ) {
+                    val layoutKeyHeight = layout.keyHeight ?: appearanceKeyHeight
+                    val layoutLandscapeKeyHeight =
+                        layout.landscapeKeyHeight ?: appearanceLandscapeKeyHeight
+                    IntStepperPreference(
+                        value = layoutKeyHeight,
+                        onValueChange = { v ->
+                            commitDraft(layout.copy(keyHeight = v))
+                        },
+                        valueRange = 10..200,
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.layout_key_height),
+                                infoText = stringResource(R.string.layout_key_height_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                if (layout.keyHeight == null) {
+                                    stringResource(
+                                        R.string.layout_key_height_summary_appearance,
+                                        appearanceKeyHeight.toString(),
+                                    )
+                                } else {
+                                    stringResource(
+                                        R.string.layout_key_height_summary,
+                                        layoutKeyHeight.toString(),
+                                    )
+                                },
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Crop75,
+                                contentDescription = null,
+                            )
+                        },
+                        onReset = {
+                            commitDraft(layout.copy(keyHeight = null))
+                        },
+                        resetTo = appearanceKeyHeight,
+                    )
+                    IntStepperPreference(
+                        value = layoutLandscapeKeyHeight,
+                        onValueChange = { v ->
+                            commitDraft(layout.copy(landscapeKeyHeight = v))
+                        },
+                        valueRange = 10..200,
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.layout_landscape_key_height),
+                                infoText = stringResource(R.string.layout_landscape_key_height_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                if (layout.landscapeKeyHeight == null) {
+                                    stringResource(
+                                        R.string.layout_landscape_key_height_summary_appearance,
+                                        appearanceLandscapeKeyHeight.toString(),
+                                    )
+                                } else {
+                                    stringResource(
+                                        R.string.layout_landscape_key_height_summary,
+                                        layoutLandscapeKeyHeight.toString(),
+                                    )
+                                },
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Crop75,
+                                contentDescription = null,
+                            )
+                        },
+                        onReset = {
+                            commitDraft(layout.copy(landscapeKeyHeight = null))
+                        },
+                        resetTo = appearanceLandscapeKeyHeight,
+                    )
+                    SwitchPreference(
+                        value = layout.landscapeFloating,
+                        onValueChange = { on ->
+                            commitDraft(layout.copy(landscapeFloating = on))
+                        },
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.layout_landscape_floating),
+                                infoText = stringResource(R.string.layout_landscape_floating_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                stringResource(
+                                    if (layout.landscapeFloating) {
+                                        R.string.layout_landscape_floating_on
+                                    } else {
+                                        R.string.layout_landscape_floating_off
+                                    },
+                                ),
+                            )
+                        },
+                    )
                     val cycle = layout.spaceMultitapCycle.orEmpty()
                     CompositionLocalProvider(
                         LocalTextStyle provides MaterialTheme.typography.titleSmall,
@@ -1045,7 +1192,14 @@ fun LayoutEditorScreen(
                         )
                     }
                     Text(
-                        text = stringResource(R.string.layout_unsaved_changes),
+                        text =
+                            stringResource(
+                                if (existedOnOpen) {
+                                    R.string.layout_unsaved_changes
+                                } else {
+                                    R.string.layout_unsaved_new_copy
+                                },
+                            ),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.bodySmall,
                     )
@@ -3683,6 +3837,12 @@ private fun ZoneCommandPicker(
                 onClick = { onSelect(id) },
                 legend = commandEditorLegend(id),
                 title = commandDisplayTitle(id),
+                infoText =
+                    if (id == CommandId.TOGGLE_LANDSCAPE_FLOATING) {
+                        stringResource(R.string.command_toggle_landscape_floating_info)
+                    } else {
+                        null
+                    },
             )
         }
     }
@@ -3741,13 +3901,16 @@ private fun ZoneLayerPicker(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ZonePickCell(
     selected: Boolean,
     onClick: () -> Unit,
     legend: KeyLegend,
     title: String,
+    infoText: String? = null,
 ) {
+    var showInfo by remember { mutableStateOf(false) }
     val shape = RoundedCornerShape(12.dp)
     val borderColor =
         if (selected) {
@@ -3767,31 +3930,66 @@ private fun ZonePickCell(
         } else {
             MaterialTheme.colorScheme.onSurface
         }
-    Column(
-        modifier =
-            Modifier
-                .width(76.dp)
-                .clip(shape)
-                .background(fill)
-                .border(if (selected) 2.dp else 1.dp, borderColor, shape)
-                .clickable(onClick = onClick)
-                .padding(horizontal = 6.dp, vertical = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        KeyLegendMark(
-            legend = legend,
-            fontSize = 16.sp,
-            iconSize = 26.dp,
-            color = contentColor,
-        )
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelSmall,
-            color = contentColor,
-            textAlign = TextAlign.Center,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 6.dp),
-        )
+    Box(modifier = Modifier.width(76.dp)) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clip(shape)
+                    .background(fill)
+                    .border(if (selected) 2.dp else 1.dp, borderColor, shape)
+                    .clickable(onClick = onClick)
+                    .padding(horizontal = 6.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            KeyLegendMark(
+                legend = legend,
+                fontSize = 16.sp,
+                iconSize = 26.dp,
+                color = contentColor,
+            )
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelSmall,
+                color = contentColor,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        }
+        if (infoText != null) {
+            Icon(
+                imageVector = Icons.Outlined.Info,
+                contentDescription = stringResource(R.string.more_info),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(2.dp)
+                        .requiredSize(16.dp)
+                        .clickable(role = Role.Button) { showInfo = true },
+            )
+        }
+    }
+    if (infoText != null && showInfo) {
+        ModalBottomSheet(
+            sheetState = rememberModalBottomSheetState(),
+            onDismissRequest = { showInfo = false },
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .padding(bottom = 24.dp),
+            ) {
+                MarkdownText(
+                    markdown = infoText,
+                    linkColor = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
     }
 }

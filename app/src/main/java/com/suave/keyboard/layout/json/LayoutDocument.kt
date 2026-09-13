@@ -29,6 +29,11 @@ data class LayoutDocument(
     val layers: List<LayerDocument> = emptyList(),
     val caseMaps: CaseMapsDocument = CaseMapsDocument(),
     val spaceMultitapCycle: List<String>? = null,
+    val keyHeight: Int? = null,
+    val landscapeKeyHeight: Int? = null,
+    val landscapeFloating: Boolean = false,
+    val landscapeFloatingByApp: Map<String, Boolean> = emptyMap(),
+    val tags: List<String> = emptyList(),
     /** Forward-compat sink: unknown top-level fields are ignored by kotlinx when not listed. */
     val extras: Map<String, JsonElement> = emptyMap(),
 )

@@ -20,12 +20,15 @@ Migrators live in `layout/json/LayoutSchemaMigrator.kt`. v1 has an identity migr
   "schemaVersion": 1,
   "id": "s12",
   "title": "Suave Layout",
+  "tags": ["en", "split", "suave", "thumbkey"],
   "homeLayerId": "main",
   "caseMaps": {
     "shift": { "ß": "SS", "sch": "Sch" },
     "capsLock": { "sch": "SCH" }
   },
   "spaceMultitapCycle": [", ", ". ", "? ", "! ", ": ", "; "],
+  "keyHeight": 64,
+  "landscapeKeyHeight": 48,
   "layers": [
     {
       "id": "main",
@@ -53,6 +56,11 @@ Migrators live in `layout/json/LayoutSchemaMigrator.kt`. v1 has an identity migr
 | `homeLayerId` | Required. Must match a `layers[].id`. Keyboard starts here. |
 | `caseMaps.shift` / `caseMaps.capsLock` | Layout-wide string rewrites while Shift / Caps Lock are active. |
 | `spaceMultitapCycle` | Optional. Replacements after the first space tap; omit for the engine default. |
+| `keyHeight` | Optional integer dp (10..200). Portrait/square key row height for this layout. Omit to use Appearance Key height. |
+| `landscapeKeyHeight` | Optional integer dp (10..200). Landscape key row height for this layout. Omit to use Appearance Landscape key height. |
+| `landscapeFloating` | Optional boolean (default `false`). In landscape, float the keyboard over the app so hosts keep drawing underneath (Split/Dual gap stays visually open; touches outside the key blocks can pass through). |
+| `landscapeFloatingByApp` | Optional map of host `packageName` -> boolean. Per-app overrides for `landscapeFloating` (from the Toggle landscape float command). Omit packages that should follow the layout default. |
+| `tags` | Optional string list for search and catalog filters (language, style, origin). Stored lowercase and unique. Omit or `[]` if none. |
 | `layers` | Required, non-empty. Cap: 14 layers. Ids must be unique, non-blank. |
 
 Well-known S12 layer ids: `main`, `numeric`, `emoji`, `clipboard`. Any other id is a normal layer (same model).

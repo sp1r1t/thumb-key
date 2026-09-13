@@ -21,6 +21,7 @@ import com.suave.keyboard.layout.LayerDefinition
 import com.suave.keyboard.layout.LayerIcon
 import com.suave.keyboard.layout.MAX_LAYERS
 import com.suave.keyboard.layout.NamedLayout
+import com.suave.keyboard.layout.normalizeTags
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -86,6 +87,11 @@ fun LayoutDocument.toNamedLayout(): NamedLayout {
         shiftMappings = caseMaps.shift,
         capsLockMappings = caseMaps.capsLock,
         spaceMultitapCycle = spaceMultitapCycle,
+        keyHeight = keyHeight,
+        landscapeKeyHeight = landscapeKeyHeight,
+        landscapeFloating = landscapeFloating,
+        landscapeFloatingByApp = landscapeFloatingByApp,
+        tags = normalizeTags(tags),
     )
 }
 
@@ -102,6 +108,11 @@ fun NamedLayout.toLayoutDocument(): LayoutDocument =
                 capsLock = capsLockMappings,
             ),
         spaceMultitapCycle = spaceMultitapCycle,
+        keyHeight = keyHeight,
+        landscapeKeyHeight = landscapeKeyHeight,
+        landscapeFloating = landscapeFloating,
+        landscapeFloatingByApp = landscapeFloatingByApp,
+        tags = tags,
     )
 
 fun decodeNamedLayout(json: String): NamedLayout = parseLayoutDocument(json).toNamedLayout()

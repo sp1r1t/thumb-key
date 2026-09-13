@@ -17,6 +17,22 @@ data class NamedLayout(
     val capsLockMappings: Map<String, String> = emptyMap(),
     /** Optional spacebar multitap replacements after the first plain space; null uses engine default. */
     val spaceMultitapCycle: List<String>? = null,
+    /** Optional portrait/default key height in dp; null uses Appearance. */
+    val keyHeight: Int? = null,
+    /** Optional landscape key height in dp; null uses Appearance landscape height. */
+    val landscapeKeyHeight: Int? = null,
+    /**
+     * When true in landscape, the IME floats over the app (apps keep drawing underneath;
+     * Split/Dual gap stays pass-through for touches outside the key halves).
+     */
+    val landscapeFloating: Boolean = false,
+    /**
+     * Per-app overrides for [landscapeFloating], keyed by host package name. Missing key means
+     * use the layout default. Cleared entries are omitted from JSON.
+     */
+    val landscapeFloatingByApp: Map<String, Boolean> = emptyMap(),
+    /** Search tags (language, style, origin). Lowercase, unique. */
+    val tags: List<String> = emptyList(),
 ) {
     init {
         require(id.isNotBlank()) { "Layout id must not be blank" }
@@ -28,6 +44,32 @@ data class NamedLayout(
         require(layers.any { it.id == homeLayerId }) {
             "homeLayerId '$homeLayerId' must match a layer id"
         }
+        keyHeight?.let { require(it in 10..200) { "keyHeight must be 10..200, got $it" } }
+        landscapeKeyHeight?.let {
+            require(it in 10..200) { "landscapeKeyHeight must be 10..200, got $it" }
+        }
+    }
+
+    /** Layout default, or the stored override for [packageName] when present. */
+    fun effectiveLandscapeFloating(packageName: String?): Boolean {
+        if (packageName.isNullOrBlank()) return landscapeFloating
+        return landscapeFloatingByApp[packageName] ?: landscapeFloating
+    }
+
+    /**
+     * Toggle float for [packageName]. Returns a copy with the override map updated; when the
+     * next value matches [landscapeFloating], the package entry is removed.
+     */
+    fun withToggledLandscapeFloatingForApp(packageName: String): NamedLayout {
+        require(packageName.isNotBlank()) { "packageName must not be blank" }
+        val next = !effectiveLandscapeFloating(packageName)
+        val map = landscapeFloatingByApp.toMutableMap()
+        if (next == landscapeFloating) {
+            map.remove(packageName)
+        } else {
+            map[packageName] = next
+        }
+        return copy(landscapeFloatingByApp = map.toMap())
     }
 
     fun layer(id: String): LayerDefinition? = layers.find { it.id == id }
@@ -104,6 +146,7 @@ object BuiltinLayouts {
         ).copy(
             shiftMappings = S12_SHIFT_MAPPINGS,
             capsLockMappings = S12_CAPS_LOCK_MAPPINGS,
+            tags = listOf("en", "split", "suave", "thumbkey"),
         )
     }
 

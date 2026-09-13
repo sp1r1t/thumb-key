@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "id": "s12",
   "title": "Suave Layout",
+  "tags": ["en", "split", "suave", "thumbkey"],
   "homeLayerId": "main",
   "caseMaps": {
     "shift": {

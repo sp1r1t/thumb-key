@@ -26,12 +26,14 @@ class UserLayoutStoreTest {
             BuiltinLayouts.S12.copy(
                 id = "user_test1",
                 title = "Test copy",
+                tags = listOf("en", "qa"),
             )
         UserLayoutFiles.save(dir, original)
         val restored = UserLayoutFiles.load(dir, "user_test1")
         assertNotNull(restored)
         assertEquals(original.id, restored!!.id)
         assertEquals(original.title, restored.title)
+        assertEquals(listOf("en", "qa"), restored.tags)
         assertEquals(original.homeLayer().keyGrid.keys, restored.homeLayer().keyGrid.keys)
         assertEquals(original.shiftMappings, restored.shiftMappings)
         assertEquals(

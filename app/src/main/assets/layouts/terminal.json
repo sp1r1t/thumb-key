@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "id": "terminal",
   "title": "Terminal",
+  "tags": ["en", "terminal"],
   "homeLayerId": "main",
   "layers": [
     {

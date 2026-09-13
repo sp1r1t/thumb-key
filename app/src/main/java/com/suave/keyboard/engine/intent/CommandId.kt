@@ -42,6 +42,11 @@ enum class CommandId {
     HIDE_KEYBOARD,
     /** Super/Meta/Win modifier (also sendable as a standalone key). */
     META,
+    /**
+     * Toggle landscape floating for the current host app (layout default, overridden per
+     * package and remembered on the layout).
+     */
+    TOGGLE_LANDSCAPE_FLOATING,
     ;
 
     /**
@@ -85,6 +90,7 @@ enum class CommandId {
             IME_ACTION,
             HIDE_KEYBOARD,
             META,
+            TOGGLE_LANDSCAPE_FLOATING,
             -> false
         }
 

@@ -4,6 +4,10 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.graphics.Color
+import android.graphics.Rect
+import android.graphics.Region
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.Bundle
 import android.inputmethodservice.InputMethodService
@@ -60,11 +64,16 @@ class IMEService :
 
         val view = ComposeKeyboardView(this, settingsRepo)
         suppressImeAutofill(view)
-        window?.window?.decorView?.let { decorView ->
-            suppressImeAutofill(decorView)
-            decorView.setViewTreeLifecycleOwner(this)
-            decorView.setViewTreeViewModelStoreOwner(this)
-            decorView.setViewTreeSavedStateRegistryOwner(this)
+        window?.window?.let { win ->
+            // Transparent so floating landscape can show the host through gaps; Compose paints
+            // the board / backdrop where keys live.
+            win.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+            win.decorView.let { decorView ->
+                suppressImeAutofill(decorView)
+                decorView.setViewTreeLifecycleOwner(this)
+                decorView.setViewTreeViewModelStoreOwner(this)
+                decorView.setViewTreeSavedStateRegistryOwner(this)
+            }
         }
         view.let {
             view.setViewTreeLifecycleOwner(this)
@@ -72,6 +81,73 @@ class IMEService :
             view.setViewTreeSavedStateRegistryOwner(this)
         }
         return view
+    }
+
+    /**
+     * Layout option [com.suave.keyboard.layout.NamedLayout.landscapeFloating] in landscape:
+     * report insets as if the IME covers nothing (apps keep drawing underneath), and limit
+     * touches to the key blocks so the Split/Dual gap can pass through.
+     */
+    @Volatile
+    private var landscapeFloating: Boolean = false
+    private val floatingTouchableRegion = Region()
+
+    fun setLandscapeFloating(enabled: Boolean) {
+        if (landscapeFloating == enabled) return
+        landscapeFloating = enabled
+        if (!enabled) {
+            floatingTouchableRegion.setEmpty()
+        }
+        requestInsetsUpdate()
+    }
+
+    /** [rects] are in the input [View] coordinate space (Compose root). */
+    fun setFloatingTouchableRects(
+        inputView: View,
+        rects: List<Rect>,
+    ) {
+        floatingTouchableRegion.setEmpty()
+        val origin = IntArray(2)
+        inputView.getLocationInWindow(origin)
+        for (rect in rects) {
+            if (rect.isEmpty) continue
+            floatingTouchableRegion.op(
+                Rect(
+                    rect.left + origin[0],
+                    rect.top + origin[1],
+                    rect.right + origin[0],
+                    rect.bottom + origin[1],
+                ),
+                Region.Op.UNION,
+            )
+        }
+        requestInsetsUpdate()
+    }
+
+    private fun requestInsetsUpdate() {
+        // onComputeInsets is driven by the decor ViewTreeObserver; force a pass.
+        window?.window?.decorView?.let { decor ->
+            decor.requestLayout()
+            decor.invalidate()
+        }
+    }
+
+    override fun onComputeInsets(outInsets: Insets) {
+        super.onComputeInsets(outInsets)
+        if (!landscapeFloating) return
+        val decor = window?.window?.decorView ?: return
+        // Lie that the IME covers nothing so hosts keep painting full-screen underneath
+        // (AOSP ThemedNavBarKeyboard floating mode).
+        val height = decor.height
+        if (height <= 0) return
+        outInsets.contentTopInsets = height
+        outInsets.visibleTopInsets = height
+        if (floatingTouchableRegion.isEmpty) {
+            outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_FRAME
+        } else {
+            outInsets.touchableInsets = Insets.TOUCHABLE_INSETS_REGION
+            outInsets.touchableRegion.set(floatingTouchableRegion)
+        }
     }
 
     private var clipboardManager: SuaveClipboardManager? = null

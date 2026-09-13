@@ -14,8 +14,8 @@ const val LAYOUT_SOURCE_BUILTIN = "builtin"
 const val LAYOUT_SOURCE_USER = "user"
 
 /**
- * Room index of known layouts. JSON for [LAYOUT_SOURCE_USER] lives under files/layouts;
- * builtins stay in assets and are only mirrored here for listing.
+ * Room index of known layouts. JSON for [LAYOUT_SOURCE_USER] lives under files/layouts.
+ * Builtin / template layouts stay in assets and are offered only when adding a layout.
  */
 @Entity(tableName = "UserLayoutIndex")
 data class UserLayoutIndex(
@@ -27,21 +27,26 @@ data class UserLayoutIndex(
     val updatedAt: Long,
     @ColumnInfo(name = "source")
     val source: String,
+    @ColumnInfo(name = "tags", defaultValue = "")
+    val tags: String = "",
 )
 
 @Dao
 interface UserLayoutIndexDao {
+    @Query("SELECT * FROM UserLayoutIndex WHERE source = :source ORDER BY title ASC")
+    fun observeBySource(source: String): LiveData<List<UserLayoutIndex>>
+
     @Query("SELECT * FROM UserLayoutIndex ORDER BY source ASC, title ASC")
     fun observeAll(): LiveData<List<UserLayoutIndex>>
+
+    @Query("SELECT * FROM UserLayoutIndex WHERE source = :source ORDER BY title ASC")
+    suspend fun listBySource(source: String): List<UserLayoutIndex>
 
     @Query("SELECT * FROM UserLayoutIndex ORDER BY source ASC, title ASC")
     suspend fun listAll(): List<UserLayoutIndex>
 
     @Query("SELECT * FROM UserLayoutIndex WHERE id = :id LIMIT 1")
     suspend fun getById(id: String): UserLayoutIndex?
-
-    @Query("SELECT * FROM UserLayoutIndex WHERE source = :source ORDER BY title ASC")
-    suspend fun listBySource(source: String): List<UserLayoutIndex>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entry: UserLayoutIndex)

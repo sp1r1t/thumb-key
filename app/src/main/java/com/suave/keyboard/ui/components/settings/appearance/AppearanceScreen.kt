@@ -77,6 +77,7 @@ import com.suave.keyboard.db.DEFAULT_KEY_PADDING
 import com.suave.keyboard.db.DEFAULT_KEY_PADDING_VERTICAL
 import com.suave.keyboard.db.DEFAULT_KEY_RADIUS
 import com.suave.keyboard.db.DEFAULT_KEYBOARD_POSITIONS
+import com.suave.keyboard.db.DEFAULT_LANDSCAPE_KEY_HEIGHT
 import com.suave.keyboard.db.DEFAULT_PREVENT_CRAMPED_DUAL
 import com.suave.keyboard.db.DEFAULT_PREVENT_NEEDLESS_SPLIT
 import com.suave.keyboard.db.DEFAULT_PUSHUP_SIZE
@@ -147,6 +148,7 @@ fun AppearanceScreen(
     var themeColorState = settings?.themeColor ?: DEFAULT_THEME_COLOR
     ThemeRegistry.ensureLoaded(context)
     var keyHeightState = settings?.keyHeight ?: DEFAULT_KEY_HEIGHT
+    var landscapeKeyHeightState = settings?.landscapeKeyHeight ?: DEFAULT_LANDSCAPE_KEY_HEIGHT
     var distinctLetterControlColorsState =
         (settings?.distinctLetterControlColors ?: DEFAULT_DISTINCT_LETTER_CONTROL_COLORS).toBool()
 
@@ -222,6 +224,7 @@ fun AppearanceScreen(
                 theme = themeState.ordinal,
                 themeColor = themeColorState,
                 keyHeight = keyHeightState,
+                landscapeKeyHeight = landscapeKeyHeightState,
                 layerHeights = layerHeightsState,
                 disableFullscreenEditor = disableFullscreenEditorState.toInt(),
                 backdropEnabled = backdropEnabledState.toInt(),
@@ -637,6 +640,42 @@ fun AppearanceScreen(
                             updateAppearance()
                         },
                         resetTo = DEFAULT_KEY_HEIGHT,
+                    )
+
+                    IntStepperPreference(
+                        value = landscapeKeyHeightState,
+                        onValueChange = {
+                            landscapeKeyHeightState = it
+                            updateAppearance()
+                        },
+                        valueRange = 10..200,
+                        vibrateOnRepeat = vibrateOnHoldRepeatState,
+                        repeatHapticType = vibrateHoldRepeatTypeState,
+                        title = {
+                            SettingTitle(
+                                text = stringResource(R.string.landscape_key_height),
+                                infoText = stringResource(R.string.landscape_key_height_info),
+                            )
+                        },
+                        summary = {
+                            Text(
+                                stringResource(
+                                    R.string.landscape_key_height_summary,
+                                    landscapeKeyHeightState.toString(),
+                                ),
+                            )
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = Icons.Outlined.Crop75,
+                                contentDescription = null,
+                            )
+                        },
+                        onReset = {
+                            landscapeKeyHeightState = DEFAULT_LANDSCAPE_KEY_HEIGHT
+                            updateAppearance()
+                        },
+                        resetTo = DEFAULT_LANDSCAPE_KEY_HEIGHT,
                     )
 
                     IntStepperPreference(

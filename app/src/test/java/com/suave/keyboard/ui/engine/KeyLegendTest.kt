@@ -3,14 +3,17 @@ package com.suave.keyboard.ui.engine
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.outlined.KeyboardReturn
+import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material.icons.outlined.Abc
 import androidx.compose.material.icons.outlined.ArrowDropUp
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.KeyboardCapslock
 import androidx.compose.material.icons.outlined.Numbers
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SwapHoriz
 import androidx.compose.material.icons.outlined.ViewColumn
 import androidx.compose.ui.unit.dp
@@ -261,6 +264,32 @@ class KeyLegendTest {
                 KeyIntent.ModifierPress(ModifierId.SHIFT),
                 modifierState = ModifierState().activate(ModifierId.SHIFT, ActivationMode.LOCKED),
             ),
+        )
+    }
+
+    @Test
+    fun `IME action uses an icon and ignores display labels`() {
+        val search =
+            keyLegend(
+                KeyIntent.Command(CommandId.IME_ACTION),
+                shown,
+                idle,
+                emptyMap(),
+                displayLabel = "Search",
+                imeAction = android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH,
+            )
+        assertEquals(KeyLegend.Icon(Icons.Outlined.Search), search)
+        assertEquals(
+            KeyLegend.Icon(Icons.AutoMirrored.Outlined.Send),
+            imeActionLegend(android.view.inputmethod.EditorInfo.IME_ACTION_SEND),
+        )
+        assertEquals(
+            KeyLegend.Icon(Icons.Outlined.Done),
+            imeActionLegend(android.view.inputmethod.EditorInfo.IME_ACTION_DONE),
+        )
+        assertEquals(
+            KeyLegend.Icon(Icons.AutoMirrored.Outlined.KeyboardReturn),
+            commandLegend(CommandId.IME_ACTION),
         )
     }
 

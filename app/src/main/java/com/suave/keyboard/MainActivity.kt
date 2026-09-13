@@ -37,6 +37,8 @@ import com.suave.keyboard.db.AppSettingsViewModel
 import com.suave.keyboard.db.AppSettingsViewModelFactory
 import com.suave.keyboard.db.ClipboardDB
 import com.suave.keyboard.db.ClipboardRepository
+import com.suave.keyboard.db.DEFAULT_KEYBOARD_LAYOUT
+import com.suave.keyboard.db.LayoutsUpdate
 import com.suave.keyboard.layout.LayoutRegistry
 import com.suave.keyboard.layout.UserLayoutStore
 import com.suave.keyboard.ui.components.common.ShowChangelog
@@ -83,6 +85,21 @@ class SuaveApplication : Application() {
         try {
             kotlinx.coroutines.runBlocking {
                 userLayoutStore.loadIntoRegistry()
+                val settings = appSettingsRepository.getSettingsSync()
+                val promoted =
+                    userLayoutStore.promoteEnabledTemplates(
+                        settings?.keyboardLayout ?: DEFAULT_KEYBOARD_LAYOUT,
+                        settings?.keyboardLayouts ?: DEFAULT_KEYBOARD_LAYOUT,
+                    )
+                if (promoted != null) {
+                    appSettingsRepository.updateLayouts(
+                        LayoutsUpdate(
+                            id = 1,
+                            keyboardLayout = promoted.activeId,
+                            keyboardLayouts = promoted.enabledCsv,
+                        ),
+                    )
+                }
             }
         } catch (e: Exception) {
             android.util.Log.e("suave", "Failed to load user layouts: ${e.message}")

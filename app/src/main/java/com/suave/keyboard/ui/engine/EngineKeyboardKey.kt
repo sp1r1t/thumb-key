@@ -334,6 +334,7 @@ fun EngineKeyboardKey(
                     .fillMaxSize()
                     .padding(2.dp),
         ) {
+            val imeAction = LocalImeAction.current
             for ((direction, alignment) in DIRECTIONAL_ALIGNMENTS) {
                 val zone = Zone.Directional(direction)
                 val legend =
@@ -345,6 +346,7 @@ fun EngineKeyboardKey(
                         capsLockMappings,
                         displayLabel = mapping.displayLabels[zone],
                         switchLayerIcons = switchLayerIcons,
+                        imeAction = imeAction,
                     )
                 if (legend != null) {
                     KeyLegendMark(
@@ -365,6 +367,7 @@ fun EngineKeyboardKey(
                     capsLockMappings,
                     displayLabel = mapping.displayLabels[Zone.Center],
                     switchLayerIcons = switchLayerIcons,
+                    imeAction = imeAction,
                 )
             if (centerLegend != null) {
                 val isUpperCase =

@@ -3,12 +3,14 @@ package com.suave.keyboard.layout
 import com.suave.keyboard.utils.KeyboardPosition
 
 /**
- * Arrangements the user can enable for Move keyboard. Left and Right still render as full-width
- * Center, so they stay out of this list until they actually park a narrower board.
+ * Arrangements the user can enable for Move keyboard. Center parks a capped board in the
+ * middle; Left / Right / Dual / Split park against the edges with a flexible gap.
  */
 val TOGGLEABLE_KEYBOARD_POSITIONS: List<KeyboardPosition> =
     listOf(
         KeyboardPosition.Center,
+        KeyboardPosition.Left,
+        KeyboardPosition.Right,
         KeyboardPosition.Dual,
         KeyboardPosition.Split,
     )
@@ -76,6 +78,32 @@ fun splitHalfColumnCount(columnCount: Int): Int {
     return maxOf(left.count(), right.count()).coerceAtLeast(1)
 }
 
+/**
+ * Cap for one column-unit of key width (dp). Keys may be [columnSpan] times this wide, but
+ * never grow past it just because the screen is wide - that is what made landscape unusable.
+ */
+fun maxCellWidthDp(keyHeightDp: Int): Int = keyHeightDp.coerceAtLeast(MIN_DUAL_CELL_WIDTH_DP)
+
+/** Ideal full-board width for [columnCount] columns at the capped cell size. */
+fun boardWidthDp(
+    columnCount: Int,
+    maxCellWidthDp: Int,
+): Int = columnCount.coerceAtLeast(1) * maxCellWidthDp
+
+/**
+ * Width of one Split/Dual half. Ideal is half-column-count * cell cap; never more than half
+ * the screen so two parked halves always fit with a center gap when there is spare room.
+ */
+fun parkedHalfWidthDp(
+    columnCount: Int,
+    maxCellWidthDp: Int,
+    screenWidthDp: Int,
+): Int {
+    val ideal = splitHalfColumnCount(columnCount) * maxCellWidthDp
+    val room = (screenWidthDp / 2).coerceAtLeast(1)
+    return minOf(ideal, room)
+}
+
 fun isSplitCramped(
     screenWidthDp: Int,
     columnCount: Int,
@@ -133,3 +161,23 @@ fun nextKeyboardPosition(
 }
 
 fun canCycleKeyboardPosition(reachable: List<KeyboardPosition>): Boolean = reachable.size > 1
+
+/**
+ * Effective key height in dp: layout override, then Appearance (portrait or landscape), then
+ * built-in defaults.
+ */
+fun resolveKeyHeightDp(
+    landscape: Boolean,
+    layoutKeyHeight: Int?,
+    layoutLandscapeKeyHeight: Int?,
+    settingsKeyHeight: Int?,
+    settingsLandscapeKeyHeight: Int?,
+    defaultKeyHeight: Int = 64,
+    defaultLandscapeKeyHeight: Int = 48,
+): Int {
+    val fromLayout = if (landscape) layoutLandscapeKeyHeight else layoutKeyHeight
+    if (fromLayout != null) return fromLayout.coerceIn(10, 200)
+    val fromSettings = if (landscape) settingsLandscapeKeyHeight else settingsKeyHeight
+    if (fromSettings != null) return fromSettings.coerceIn(10, 200)
+    return (if (landscape) defaultLandscapeKeyHeight else defaultKeyHeight).coerceIn(10, 200)
+}

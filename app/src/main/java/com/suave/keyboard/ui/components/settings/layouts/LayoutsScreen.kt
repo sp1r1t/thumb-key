@@ -24,6 +24,7 @@ import androidx.compose.material.icons.outlined.FileUpload
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -51,11 +52,14 @@ import com.suave.keyboard.SuaveApplication
 import com.suave.keyboard.db.AppSettingsViewModel
 import com.suave.keyboard.db.DEFAULT_KEYBOARD_LAYOUT
 import com.suave.keyboard.db.LayoutsUpdate
-import com.suave.keyboard.layout.BuiltinLayouts
-import com.suave.keyboard.layout.LAYOUT_SOURCE_BUILTIN
 import com.suave.keyboard.layout.LAYOUT_SOURCE_USER
 import com.suave.keyboard.layout.LayoutRegistry
+import com.suave.keyboard.layout.LayoutSort
+import com.suave.keyboard.layout.StartLayoutChoice
 import com.suave.keyboard.layout.UserLayoutIndex
+import com.suave.keyboard.layout.filterAvailableLayouts
+import com.suave.keyboard.layout.startLayoutChoices
+import com.suave.keyboard.layout.tagsFromIndex
 import com.suave.keyboard.ui.components.common.SettingTitle
 import com.suave.keyboard.ui.components.common.SettingsScreenBody
 import com.suave.keyboard.ui.components.common.SettingsSection
@@ -84,8 +88,9 @@ fun LayoutsScreen(
 
     var pendingExportId by remember { mutableStateOf<String?>(null) }
     var deleteTarget by remember { mutableStateOf<UserLayoutIndex?>(null) }
-    var showCreateDialog by remember { mutableStateOf(false) }
-    var showStartLayoutPicker by remember { mutableStateOf(false) }
+    var showAddLayout by remember { mutableStateOf(false) }
+    var availableQuery by remember { mutableStateOf("") }
+    var availableSort by remember { mutableStateOf(LayoutSort.TITLE) }
 
     val enabledIds =
         remember(settings?.keyboardLayouts) {
@@ -101,30 +106,12 @@ fun LayoutsScreen(
     val activeId = settings?.keyboardLayout ?: DEFAULT_KEYBOARD_LAYOUT
 
     val layoutRows =
-        remember(index, ctx) {
-            index.ifEmpty {
-                LayoutRegistry.all(ctx).map {
-                    UserLayoutIndex(
-                        id = it.id,
-                        title = it.title,
-                        updatedAt = 0L,
-                        source =
-                            if (it.id == LayoutRegistry.DEFAULT_ID ||
-                                BuiltinLayouts.ALL.any { b -> b.id == it.id }
-                            ) {
-                                LAYOUT_SOURCE_BUILTIN
-                            } else {
-                                LAYOUT_SOURCE_USER
-                            },
-                    )
-                }
-            }
+        remember(index) {
+            index.filter { it.source == LAYOUT_SOURCE_USER }
         }
-
-    val activeTitle =
-        remember(activeId, layoutRows, ctx) {
-            layoutRows.firstOrNull { it.id == activeId }?.title
-                ?: LayoutRegistry.byId(ctx, activeId).title
+    val visibleRows =
+        remember(layoutRows, availableQuery, availableSort) {
+            filterAvailableLayouts(layoutRows, availableQuery, availableSort)
         }
 
     val exportLauncher =
@@ -193,8 +180,7 @@ fun LayoutsScreen(
         }
 
     fun openCreateFrom(sourceId: String) {
-        showCreateDialog = false
-        showStartLayoutPicker = false
+        showAddLayout = false
         navController.navigate("layoutCreate/$sourceId")
     }
 
@@ -216,12 +202,12 @@ fun LayoutsScreen(
                     Preference(
                         title = { Text(stringResource(R.string.layout_create_new)) },
                         summary = {
-                            Text(stringResource(R.string.layout_create_new_summary, activeTitle))
+                            Text(stringResource(R.string.layout_create_new_summary))
                         },
                         icon = {
                             Icon(Icons.Outlined.Add, contentDescription = null)
                         },
-                        onClick = { showCreateDialog = true },
+                        onClick = { showAddLayout = true },
                     )
                     Preference(
                         title = { Text(stringResource(R.string.layout_import)) },
@@ -237,7 +223,63 @@ fun LayoutsScreen(
                     title = stringResource(R.string.layouts_section_available),
                     initiallyExpanded = true,
                 ) {
-                    for (entry in layoutRows) {
+                    OutlinedTextField(
+                        value = availableQuery,
+                        onValueChange = { availableQuery = it },
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                        singleLine = true,
+                        label = { Text(stringResource(R.string.layout_search_available)) },
+                    )
+                    Row(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        FilterChip(
+                            selected = availableSort == LayoutSort.TITLE,
+                            onClick = { availableSort = LayoutSort.TITLE },
+                            label = { Text(stringResource(R.string.layout_sort_title)) },
+                        )
+                        FilterChip(
+                            selected = availableSort == LayoutSort.UPDATED,
+                            onClick = { availableSort = LayoutSort.UPDATED },
+                            label = { Text(stringResource(R.string.layout_sort_updated)) },
+                        )
+                    }
+                    Text(
+                        text =
+                            stringResource(
+                                if (availableSort == LayoutSort.TITLE) {
+                                    R.string.layout_sort_summary_title
+                                } else {
+                                    R.string.layout_sort_summary_updated
+                                },
+                            ),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                    )
+                    if (visibleRows.isEmpty()) {
+                        Text(
+                            text =
+                                stringResource(
+                                    if (layoutRows.isEmpty()) {
+                                        R.string.layout_available_empty
+                                    } else {
+                                        R.string.layout_search_empty
+                                    },
+                                ),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                        )
+                    }
+                    for (entry in visibleRows) {
                         LayoutIndexRow(
                             entry = entry,
                             enabled = entry.id in enabledIds,
@@ -276,33 +318,7 @@ fun LayoutsScreen(
                                 navController.navigate("layoutEditor/${entry.id}")
                             },
                             onDuplicate = {
-                                scope.launch {
-                                    try {
-                                        val copy = store.duplicateFrom(entry.id)
-                                        val next = enabledIds + copy.id
-                                        appSettingsViewModel.updateLayouts(
-                                            LayoutsUpdate(
-                                                id = 1,
-                                                keyboardLayout = activeId,
-                                                keyboardLayouts = next.joinToString(","),
-                                            ),
-                                        )
-                                        Toast
-                                            .makeText(
-                                                ctx,
-                                                ctx.getString(R.string.layout_duplicated, copy.title),
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                        navController.navigate("layoutEditor/${copy.id}")
-                                    } catch (e: Exception) {
-                                        Toast
-                                            .makeText(
-                                                ctx,
-                                                ctx.getString(R.string.layout_action_failed, e.message ?: ""),
-                                                Toast.LENGTH_LONG,
-                                            ).show()
-                                    }
-                                }
+                                openCreateFrom(entry.id)
                             },
                             onExport = {
                                 pendingExportId = entry.id
@@ -342,41 +358,10 @@ fun LayoutsScreen(
         }
     }
 
-    if (showCreateDialog) {
-        AlertDialog(
-            onDismissRequest = { showCreateDialog = false },
-            title = { Text(stringResource(R.string.layout_create_new)) },
-            text = {
-                Text(stringResource(R.string.layout_create_choose_source, activeTitle))
-            },
-            confirmButton = {
-                Column(horizontalAlignment = Alignment.End) {
-                    TextButton(onClick = { openCreateFrom(activeId) }) {
-                        Text(stringResource(R.string.layout_start_from_selected, activeTitle))
-                    }
-                    TextButton(
-                        onClick = {
-                            showCreateDialog = false
-                            showStartLayoutPicker = true
-                        },
-                    ) {
-                        Text(stringResource(R.string.layout_select_start_layout))
-                    }
-                    TextButton(onClick = { openCreateFrom("blank") }) {
-                        Text(stringResource(R.string.layout_start_blank))
-                    }
-                    TextButton(onClick = { showCreateDialog = false }) {
-                        Text(stringResource(R.string.cancel))
-                    }
-                }
-            },
-        )
-    }
-
-    if (showStartLayoutPicker) {
+    if (showAddLayout) {
         LayoutStartPickerDialog(
-            layouts = layoutRows,
-            onDismiss = { showStartLayoutPicker = false },
+            templates = LayoutRegistry.templates(ctx),
+            onDismiss = { showAddLayout = false },
             onSelect = { openCreateFrom(it) },
         )
     }
@@ -433,22 +418,15 @@ fun LayoutsScreen(
 
 @Composable
 private fun LayoutStartPickerDialog(
-    layouts: List<UserLayoutIndex>,
+    templates: List<com.suave.keyboard.layout.NamedLayout>,
     onDismiss: () -> Unit,
     onSelect: (String) -> Unit,
 ) {
     var query by remember { mutableStateOf("") }
-    val filtered =
-        remember(layouts, query) {
-            val needle = query.trim()
-            if (needle.isEmpty()) {
-                layouts
-            } else {
-                layouts.filter {
-                    it.title.contains(needle, ignoreCase = true) ||
-                        it.id.contains(needle, ignoreCase = true)
-                }
-            }
+    val blankTitle = stringResource(R.string.layout_start_blank)
+    val choices =
+        remember(templates, query, blankTitle) {
+            startLayoutChoices(templates, query, blankTitle)
         }
 
     AlertDialog(
@@ -472,24 +450,11 @@ private fun LayoutStartPickerDialog(
                             .fillMaxWidth()
                             .heightIn(max = 360.dp),
                 ) {
-                    items(filtered, key = { it.id }) { entry ->
-                        Column(
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth()
-                                    .clickable { onSelect(entry.id) }
-                                    .padding(vertical = 12.dp, horizontal = 4.dp),
-                        ) {
-                            Text(
-                                text = entry.title,
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                            Text(
-                                text = entry.id,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
+                    items(choices, key = { it.id }) { choice ->
+                        StartLayoutChoiceRow(
+                            choice = choice,
+                            onSelect = { onSelect(choice.id) },
+                        )
                     }
                 }
             }
@@ -501,6 +466,36 @@ private fun LayoutStartPickerDialog(
         },
         dismissButton = {},
     )
+}
+
+@Composable
+private fun StartLayoutChoiceRow(
+    choice: StartLayoutChoice,
+    onSelect: () -> Unit,
+) {
+    val tagsLabel =
+        if (choice.tags.isEmpty()) {
+            choice.id
+        } else {
+            choice.tags.joinToString(", ")
+        }
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onSelect)
+                .padding(vertical = 12.dp, horizontal = 4.dp),
+    ) {
+        Text(
+            text = choice.title,
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        Text(
+            text = tagsLabel,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }
 
 @Composable
@@ -516,25 +511,17 @@ private fun LayoutIndexRow(
     onShare: () -> Unit,
     onDelete: () -> Unit,
 ) {
-    val isUser = entry.source == LAYOUT_SOURCE_USER
-    val sourceLabel =
-        if (isUser) {
-            stringResource(R.string.layout_source_user)
-        } else {
-            stringResource(R.string.layout_source_builtin)
-        }
+    val tags = tagsFromIndex(entry.tags)
     val status =
         buildString {
-            append(sourceLabel)
-            if (active) {
+            when {
+                active -> append(stringResource(R.string.layout_active))
+                enabled -> append(stringResource(R.string.layout_enabled))
+                else -> append(stringResource(R.string.layout_disabled))
+            }
+            if (tags.isNotEmpty()) {
                 append(" - ")
-                append(stringResource(R.string.layout_active))
-            } else if (enabled) {
-                append(" - ")
-                append(stringResource(R.string.layout_enabled))
-            } else {
-                append(" - ")
-                append(stringResource(R.string.layout_disabled))
+                append(tags.joinToString(", "))
             }
         }
 
@@ -558,10 +545,8 @@ private fun LayoutIndexRow(
                     Text(stringResource(R.string.layout_use))
                 }
             }
-            if (isUser) {
-                IconButton(onClick = onEdit) {
-                    Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.layout_edit))
-                }
+            IconButton(onClick = onEdit) {
+                Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.layout_edit))
             }
             IconButton(onClick = onDuplicate) {
                 Icon(Icons.Outlined.ContentCopy, contentDescription = stringResource(R.string.layout_duplicate))
@@ -572,14 +557,12 @@ private fun LayoutIndexRow(
             IconButton(onClick = onShare) {
                 Icon(Icons.Outlined.Share, contentDescription = stringResource(R.string.layout_share))
             }
-            if (isUser) {
-                IconButton(onClick = onDelete) {
-                    Icon(
-                        Icons.Outlined.Delete,
-                        contentDescription = stringResource(R.string.delete),
-                        tint = MaterialTheme.colorScheme.error,
-                    )
-                }
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Outlined.Delete,
+                    contentDescription = stringResource(R.string.delete),
+                    tint = MaterialTheme.colorScheme.error,
+                )
             }
         }
     }

@@ -1,20 +1,25 @@
 package com.suave.keyboard.ui.engine
 
+import android.view.inputmethod.EditorInfo
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.KeyboardBackspace
 import androidx.compose.material.icons.automirrored.outlined.KeyboardReturn
 import androidx.compose.material.icons.automirrored.outlined.KeyboardTab
 import androidx.compose.material.icons.automirrored.outlined.Redo
+import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material.icons.automirrored.outlined.Undo
 import androidx.compose.material.icons.outlined.Abc
 import androidx.compose.material.icons.outlined.ArrowDropUp
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.ContentCut
 import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material.icons.outlined.EmojiEmotions
+import androidx.compose.material.icons.outlined.Fullscreen
 import androidx.compose.material.icons.outlined.Functions
 import androidx.compose.material.icons.outlined.HideImage
 import androidx.compose.material.icons.outlined.History
@@ -26,6 +31,7 @@ import androidx.compose.material.icons.outlined.KeyboardControlKey
 import androidx.compose.material.icons.outlined.KeyboardOptionKey
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.Numbers
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.SelectAll
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.SpaceBar
@@ -34,6 +40,7 @@ import androidx.compose.material.icons.outlined.ViewColumn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -68,6 +75,9 @@ sealed class KeyLegend {
         val icon: ImageVector,
     ) : KeyLegend()
 }
+
+/** Live IME action from the focused editor; defaults to a Return-style action in previews. */
+val LocalImeAction = compositionLocalOf { EditorInfo.IME_ACTION_UNSPECIFIED }
 
 /**
  * How a key zone's label is grouped for the Appearance hide toggles. Space is editing but has
@@ -120,6 +130,7 @@ fun keyLegend(
     capsLockMappings: Map<String, String> = emptyMap(),
     displayLabel: String? = null,
     switchLayerIcons: Map<String, ImageVector> = emptyMap(),
+    imeAction: Int = EditorInfo.IME_ACTION_UNSPECIFIED,
 ): KeyLegend? =
     when (intent) {
         null, KeyIntent.Noop -> null
@@ -145,6 +156,7 @@ fun keyLegend(
             if (intent.id == CommandId.SWITCH_LANGUAGE && !visibility.canSwitchLayout) return null
             if (intent.id == CommandId.MOVE_KEYBOARD && !visibility.canMoveKeyboard) return null
             if (visibility.hides(intent.id.legendCategory())) return null
+            if (intent.id == CommandId.IME_ACTION) return imeActionLegend(imeAction)
             if (!displayLabel.isNullOrBlank()) return KeyLegend.Text(displayLabel)
             commandLegend(intent.id)
         }
@@ -250,6 +262,7 @@ internal fun CommandId.legendCategory(): LegendCategory =
         CommandId.IME_ACTION,
         CommandId.HIDE_KEYBOARD,
         CommandId.META,
+        CommandId.TOGGLE_LANDSCAPE_FLOATING,
         -> LegendCategory.SPECIAL
     }
 
@@ -286,8 +299,21 @@ fun commandLegend(id: CommandId): KeyLegend? =
         CommandId.TOGGLE_EMOJI_MODE -> KeyLegend.Icon(Icons.Outlined.EmojiEmotions)
         CommandId.TOGGLE_NUMERIC_MODE -> KeyLegend.Icon(Icons.Outlined.Numbers)
         CommandId.TOGGLE_ABC_MODE -> KeyLegend.Icon(Icons.Outlined.Abc)
-        CommandId.IME_ACTION -> KeyLegend.Text("Go")
+        CommandId.IME_ACTION -> KeyLegend.Icon(Icons.AutoMirrored.Outlined.KeyboardReturn)
         CommandId.HIDE_KEYBOARD -> KeyLegend.Icon(Icons.Outlined.Keyboard)
+        CommandId.TOGGLE_LANDSCAPE_FLOATING -> KeyLegend.Icon(Icons.Outlined.Fullscreen)
+    }
+
+/** Icon for the live IME action key, following the focused field's EditorInfo action. */
+fun imeActionLegend(imeAction: Int): KeyLegend =
+    when (imeAction) {
+        EditorInfo.IME_ACTION_GO -> KeyLegend.Icon(Icons.AutoMirrored.Outlined.ArrowForward)
+        EditorInfo.IME_ACTION_SEARCH -> KeyLegend.Icon(Icons.Outlined.Search)
+        EditorInfo.IME_ACTION_SEND -> KeyLegend.Icon(Icons.AutoMirrored.Outlined.Send)
+        EditorInfo.IME_ACTION_NEXT -> KeyLegend.Icon(Icons.AutoMirrored.Outlined.KeyboardTab)
+        EditorInfo.IME_ACTION_DONE -> KeyLegend.Icon(Icons.Outlined.Done)
+        EditorInfo.IME_ACTION_PREVIOUS -> KeyLegend.Icon(Icons.AutoMirrored.Outlined.KeyboardArrowLeft)
+        else -> KeyLegend.Icon(Icons.AutoMirrored.Outlined.KeyboardReturn)
     }
 
 fun CommandId.titleRes(): Int =
@@ -324,6 +350,7 @@ fun CommandId.titleRes(): Int =
         CommandId.IME_ACTION -> R.string.command_ime_action
         CommandId.HIDE_KEYBOARD -> R.string.command_hide_keyboard
         CommandId.META -> R.string.command_meta
+        CommandId.TOGGLE_LANDSCAPE_FLOATING -> R.string.command_toggle_landscape_floating
     }
 
 /** Legend for the layout editor: always has a mark (Space gets an icon here). */

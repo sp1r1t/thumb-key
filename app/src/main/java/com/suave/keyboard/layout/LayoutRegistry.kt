@@ -18,6 +18,7 @@ object LayoutRegistry {
     private const val TAG = "LayoutRegistry"
 
     private val cache = ConcurrentHashMap<String, NamedLayout>()
+    private val templateIds = ConcurrentHashMap.newKeySet<String>()
 
     @Volatile
     private var assetsLoaded = false
@@ -42,6 +43,7 @@ object LayoutRegistry {
                         assets.open("$ASSET_DIR/$name").bufferedReader().use { it.readText() }
                     val layout = decodeNamedLayout(json)
                     cache[layout.id] = layout
+                    templateIds.add(layout.id)
                 } catch (e: LayoutJsonException) {
                     Log.e(TAG, "Failed to decode layout asset $name: ${e.message}")
                 } catch (e: Exception) {
@@ -57,6 +59,7 @@ object LayoutRegistry {
     private fun seedKotlinFallbacks() {
         for (layout in BuiltinLayouts.ALL) {
             cache.putIfAbsent(layout.id, layout)
+            templateIds.add(layout.id)
         }
     }
 
@@ -128,5 +131,24 @@ object LayoutRegistry {
     fun all(context: Context): List<NamedLayout> {
         ensureLoaded(context)
         return all()
+    }
+
+    fun isTemplateId(id: String): Boolean {
+        seedKotlinFallbacks()
+        return id in templateIds
+    }
+
+    /** Builtin JSON / Kotlin fallbacks used as Add-layout start templates. */
+    fun templates(): List<NamedLayout> {
+        seedKotlinFallbacks()
+        return cache.values
+            .filter { it.id in templateIds }
+            .distinctBy { it.id }
+            .sortedBy { it.title.lowercase() }
+    }
+
+    fun templates(context: Context): List<NamedLayout> {
+        ensureLoaded(context)
+        return templates()
     }
 }

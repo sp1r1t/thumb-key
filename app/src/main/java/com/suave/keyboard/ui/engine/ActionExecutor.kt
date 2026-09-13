@@ -32,6 +32,7 @@ data class AppCommandHost(
     val onSwitchLayer: (String) -> Unit,
     val onToggleEmojiLayer: () -> Unit,
     val onToggleClipboardHistory: () -> Unit,
+    val onToggleLandscapeFloating: () -> Unit,
 )
 
 /**
@@ -104,6 +105,7 @@ object ActionExecutor {
             CommandId.TOGGLE_NUMERIC_MODE -> host.onSelectLayer(ActiveLayer.Numeric)
             CommandId.TOGGLE_ABC_MODE -> host.onSelectLayer(ActiveLayer.Main)
             CommandId.TOGGLE_CLIPBOARD_HISTORY -> host.onToggleClipboardHistory()
+            CommandId.TOGGLE_LANDSCAPE_FLOATING -> host.onToggleLandscapeFloating()
             CommandId.IME_ACTION -> performImeAction(ime)
             CommandId.HIDE_KEYBOARD -> ime.requestHideSelf(0)
             else -> {}

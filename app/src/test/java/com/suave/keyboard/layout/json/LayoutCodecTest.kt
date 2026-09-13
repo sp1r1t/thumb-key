@@ -246,6 +246,52 @@ class LayoutCodecTest {
     }
 
     @Test
+    fun `layout key heights round-trip and omit when unset`() {
+        val withHeights =
+            loadS12Asset().copy(keyHeight = 70, landscapeKeyHeight = 42)
+        val encoded = encodeNamedLayout(withHeights)
+        assertTrue(encoded.contains("\"keyHeight\": 70"))
+        assertTrue(encoded.contains("\"landscapeKeyHeight\": 42"))
+        val restored = decodeNamedLayout(encoded)
+        assertEquals(70, restored.keyHeight)
+        assertEquals(42, restored.landscapeKeyHeight)
+
+        val without = encodeNamedLayout(loadS12Asset().copy(keyHeight = null, landscapeKeyHeight = null))
+        assertTrue(!without.contains("\"keyHeight\""))
+        assertTrue(!without.contains("\"landscapeKeyHeight\""))
+    }
+
+    @Test
+    fun `landscape floating round-trips`() {
+        val on = loadS12Asset().copy(landscapeFloating = true)
+        val encoded = encodeNamedLayout(on)
+        assertTrue(encoded.contains("\"landscapeFloating\": true"))
+        assertTrue(decodeNamedLayout(encoded).landscapeFloating)
+        val offJson = encodeNamedLayout(loadS12Asset().copy(landscapeFloating = false))
+        assertTrue(!offJson.contains("landscapeFloating"))
+        assertTrue(!decodeNamedLayout(offJson).landscapeFloating)
+    }
+
+    @Test
+    fun `landscape floating by app round-trips and resolves`() {
+        val layout =
+            loadS12Asset().copy(
+                landscapeFloating = true,
+                landscapeFloatingByApp = mapOf("com.example.maps" to false),
+            )
+        assertTrue(layout.effectiveLandscapeFloating(null))
+        assertTrue(layout.effectiveLandscapeFloating("com.other"))
+        assertTrue(!layout.effectiveLandscapeFloating("com.example.maps"))
+        val toggled = layout.withToggledLandscapeFloatingForApp("com.example.maps")
+        assertTrue(toggled.effectiveLandscapeFloating("com.example.maps"))
+        assertTrue(toggled.landscapeFloatingByApp.isEmpty())
+        val encoded = encodeNamedLayout(layout)
+        assertTrue(encoded.contains("landscapeFloatingByApp"))
+        val restored = decodeNamedLayout(encoded)
+        assertEquals(mapOf("com.example.maps" to false), restored.landscapeFloatingByApp)
+    }
+
+    @Test
     fun `new layout assets decode`() {
         for (name in listOf("simple.json", "terminal.json", "unexpected.json")) {
             val layout = loadLayoutAsset(name)
@@ -253,6 +299,20 @@ class LayoutCodecTest {
             assertTrue(layout.layers.isNotEmpty())
             assertNotNull(layout.homeLayer())
         }
+    }
+
+    @Test
+    fun `tags round-trip and normalize`() {
+        val tagged =
+            loadS12Asset().copy(tags = listOf(" EN ", "thumbkey", "en"))
+        val encoded = encodeNamedLayout(tagged)
+        assertTrue(encoded.contains("\"tags\""))
+        val restored = decodeNamedLayout(encoded)
+        assertEquals(listOf("en", "thumbkey"), restored.tags)
+        val fromAsset = loadS12Asset()
+        assertTrue(fromAsset.tags.contains("suave"))
+        val empty = encodeNamedLayout(loadS12Asset().copy(tags = emptyList()))
+        assertTrue(!empty.contains("\"tags\""))
     }
 }
 
