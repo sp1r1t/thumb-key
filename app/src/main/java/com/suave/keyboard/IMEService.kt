@@ -174,7 +174,7 @@ class IMEService :
     /**
      * Keep one input view for the IME session. Replacing it on every [onStartInput] tears down
      * inflated Autofill chips (Firefox and Chrome restart input when a login field focuses).
-     * Numeric/editor changes still apply because Compose keys off [inputEpoch].
+     * Numeric layer and editor chrome still update because Compose keys off [inputEpoch].
      */
     override fun onCreateInputView(): View = setupView()
 

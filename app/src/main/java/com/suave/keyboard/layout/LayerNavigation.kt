@@ -56,3 +56,21 @@ fun LayerSession.toggleBase(
     } else {
         selectBase(target)
     }
+
+/**
+ * Starting layer for a newly focused editor. Number/phone/datetime open numeric when that
+ * layer exists; otherwise home.
+ */
+fun layerSessionForEditor(
+    layout: NamedLayout,
+    prefersNumeric: Boolean,
+): LayerSession {
+    val numeric = ActiveLayer.Numeric
+    val base =
+        if (prefersNumeric && layout.layer(numeric) != null) {
+            numeric
+        } else {
+            layout.homeActive()
+        }
+    return LayerSession().selectBase(base)
+}

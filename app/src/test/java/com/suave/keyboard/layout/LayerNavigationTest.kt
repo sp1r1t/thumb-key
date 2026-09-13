@@ -36,4 +36,23 @@ class LayerNavigationTest {
                 .leaveOverlay()
         assertEquals(ActiveLayer.Numeric, session.current)
     }
+
+    @Test
+    fun `number fields open numeric when the layout has that layer`() {
+        val numeric = layerSessionForEditor(s12, prefersNumeric = true)
+        assertEquals(ActiveLayer.Numeric, numeric.current)
+        assertEquals(ActiveLayer.Numeric, numeric.origin)
+        val text = layerSessionForEditor(s12, prefersNumeric = false)
+        assertEquals(ActiveLayer.Main, text.current)
+    }
+
+    @Test
+    fun `number fields stay on home when there is no numeric layer`() {
+        val homeOnly =
+            blankNamedLayout("user_x", "X", listOf(3, 3)).let { layout ->
+                layout.copy(layers = listOf(layout.homeLayer()))
+            }
+        val session = layerSessionForEditor(homeOnly, prefersNumeric = true)
+        assertEquals(homeOnly.homeActive(), session.current)
+    }
 }

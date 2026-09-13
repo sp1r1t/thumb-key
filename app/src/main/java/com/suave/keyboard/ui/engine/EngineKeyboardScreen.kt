@@ -122,6 +122,7 @@ import com.suave.keyboard.engine.action.SpacebarMultitapTracker
 import com.suave.keyboard.engine.capability.EditorCapabilities
 import com.suave.keyboard.engine.capability.EditorCapabilityResolver
 import com.suave.keyboard.engine.capability.EditorInfoDebug
+import com.suave.keyboard.engine.capability.prefersNumericLayer
 import com.suave.keyboard.engine.feedback.FeedbackDispatcher
 import com.suave.keyboard.engine.feedback.FeedbackEvent
 import com.suave.keyboard.engine.feedback.FeedbackSettings
@@ -154,6 +155,7 @@ import com.suave.keyboard.layout.NamedLayout
 import com.suave.keyboard.layout.canCycleKeyboardPosition
 import com.suave.keyboard.layout.coerceDisplayedPosition
 import com.suave.keyboard.layout.leaveOverlay
+import com.suave.keyboard.layout.layerSessionForEditor
 import com.suave.keyboard.layout.maxCellWidthDp
 import com.suave.keyboard.layout.nextKeyboardPosition
 import com.suave.keyboard.layout.parkedBoardWidthDp
@@ -400,8 +402,10 @@ fun EngineKeyboardScreen(
             ime.currentInputEditorInfo?.let { isPasswordField(ime) } ?: false
         }
 
-    LaunchedEffect(namedLayout.id) {
-        layerSessionState.value = LayerSession()
+    LaunchedEffect(namedLayout.id, inputEpoch) {
+        val prefersNumeric =
+            prefersNumericLayer(ime.currentInputEditorInfo?.inputType ?: 0)
+        layerSessionState.value = layerSessionForEditor(namedLayout, prefersNumeric)
     }
     LaunchedEffect(inputEpoch, autoCapitalize) {
         spacebarMultitap.reset()
@@ -474,7 +478,6 @@ fun EngineKeyboardScreen(
                 onToggleHideLetters = { onToggleHideLettersState.value() },
                 onSwitchLanguage = {
                     if (canSwitchLayoutState.value) {
-                        layerSessionState.value = LayerSession()
                         onSwitchLanguageState.value()
                     }
                 },
